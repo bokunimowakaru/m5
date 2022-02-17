@@ -1,5 +1,5 @@
 /******************************************************************************
-Example 01: Hello, world! for M5StickC
+Example 01: Hello, world! for M5StickC PLUS
 ・起動時にLEDを点滅、LCDにタイトルを表示します。
 ・本体のボタンを押すと、ボタンに応じてメッセージを表示します。
 
@@ -9,11 +9,11 @@ Example 01: Hello, world! for M5StickC
 Arduino IDE 開発環境イントール方法：
 https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
 
-M5StickC Arduino Library API 情報：
+M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
 https://docs.m5stack.com/en/api/stickc/system_m5stickc
 *******************************************************************************/
 
-#include <M5StickC.h>                           // M5StickC用ライブラリ
+#include <M5StickCPlus.h>                       // M5StickC Plus 用ライブラリ
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     pinMode(M5_LED,OUTPUT);                     // LEDのIOを出力に設定
@@ -25,7 +25,7 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.Lcd.fillScreen(BLACK);                   // LCDを消去
     M5.Axp.ScreenBreath(7+2);                   // LCDの輝度を2に設定
     M5.Lcd.setRotation(1);                      // LCDを横向き表示に設定
-    M5.Lcd.println("Example 01 M5StickC LCD");  // LCDにタイトルを表示
+    M5.Lcd.println("Example 0 M5StickC LCD");   // LCDにタイトルを表示
 }
 
 void loop(){                                    // 繰り返し実行する関数

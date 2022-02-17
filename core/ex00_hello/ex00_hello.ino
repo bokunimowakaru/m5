@@ -1,5 +1,5 @@
 /******************************************************************************
-Example 01: Hello, world! for M5Stack
+Example 0: Hello, world! for M5Stack
 ・起動時にスピーカから音を鳴らし、LCDにタイトルを表示します。
 ・本体上面のボタンを押すと、ボタンに応じたメッセージを表示します。
 
@@ -27,7 +27,7 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.Lcd.begin();                             // M5Stack用Lcdライブラリの起動
     M5.Lcd.fillScreen(BLACK);                   // LCDを消去
     M5.Lcd.setTextSize(2);                      // 文字表示サイズを2倍に設定
-    M5.Lcd.println("Example 01 M5Stack LCD");   // LCDにタイトルを表示
+    M5.Lcd.println("Example 0 M5Stack LCD");    // LCDにタイトルを表示
 }
 
 void loop(){                                    // 繰り返し実行する関数

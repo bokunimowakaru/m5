@@ -1,5 +1,5 @@
 /******************************************************************************
-Example 01: Hello, world! for ATOM / ATOM Lite
+Example 0: Hello, world! for ATOM / ATOM Lite
 ・起動時にLEDを点滅、モールス信号でタイトルを表示します。
 ・本体のボタンを押すと、メッセージをモールス出力します。
 
@@ -27,8 +27,8 @@ void setup(){                                   // 起動時に一度だけ実�
     delay(500);                                 // 100msの待ち時間処理
 
 //  M5.begin();                                 // M5Stack用ライブラリの起動
-    Serial.println("Example 01 ATOM");          // LCDにタイトルを表示
-    morse(-1,50,"EXAMPLE 1");                   // モールス符号(-1,速度50,文字)
+    Serial.println("Example 0 ATOM");           // LCDにタイトルを表示
+    morse(-1,50,"EXAMPLE 0");                   // モールス符号(-1,速度50,文字)
 }
 
 void loop(){                                    // 繰り返し実行する関数
