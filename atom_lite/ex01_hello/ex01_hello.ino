@@ -19,6 +19,11 @@ https://docs.m5stack.com/en/api/atom/system
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     led_setup(PIN_LED_RGB);                     // LEDの初期設定(ポートを設定)
+/*
+    led(20);                                    // LED ON (輝度20)
+    delay(100);                                 // 100msの待ち時間処理
+    led(0);                                     // LED OFF
+*/
     pinMode(PIN_BTN_A, INPUT_PULLUP);           // ボタン入力ポート
     Serial.begin(115200);                       // 動作確認のためのシリアル出力
 
