@@ -102,14 +102,30 @@ void led_setup(int pin){
     _PIN_LED = pin;
     pinMode(_PIN_LED,OUTPUT);                   // ポートを出力に設定
     digitalWrite(_PIN_LED,LOW);
-    delay(100);
-    T_Delay = _initial_delay();                 // 信号処理遅延を算出
-    T0H_num=_led_delay(T0H_ns);                 // 待ち時間処理回数変換
-    T0L_num=_led_delay(T0L_ns);
-    T1H_num=_led_delay(T1H_ns);
-    T1L_num=_led_delay(T1L_ns);
+    int i = 0;
+    while(!i){
+        T_Delay = _initial_delay();                 // 信号処理遅延を算出
+        T0H_num=_led_delay(T0H_ns);                 // 待ち時間処理回数変換
+        T0L_num=_led_delay(T0L_ns);
+        T1H_num=_led_delay(T1H_ns);
+        T1L_num=_led_delay(T1L_ns);
+        
+        int i0 = T0H_num + T0L_num;
+        int i1 = T1H_num + T1L_num;
+        if( i0 == 0 || i1 == 0) continue;
+        
+        int e = (i0 + i1) >> 4;
+        if( e <= 0 ) e = 1;
+        if( abs(i0 - i1) > e ) continue;
+        if( abs((100 * T0H_num / i0) - (100 * (T0H_ns - T_Delay) / (T0H_ns + T0L_ns - 2 * T_Delay))) > 12 ) continue;
+        if( abs((100 * T1H_num / i1) - (100 * (T1H_ns - T_Delay) / (T1H_ns + T1L_ns - 2 * T_Delay))) > 12 ) continue;
+        if( abs((100 * T0L_num / i0) - (100 * (T0L_ns - T_Delay) / (T0H_ns + T0L_ns - 2 * T_Delay))) > 12 ) continue;
+        if( abs((100 * T1L_num / i1) - (100 * (T1L_ns - T_Delay) / (T1H_ns + T1L_ns - 2 * T_Delay))) > 12 ) continue;
+        i=1; // Done while loop
+    }
     led_off();
-    delay(100);
+    led_off();
+    Serial.printf("WS2812 T0H=%d, T0L=%d, T1H=%d, T1L=%d\n",T0H_num,T0L_num,T1H_num,T1L_num);
 }
 
 void led_setup(){
