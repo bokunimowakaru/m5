@@ -1,10 +1,19 @@
 /*******************************************************************************
-Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計
-照度センサ から取得した照度値を送信するIoTセンサです。
+Example 5: ESP32 (IoTセンサ) Wi-Fi 温湿度計 SENSIRION製 SHT30/SHT31/SHT35 版
+デジタルI2Cインタフェース搭載センサから取得した温湿度を送信するIoTセンサです。
 
-使用機材(例)：ATOM + ATOM-HAT(ATOM-MATEに付属) + HAT-DLIGHT
+使用機材(例)：ATOM + ATOM-HAT(ATOM-MATEに付属) + ENV II/III HAT
 
-                                          Copyright (c) 2021-2022 Wataru KUNINO
+    ESP32 のI2Cポート:
+        SHT30/SHT31/SHT35 SDAポート G19
+        SHT30/SHT31/SHT35 SCLポート G22    設定方法＝shtSetup(SDA,SCL)
+
+注意: ENV HATのバージョンによって搭載されているセンサが異なります。
+      このプログラムは SHT30 用です。ENV HAT には対応していません。
+
+ENV HAT     DHT12 + BMP280 + BMM150
+ENV II HAT  SHT30 + BMP280 + BMM150
+ENV III HAT SHT30 + QMP6988
 *******************************************************************************
 【参考文献】
 Arduino IDE 開発環境イントール方法：
@@ -14,9 +23,12 @@ ATOM Lite Arduino Library API 情報(本サンプルでは使用しない)：
 https://docs.m5stack.com/en/api/atom/system
 
 【引用コード】
-https://github.com/bokunimowakaru/esp/tree/master/2_example/example06_lum
-https://github.com/bokunimowakaru/esp/tree/master/2_example/example38_lum
-https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex03_lum
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example09_hum_sht31
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example41_hum_sht31
+https://github.com/bokunimowakaru/m5s/tree/master/example04d_temp_hum_sht
+https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex05_hum
+
+                                          Copyright (c) 2016-2022 Wataru KUNINO
 *******************************************************************************/
 
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
@@ -25,11 +37,11 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex03_lum
 #include "esp_sleep.h"                          // ESP32用Deep Sleep ライブラリ
 
 #define PIN_LED_RGB 27                          // G27 に RGB LED
-#define SSID "1234ABCD"                         // 無線LANアクセスポイントSSID
+#define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
 #define PASS "password"                         // パスワード
 #define PORT 1024                               // 送信のポート番号
 #define SLEEP_P 30*1000000ul                    // スリープ時間 30秒(uint32_t)
-#define DEVICE "illum_5,"                       // デバイス名(5字+"_"+番号+",")
+#define DEVICE "humid_5,"                       // デバイス名(5字+"_"+番号+",")
 
 /******************************************************************************
  Ambient 設定
@@ -51,8 +63,9 @@ IPAddress IP_BROAD;                             // ブロードキャストIPア
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     led_setup(PIN_LED_RGB);                     // RGB LEDの初期設定(ポート設定)
+    shtSetup(19,22);                            // 湿度センサの初期化
     Serial.begin(115200);                       // 動作確認のためのシリアル出力
-    Serial.println("M5 LUM");                   // 「M5 LUM」をシリアル出力
+    Serial.println("M5 HUM");                   // 「M5 HUM」をシリアル出力
 
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
@@ -65,13 +78,16 @@ void setup(){                                   // 起動時に一度だけ実�
     IP_BROAD = WiFi.localIP();                  // IPアドレスを取得
     IP_BROAD[3] = 255;                          // ブロードキャストアドレスに
     Serial.println(IP_BROAD);                   // ブロードキャストアドレス表示
-    bh1750Setup(19,22);
 }
 
 void loop(){                                    // 繰り返し実行する関数
-    float lux = getLux();                       // 照度(lux)を取得
+    float temp = getTemp();                     // 温度を取得して変数tempに代入
+    float hum =getHum();                        // 湿度を取得して変数humに代入
+    if(temp < -100. || hum < 0.) sleep();       // 取得失敗時に末尾のsleepを実行
 
-    String S = String(DEVICE) + String(lux,0);  // 送信データSにデバイス名を代入
+    String S = String(DEVICE);                  // 送信データSにデバイス名を代入
+    S += String(temp,1) + ", ";                 // 変数tempの値を追記
+    S += String(hum,1);                         // 変数humの値を追記
     Serial.println(S);                          // 送信データSをシリアル出力表示
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
     udp.beginPacket(IP_BROAD, PORT);            // UDP送信先を設定
@@ -80,7 +96,8 @@ void loop(){                                    // 繰り返し実行する関�
     if(strcmp(Amb_Id,"00000") == 0) sleep();    // Ambient未設定時にsleepを実行
 
     S = "{\"writeKey\":\""+String(Amb_Key);     // (項目)writeKey,(値)ライトキー
-    S += "\",\"d1\":\"" + String(lux) + "\"}";  // (項目)d1,(値)照度
+    S += "\",\"d1\":\"" + String(temp,2);       // (項目)d1,(値)温度
+    S += "\",\"d2\":\"" + String(hum,2) + "\"}"; // (項目名)d2,(値)湿度
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
     String url = "http://ambidata.io/api/v2/channels/"+String(Amb_Id)+"/data";
@@ -95,7 +112,7 @@ void loop(){                                    // 繰り返し実行する関�
 void sleep(){                                   // スリープ実行用の関数
     delay(200);                                 // 送信待ち時間
     WiFi.disconnect();                          // Wi-Fiの切断
-    led_off();                                  // (RGB LED)LEDの消灯
+    led_off();                                  // RGB LEDの消灯
     Serial.println("Sleep...");                 // 「Sleep」をシリアル出力表示
     esp_deep_sleep(SLEEP_P);                    // Deep Sleepモードへ移行
 }
