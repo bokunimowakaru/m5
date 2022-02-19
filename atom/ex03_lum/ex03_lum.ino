@@ -1,8 +1,8 @@
 /*******************************************************************************
-Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計
-照度センサ から取得した照度値を送信するIoTセンサです。
+Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for ATOM / ATOM Lite
+・照度センサ から取得した照度値を送信するIoTセンサです。
 
-使用機材(例)：ATOM + ATOM-HAT(ATOM-MATEに付属) + HAT-DLIGHT
+    使用機材(例)：ATOM/ATOM Lite + ATOM-HAT(ATOM-MATEに付属) + HAT-DLIGHT
 
                                           Copyright (c) 2021-2022 Wataru KUNINO
 *******************************************************************************
@@ -47,7 +47,13 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex03_lum
 #define Amb_Id  "00000"                         // AmbientのチャネルID
 #define Amb_Key "0000000000000000"              // Ambientのライトキー
 
-IPAddress IP_BROAD;                             // ブロードキャストIPアドレス
+/******************************************************************************
+ UDP 宛先 IP アドレス設定
+ ******************************************************************************
+ カンマ区切りでUPD宛先IPアドレスを設定してください。
+ 末尾を255にすると接続ネットワーク(アクセスポイント)にブロードキャスト
+ *****************************************************************************/
+IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     led_setup(PIN_LED_RGB);                     // RGB LEDの初期設定(ポート設定)
@@ -62,9 +68,9 @@ void setup(){                                   // 起動時に一度だけ実�
         delay(50);                              // 待ち時間処理
     }
     led(0,20,0);                                // (RGB LED)LEDを緑色で点灯
-    IP_BROAD = WiFi.localIP();                  // IPアドレスを取得
-    IP_BROAD[3] = 255;                          // ブロードキャストアドレスに
-    Serial.println(IP_BROAD);                   // ブロードキャストアドレス表示
+    Serial.print(WiFi.localIP());               // 本機のアドレスをシリアル出力
+    Serial.print(" -> ");                       // 矢印をシリアル出力
+    Serial.println(UDPTO_IP);                   // UDPの宛先IPアドレスを出力
     bh1750Setup(19,22);
 }
 
@@ -74,7 +80,7 @@ void loop(){                                    // 繰り返し実行する関�
     String S = String(DEVICE) + String(lux,0);  // 送信データSにデバイス名を代入
     Serial.println(S);                          // 送信データSをシリアル出力表示
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
-    udp.beginPacket(IP_BROAD, PORT);            // UDP送信先を設定
+    udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
     udp.println(S);                             // 送信データSをUDP送信
     udp.endPacket();                            // UDP送信の終了(実際に送信する)
     if(strcmp(Amb_Id,"00000") == 0) sleep();    // Ambient未設定時にsleepを実行

@@ -1,8 +1,8 @@
 /*******************************************************************************
 Example 5: ESP32 (IoTセンサ) Wi-Fi 温湿度計 SENSIRION製 SHT30/SHT31/SHT35 版
-デジタルI2Cインタフェース搭載センサから取得した温湿度を送信するIoTセンサです。
+・デジタルI2Cインタフェース搭載センサから取得した温湿度を送信するIoTセンサです。
 
-使用機材(例)：ATOM + ATOM-HAT(ATOM-MATEに付属) + ENV II/III HAT
+    使用機材(例)：ATOM/ATOM Lite  + ATOM-HAT(ATOM-MATEに付属) + ENV II/III HAT
 
     ESP32 のI2Cポート:
         SHT30/SHT31/SHT35 SDAポート G19
@@ -59,7 +59,13 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex05_hum
 #define Amb_Id  "00000"                         // AmbientのチャネルID
 #define Amb_Key "0000000000000000"              // Ambientのライトキー
 
-IPAddress IP_BROAD;                             // ブロードキャストIPアドレス
+/******************************************************************************
+ UDP 宛先 IP アドレス設定
+ ******************************************************************************
+ カンマ区切りでUPD宛先IPアドレスを設定してください。
+ 末尾を255にすると接続ネットワーク(アクセスポイント)にブロードキャスト
+ *****************************************************************************/
+IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     led_setup(PIN_LED_RGB);                     // RGB LEDの初期設定(ポート設定)
@@ -70,14 +76,14 @@ void setup(){                                   // 起動時に一度だけ実�
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
     while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
-        led((millis()/50) % 10);                // (RGB LED)LEDの点滅
+        led((millis()/50) % 10);                // RGB LED の点滅
         if(millis() > 30000) sleep();           // 30秒超過でスリープ
         delay(50);                              // 待ち時間処理
     }
-    led(0,20,0);                                // (RGB LED)LEDを緑色で点灯
-    IP_BROAD = WiFi.localIP();                  // IPアドレスを取得
-    IP_BROAD[3] = 255;                          // ブロードキャストアドレスに
-    Serial.println(IP_BROAD);                   // ブロードキャストアドレス表示
+    led(0,20,0);                                // RGB LED を緑色で点灯
+    Serial.print(WiFi.localIP());               // 本機のアドレスをシリアル出力
+    Serial.print(" -> ");                       // 矢印をシリアル出力
+    Serial.println(UDPTO_IP);                   // UDPの宛先IPアドレスを出力
 }
 
 void loop(){                                    // 繰り返し実行する関数
@@ -90,7 +96,7 @@ void loop(){                                    // 繰り返し実行する関�
     S += String(hum,1);                         // 変数humの値を追記
     Serial.println(S);                          // 送信データSをシリアル出力表示
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
-    udp.beginPacket(IP_BROAD, PORT);            // UDP送信先を設定
+    udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
     udp.println(S);                             // 送信データSをUDP送信
     udp.endPacket();                            // UDP送信の終了(実際に送信する)
     if(strcmp(Amb_Id,"00000") == 0) sleep();    // Ambient未設定時にsleepを実行

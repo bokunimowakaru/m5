@@ -1,12 +1,12 @@
 /*******************************************************************************
-Example 2: ESP32 (IoTセンサ) Wi-Fi ボタン
-ボタンを押下するとUDPでLAN内に文字列"Ping"を送信します。
-LINE用のトークンを設定すれば、LINEアプリに「ボタンが押されました」を通知します。
-別の子機となる Wi-Fi コンシェルジェ証明担当（ワイヤレスLED子機）のIPアドレスを
-設定すれば、ボタンを押下したときにLEDをON、押し続けたときにOFFに制御します。
+Example 2: ESP32 (IoTセンサ) Wi-Fi ボタン for ATOM / ATOM Lite
+・ボタンを押下するとUDPでLAN内に文字列"Ping"を送信します。
+・LINE用トークンを設定すれば、LINEアプリに「ボタンが押されました」を通知。
+・別の子機となる Wi-Fi コンシェルジェ証明担当(ワイヤレスLED子機)のIPアドレスを
+　設定すれば、ボタンを押下したときに子機のLEDをON、押し続けたときにOFFに制御。
 
                                           Copyright (c) 2021-2022 Wataru KUNINO
-*******************************************************************************
+********************************************************************************
 【参考文献】
 Arduino IDE 開発環境イントール方法：
 https://docs.m5stack.com/en/quick_start/atom/arduino
@@ -55,7 +55,14 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex02_sw
 #define PASS "password"                         // パスワード
 #define PORT 1024                               // 送信のポート番号
 
-IPAddress IP_BROAD;                             // ブロードキャストIPアドレス
+/******************************************************************************
+ UDP 宛先 IP アドレス設定
+ ******************************************************************************
+ カンマ区切りでUPD宛先IPアドレスを設定してください。
+ 末尾を255にすると接続ネットワーク(アクセスポイント)にブロードキャスト
+ *****************************************************************************/
+IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
+
 int wake = (int)esp_sleep_get_wakeup_cause();   // 起動理由を変数wakeに保存
 int clickType = 1;                              // 操作:1=Norm,2=Double,3=Long
 String btn_S[3]={"シングル","ダブル","ロング"}; // ボタン名
@@ -97,14 +104,14 @@ void setup(){                                   // 起動時に一度だけ実�
         delay(50);                              // 待ち時間処理
     }
     led(0,20,0);                                // LEDを緑色で点灯
-    IP_BROAD = WiFi.localIP();                  // IPアドレスを取得
-    IP_BROAD[3] = 255;                          // ブロードキャストアドレスに
-    Serial.println(IP_BROAD);                   // ブロードキャストアドレス表示
+    Serial.print(WiFi.localIP());               // 本機のアドレスをシリアル出力
+    Serial.print(" -> ");                       // 矢印をシリアル出力
+    Serial.println(UDPTO_IP);                   // UDPの宛先IPアドレスを出力
 }
 
 void loop(){                                    // 繰り返し実行する関数
     WiFiUDP udp;                                // UDP通信用のインスタンス定義
-    udp.beginPacket(IP_BROAD, PORT);            // UDP送信先を設定
+    udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
     udp.println("Ping");                        // メッセージ"Ping"を送信
     udp.endPacket();                            // UDP送信の終了(実際に送信)
     delay(200);                                 // 送信待ち時間
