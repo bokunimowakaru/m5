@@ -1,139 +1,55 @@
-/***********************************************************************
-LED制御ドライバ RGB LED WS2812
-解説＝ https://bokunimo.net/blog/esp/1522/
-                                        Copyright (c) 2021 Wataru KUNINO
-***********************************************************************/
-#define T0H_ns 320                              // b0信号Hレベル時間(ns)
-#define T0L_ns 1200 -320                        // b0信号Lレベル時間(ns)
-#define T1H_ns 640                              // b1信号Hレベル時間(ns)
-#define T1L_ns 1200 -640                        // b1信号Lレベル時間(ns)
+/******************************************************************************
+Example 0: Hello, world! for ATOM / ATOM Lite
+・起動時にLEDを点滅、モールス信号でタイトルを表示します。
+・本体のボタンを押すと、メッセージをモールス出力します。
 
-int _PIN_LED = 8;
-int T_Delay,T0H_num,T0L_num,T1H_num,T1L_num;    // 待ち時間カウンタ値
+                                          Copyright (c) 2019-2022 Wataru KUNINO
+*******************************************************************************
+【参考文献】
+Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/atom/arduino
 
-/* 引数nsに代入された待ち時間(ns)に対応する待ち時間処理回数を求める */
-int _led_delay(int ns){                         // カウンタ設定処理部
-    volatile uint32_t i;                        // 繰り返し処理用変数i
-    uint32_t target, counts=0;                  // 目標時刻,試行繰返し数
-    ns -= T_Delay;                              // 処理遅延分を減算
-    // portMUX_TYPE mutex = portMUX_INITIALIZER_UNLOCKED;  // 排他制御用
-    // portENTER_CRITICAL_ISR(&mutex);             // 割り込みの禁止
-    do{                                         // 繰り返し処理の開始
-        i = ++counts;                           // 試行回数を増やしてiに
-        target = micros() + ns / 10;            // 目標時刻を設定
-        while(i>0) i--;                         // 待ち時間処理の実行
-    }while(micros() < target);                  // 目標未達成時に繰返し
-    // portEXIT_CRITICAL_ISR(&mutex);              // 割り込み許可
-    return (counts + 50)/100;                   // 繰り返し回数を応答
+ATOM Lite Arduino Library API 情報：
+https://docs.m5stack.com/en/api/atom/system
+
+【引用コード】
+https://github.com/bokunimowakaru/m5s/tree/master/example01_hello
+*******************************************************************************/
+
+// #include <M5Atom.h>                          // M5 ATOM Lite用ライブラリ
+#define PIN_LED_RGB 27                          // G27 に RGB LED
+#define PIN_BTN_A 39                            // G39 に 操作ボタン
+
+void setup(){                                   // 起動時に一度だけ実行する関数
+    pinMode(PIN_BTN_A, INPUT_PULLUP);           // ボタン入力ポート
+    led_setup(PIN_LED_RGB);                     // LEDの初期設定(ポートを設定)
+    Serial.begin(115200);                       // 動作確認のためのシリアル出力
+    led(20);                                    // LED ON (輝度20)
+    delay(500);                                 // 100msの待ち時間処理
+    led(0);                                     // LED OFF
+    delay(500);                                 // 100msの待ち時間処理
+
+//  M5.begin();                                 // M5Stack用ライブラリの起動
+    Serial.println("Example 0 ATOM");           // LCDにタイトルを表示
+    morse(-1,50,"EXAMPLE 0");                   // モールス符号(-1,速度50,文字)
 }
 
-/* 信号操作に必要な処理時間を算出する。戻り値は必要時間(ns) */
-int _initial_delay(){                           // 初期ディレイ測定部
-    volatile uint32_t i=0;                      // 繰り返し処理用変数i
-    uint32_t start, t, counts;                  // 開始時刻,試行繰返し数
-    // portMUX_TYPE mutex = portMUX_INITIALIZER_UNLOCKED;  // 排他制御用
-    // portENTER_CRITICAL_ISR(&mutex);             // 割り込みの禁止
-    start = micros();                           // 開始時刻の保持
-    counts = 0;                                 // カウンタのリセット
-    do{                                         // 繰り返し処理の開始
-        counts++;                               // カウント
-    }while(counts < 1000);                      // 目標未達成時に繰返し
-    t = micros() - start;                       // 経過時間をtに代入
-    start = micros();                           // 開始時刻の保持
-    counts = 0;                                 // カウンタのリセット
-    do{                                         // 繰り返し処理の開始
-        counts++;                               // カウント
-        digitalWrite(_PIN_LED,LOW);             // (被測定対象)GPIO制御
-        while(i>0);                             // (被測定対象)while
-    }while(counts < 1000);                      // 目標未達成時に繰返し
-    t = micros() - start - t;                   // 対象処理に要した時間
-    // portEXIT_CRITICAL_ISR(&mutex);              // 割り込み許可
-    return t;                                   // 繰り返し回数を応答
-}
+void loop(){                                    // 繰り返し実行する関数
+//  M5.BtnA.read();                             // ボタンAの状態を確認
+//  M5.BtnB.read();                             // ボタンBの状態を確認
+//  int btnA = M5.BtnA.wasPressed();            // ボタンAの状態をbtnAへ代入
+//  int btnB = M5.BtnB.wasPressed();            // ボタンBの状態をbtnBへ代入
 
-/* 引数r,g,bに代入された色をLEDに送信する。値は0～255の範囲で設定 */
-void led(int r,int g,int b){                    // LEDにカラーを設定
-    digitalWrite(_PIN_LED,LOW);                 // Lレベル
-    delayMicroseconds(300);                     // 280us以上を維持
-    volatile int TH, TL;                        // H/Lレベル時間保持用
-    uint32_t rgb = (g & 0xff) << 16 | (r & 0xff) << 8 | (b & 0xff);
+    int btnA = !digitalRead(PIN_BTN_A);
 
-    // vTaskSuspendAll();                          // OSによるSwapOutの防止
-    //  https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3
-    //                     /api-reference/system/freertos.html#task-api
-    yield();                                    // 割り込み動作
-    // portMUX_TYPE mutex = portMUX_INITIALIZER_UNLOCKED;  // 排他制御用
-    // portENTER_CRITICAL_ISR(&mutex);             // 割り込みの禁止
-    for(int b=23;b >= 0; b--){                  // 全24ビット分の処理
-        if(rgb & (1<<b)){                       // 対象ビットが1のとき
-            TH = T1H_num;                       // Hレベルの待ち時間設定
-            TL = T1L_num;                       // Hレベルの待ち時間設定
-        }else{                                  // 対象ビットが0のとき
-            TH = T0H_num;                       // Lレベルの待ち時間設定
-            TL = T0L_num;                       // Lレベルの待ち時間設定
-        }
-        if(TH){                                 // THが0以外の時
-            digitalWrite(_PIN_LED,HIGH);        // Hレベルを出力
-            while(TH>0) TH--;                   // 待ち時間処理
-            digitalWrite(_PIN_LED,LOW);         // Lレベルを出力
-            while(TL>0) TL--;                   // 待ち時間処理
-        }else{                                  // THが0の時
-            digitalWrite(_PIN_LED,HIGH);        // Hレベルを出力
-            digitalWrite(_PIN_LED,LOW);         // Lレベルを出力
-            while(TL>0) TL--;                   // 待ち時間処理
+    if( btnA == 1 ){                            // ボタンAが押されていた時
+        delay(300);                             // 300msの待機時間
+        if(digitalRead(PIN_BTN_A)){             // 通常の操作
+            Serial.println("Hello, world!");    // メッセージをシリアル出力
+            morse(-1,50,"HELLO WORLD");         // メッセージをモールス出力
+        }else{                                  // 長押し
+            Serial.println("IoT Device M5");    // メッセージをシリアル出力
+            morse(-1,50,"IOT DEVICE M5");       // メッセージをモールス出力
         }
     }
-    // portEXIT_CRITICAL_ISR(&mutex);              // 割り込み許可
-    // if(!xTaskResumeAll()) taskYIELD();       // OSの再開
-}
-
-void led(int brightness){                       // グレースケール制御
-    if(brightness > 0xff) brightness = 0xff;    // 256以上時に255に設定
-    led(brightness,brightness,brightness);      // RGB全て同値でLED制御
-}
-
-void led_off(){                                 // LED制御の停止
-    led(0);                                     // LEDの消灯
-    digitalWrite(_PIN_LED,LOW);                 // リセット(Lレベル)
-    delayMicroseconds(300);                     // 280us以上を維持
-}
-
-void led_setup(int pin){
-    _PIN_LED = pin;
-    pinMode(_PIN_LED,OUTPUT);                   // ポートを出力に設定
-    digitalWrite(_PIN_LED,LOW);
-    T0H_num=1;
-    T0L_num=9;
-    T1H_num=6;
-    T1L_num=5;
-    /*
-    int i = 0;
-    while(!i){
-        T_Delay = _initial_delay();                 // 信号処理遅延を算出
-        T0H_num=_led_delay(T0H_ns);                 // 待ち時間処理回数変換
-        T0L_num=_led_delay(T0L_ns);
-        T1H_num=_led_delay(T1H_ns);
-        T1L_num=_led_delay(T1L_ns);
-        
-        int i0 = T0H_num + T0L_num;
-        int i1 = T1H_num + T1L_num;
-        if( i0 == 0 || i1 == 0) continue;
-        
-        int e = (i0 + i1) >> 4;
-        if( e <= 0 ) e = 1;
-        if( abs(i0 - i1) > e ) continue;
-        if( abs((100 * T0H_num / i0) - (100 * (T0H_ns - T_Delay) / (T0H_ns + T0L_ns - 2 * T_Delay))) > 12 ) continue;
-        if( abs((100 * T1H_num / i1) - (100 * (T1H_ns - T_Delay) / (T1H_ns + T1L_ns - 2 * T_Delay))) > 12 ) continue;
-        if( abs((100 * T0L_num / i0) - (100 * (T0L_ns - T_Delay) / (T0H_ns + T0L_ns - 2 * T_Delay))) > 12 ) continue;
-        if( abs((100 * T1L_num / i1) - (100 * (T1L_ns - T_Delay) / (T1H_ns + T1L_ns - 2 * T_Delay))) > 12 ) continue;
-        i=1; // Done while loop
-    }
-    */
-    led_off();
-    led_off();
-    Serial.printf("WS2812 T0H=%d, T0L=%d, T1H=%d, T1L=%d\n",T0H_num,T0L_num,T1H_num,T1L_num);
-}
-
-void led_setup(){
-    led_setup(_PIN_LED);
 }
