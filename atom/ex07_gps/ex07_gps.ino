@@ -3,8 +3,23 @@ Example 7: 現在のGPS(GNSS)の位置情報を送信する
 ・GPSモジュール：u-blox NEO-6M NEO-6M-0-001
                                                Copyright (c) 2018 Wataru KUNINO
 ********************************************************************************
+Arduino IDE 用の ESP32 開発環境のセットアップ
+
+ 1. Arduino IDE (https://www.arduino.cc/en/software/) をインストールする。
+ 2. Arduino IDE を起動し、[ファイル]メニュー内の[環境設定]を開き、「追加のボード
+    マネージャのURL」の欄に下記のURLを追加する。
+    https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+ 3. [ツール]メニュー内の[ボード]からボードマネージャを開き、検索窓に「esp32」を
+    入力後、esp32 by Espressif Systems をインストールする。
+ 4. [ツール]メニュー内の[ボード]で ESP32C3 DEev Module を選択する。
+ 5. ATOM(Lite)の場合は、[ツール]メニュー内の[Upload Speed]で115200を選択する。
+********************************************************************************
 【参考文献】
-Arduino IDE 開発環境イントール方法：
+ESP32 開発環境イントール方法：
+https://github.com/espressif/arduino-esp32
+https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html
+
+M5Stack ATOM用 Arduino IDE 開発環境イントール方法(本サンプルでは使用しない)：
 https://docs.m5stack.com/en/quick_start/atom/arduino
 
 ATOM Lite Arduino Library API 情報(本サンプルでは使用しない)：
@@ -76,9 +91,10 @@ void setup(){                                   // 起動時に一度だけ実�
     Serial.printf(" Type = %d ", clickType);    // 操作内容をシリアル出力表示
     Serial.println(btn_S[clickType-1]);         // ボタン名をシリアル出力表示
     setupGps();                                 // GPS初期化
+    int i=0;
     while(!getGpsPos(gps,&lat,&lon,&alt)){      // GPSデータの初期値入力待ち
-        led(0,0,(millis()/50) % 10);
-    }                                       // LoRaWANのフラッシュメモリの初期化
+        led(0,((++i)%6) + 1,(i%6) +1);
+    }
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
     while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
