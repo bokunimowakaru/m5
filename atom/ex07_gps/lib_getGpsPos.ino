@@ -20,17 +20,54 @@ http://sundial.com
 #include <Arduino.h>
 #include "lib_SoftwareSerial.h"
 #include "lib_TinyGPS.h"
-#define PIN_GPS_RX 32           // GPS モジュール NEO-6M 【TXピン】
+//#define PIN_GPS_RX 32           // GPS モジュール NEO-6M 【TXピン】
+#define PIN_GPS_RX 33           // GPS モジュール NEO-6M 【TXピン】
 SoftwareSerial ss(PIN_GPS_RX,2);
 
 void setupGps(){
     ss.begin(9600);
 }
 
+bool getGpsRawData(char *s, int len){
+    int i=0;
+    ss.listen();
+    s[0] = '\0';
+    boolean en = 0;
+    for (unsigned long start = millis(); millis() - start < 1000;){
+        if(ss.available()){
+            char c = ss.read();
+            if(c =='$') en = 1; // 開始
+            if(c =='*') en = 0; // 終了
+            if(c =='\r' || c =='\n') return 1;
+            if(en){
+                s[i] = c;
+                i++;
+                s[i] = '\0';
+                if(i >= len - 1){
+                    return 0;   // オーバフロー
+                }
+            }
+        }
+    }
+    return 0;   // タイムアウト
+}
+
 bool getGpsPos(TinyGPS &gps, float *flat, float *flon, float *falt){
-    bool newData = false;
     unsigned long chars;
     unsigned short sentences, failed;
+    return getGpsPos(gps,flat,flon,falt,&chars,&sentences,&failed);
+}
+
+bool getGpsPos(
+    TinyGPS &gps,
+    float *flat,
+    float *flon,
+    float *falt,
+    unsigned long *chars,
+    unsigned short *sentences,
+    unsigned short *failed
+){
+    bool newData = false;
     ss.listen();
     for (unsigned long start = millis(); millis() - start < 1000;){
         while(ss.available()){
@@ -57,14 +94,16 @@ bool getGpsPos(TinyGPS &gps, float *flat, float *flon, float *falt){
         Serial.print(gps.hdop() == TinyGPS::GPS_INVALID_HDOP ? 0 : gps.hdop());
         Serial.print(" AGE=");
         Serial.print(age);
+    }else{
+        *flat = 0.0; *flon = 0.0; *falt = 0.0;
     }
-    gps.stats(&chars, &sentences, &failed);
+    gps.stats(chars, sentences, failed);
     Serial.print(" CHARS=");
-    Serial.print(chars);
+    Serial.print(*chars);
     Serial.print(" SENTENCES=");
-    Serial.print(sentences);
+    Serial.print(*sentences);
     Serial.print(" CSUM ERR=");
-    Serial.println(failed);
-    if (chars == 0) Serial.println("** No characters received from GPS: check wiring **");
+    Serial.println(*failed);
+    if (*chars == 0) Serial.println("** No characters received from GPS: check wiring **");
     return newData;
 }

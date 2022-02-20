@@ -65,7 +65,7 @@ IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 int wake = (int)esp_sleep_get_wakeup_cause();   // 起動理由を変数wakeに保存
 int clickType = 1;                              // 操作:1=Norm,2=Double,3=Long
-String btn_S[3]={"シングル","ダブル","ロング"}; // ボタン名
+String btn_S[]={"No","Single","Double","Long"}; // ボタン名
 
 int get_clickType(){                            // ボタン操作内容を取得する
     int btn_pre = (int)!digitalRead(PIN_BTN);   // ボタンの初期状態を取得
@@ -90,7 +90,7 @@ void setup(){                                   // 起動時に一度だけ実�
     led(0,15,15);                               // LEDを水色で点灯
     clickType = get_clickType();                // ボタン操作内容を取得
     Serial.printf(" Type = %d ", clickType);    // 操作内容をシリアル出力表示
-    Serial.println(btn_S[clickType-1]);         // ボタン名をシリアル出力表示
+    Serial.println(btn_S[clickType]);           // ボタン名をシリアル出力表示
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
     while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
@@ -126,7 +126,7 @@ void loop(){                                    // 繰り返し実行する関�
         http.begin(url);                        // HTTPリクエスト先を設定する
         http.addHeader("Content-Type","application/x-www-form-urlencoded");
         http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
-        http.POST("message=ボタン(" + btn_S[clickType-1]  + ")が押されました");
+        http.POST("message=ボタン(" + btn_S[clickType]  + ")が押されました");
         http.end();                             // HTTP通信を終了する
     }
     if(strcmp(LED_IP,"192.168.1.0")){           // 子機IPアドレス設定時

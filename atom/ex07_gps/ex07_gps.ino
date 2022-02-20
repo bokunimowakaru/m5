@@ -1,7 +1,11 @@
 /*******************************************************************************
 Example 7: 現在のGPS(GNSS)の位置情報を送信する
 ・GPSモジュール：u-blox NEO-6M NEO-6M-0-001
+・ボタン長押し起動で連続動作します。
+
                                                Copyright (c) 2018 Wataru KUNINO
+********************************************************************************
+★ご注意★：屋外での視覚用にLEDの★輝度を高めに設定★してあります。
 ********************************************************************************
 Arduino IDE 用の ESP32 開発環境のセットアップ
 
@@ -43,6 +47,8 @@ https://github.com/bokunimowakaru/SORACOM-LoRaWAN/blob/master/examples/cqp_ex05_
 #define PORT 1024                               // 送信のポート番号
 #define SLEEP_P 10*60*1000000ul                 // スリープ時間 10分(uint32_t)
 #define DEVICE "gns_s_5,"                       // デバイス名(5字+"_"+番号+",")
+#define GPS_TIMEOUT_MS 30*1000                  // GPS測定の時間制限
+#define WIFI_TIMEOUT_MS GPS_TIMEOUT_MS+10*1000  // Wi-Fi接続の時間制限
 
 /******************************************************************************
  UDP 宛先 IP アドレス設定
@@ -53,8 +59,8 @@ https://github.com/bokunimowakaru/SORACOM-LoRaWAN/blob/master/examples/cqp_ex05_
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 int wake = (int)esp_sleep_get_wakeup_cause();   // 起動理由を変数wakeに保存
-int clickType = 1;                              // 操作:1=Norm,2=Double,3=Long
-String btn_S[3]={"シングル","ダブル","ロング"}; // ボタン名
+int clickType = 0;                              // 操作:1=Norm,2=Double,3=Long
+String btn_S[]={"No","Single","Double","Long"}; // ボタン名
 
 TinyGPS gps;                                // GPSライブラリのインスタンスを定義
 float lat, lon, alt;                        // 緯度・経度・標高
@@ -85,37 +91,51 @@ void setup(){                                   // 起動時に一度だけ実�
     Serial.begin(115200);                       // 動作確認のためのシリアル出力
     Serial.println("M5 GNSS/GPS");              // 「GNSS」をシリアル出力表示
     Serial.printf(" Wake = %d\n", wake);        // 起動理由noをシリアル出力表示
-    if(wake != ESP_SLEEP_WAKEUP_EXT0) sleep();  // ボタン以外で起動時にスリープ
-    led(0,15,15);                               // LEDを水色で点灯
+    if(wake == ESP_SLEEP_WAKEUP_EXT0) clickType=1;  // ボタンで起動
+    else if(wake != ESP_SLEEP_WAKEUP_TIMER) sleep();
+    led(0,60,60);                               // LEDを水色で点灯
     clickType = get_clickType();                // ボタン操作内容を取得
     Serial.printf(" Type = %d ", clickType);    // 操作内容をシリアル出力表示
-    Serial.println(btn_S[clickType-1]);         // ボタン名をシリアル出力表示
+    Serial.println(btn_S[clickType]);           // ボタン名をシリアル出力表示
     setupGps();                                 // GPS初期化
-    int i=0;
-    while(!getGpsPos(gps,&lat,&lon,&alt)){      // GPSデータの初期値入力待ち
-        led(0,((++i)%6) + 1,(i%6) +1);
+    if(clickType == 2){                         // ダブルクリック時
+        while(!digitalRead(PIN_BTN));           // 操作完了待ち
+        delay(100);                             // チャタリング防止用
+        while(digitalRead(PIN_BTN)){            // ボタン未押下状態でモニタ
+            char s[128];                        // 最大文字長127文字
+            boolean i = getGpsRawData(s,128);   // GPS生データを取り込む
+            if(i) led(0,0,40); else led(0,0,0); // LEDの青色で状態を表示
+            if(s[0] != 0) Serial.println(s);    // データがあるときは表示
+        }
+    }
+    boolean i=1,res=0;
+    while(clickType <= 1 && !res){              // 通常起動かつGPSデータ未取得時
+        res = getGpsPos(gps,&lat,&lon,&alt);    // GPSデータ取得
+        if(millis() > GPS_TIMEOUT_MS) sleep();  // 時間超過でスリープ
+        led(0, 40 * (i^=1), 40 * i);            // LEDの水色点滅で動作表示
     }
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
     while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
-        int i = (millis()/50) % 10;             // LEDの輝度点滅用の値
-        switch(clickType){
-            case 1: led(i,2*(i>0),i>0);break;       // LEDを茶色で点滅
-            case 2: led(i*4,0,0);  break;       // LEDを赤色で点滅
-            default:led(i*4,i*2,0);break;       // LEDを橙色で点滅
-        }
-        if(millis() > 30000) sleep();           // 30秒超過でスリープ
+        led(6*((millis()/50)%10),0,0);          // LEDを赤色で点滅
+        if(millis() > WIFI_TIMEOUT_MS) sleep(); // 時間超過でスリープ
         delay(50);                              // 待ち時間処理
     }
-    led(0,20,0);                                // LEDを緑色で点灯
+    led(0,60,0);                                // LEDを緑色で点灯
     Serial.print(WiFi.localIP());               // 本機のアドレスをシリアル出力
     Serial.print(" -> ");                       // 矢印をシリアル出力
     Serial.println(UDPTO_IP);                   // UDPの宛先IPアドレスを出力
 }
 
 void loop(){                                    // 繰り返し実行する関数
-        LoRaPayload data;               // 送信用の構造体変数dataを定義
-    if(getGpsPos(gps,&lat,&lon,&alt)){      // GPSから位置情報を取得
+    LoRaPayload data;                           // 送信用の構造体変数dataを定義
+
+unsigned long chars;
+unsigned short sentences;
+unsigned short failed;
+
+//    if(getGpsPos(gps,&lat,&lon,&alt)){      // GPSから位置情報を取得
+    if(getGpsPos(gps,&lat,&lon,&alt,&chars,&sentences,&failed)){      // GPSから位置情報を取得
         data.lat=(int32_t)(lat*1.e6);   // 緯度を構造体変数dataへ保存
         data.lon=(int32_t)(lon*1.e6);   // 経度を構造体変数dataへ保存
         data.alt=(int16_t)(alt);        // 標高を構造体変数dataへ保存
@@ -126,12 +146,18 @@ void loop(){                                    // 繰り返し実行する関�
         Serial.print(", alt = ");       // 標高をシリアル出力表示
         Serial.println(data.alt);       // 単位＝ m メートル
         delay(100);                     // シリアル出力の完了待ち
+    }else{
+        data.lat=0; data.lon=0; data.alt=0;
     }
 
     String S = String(DEVICE);             // 送信データ保持用の文字列変数
     S += String(int(data.lat)) + ", ";     // 緯度値を送信データに追記
     S += String(int(data.lon)) + ", ";     // 経度値を送信データに追記
-    S += String(int(data.alt));            // 標高値を送信データに追記
+//  S += String(int(data.alt));            // 標高値を送信データに追記
+    S += String(int(data.alt)) + ", ";            // 標高値を送信データに追記
+    S += String(chars) + ", ";            // 標高値を送信データに追記
+    S += String(sentences) + ", ";            // 標高値を送信データに追記
+    S += String(failed);            // 標高値を送信データに追記
     Serial.println(S);                          // シリアル出力表示
 
     WiFiUDP udp;                                // UDP通信用のインスタンス定義
@@ -139,16 +165,18 @@ void loop(){                                    // 繰り返し実行する関�
     udp.println(S);                             // センサ値を送信
     udp.endPacket();                            // UDP送信の終了(実際に送信)
     delay(10);                                  // 送信待ち時間
-
+/*
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
     String url;                                 // URLを格納する変数を生成
-
-    sleep();                                    // 下記のsleep関数を実行
+*/
+    if(digitalRead(PIN_BTN)==0) clickType = 0;  // ボタン押下時にclickTypeを0に
+    if(clickType <= 1) sleep();                 // sleep関数を実行
 }
 
 void sleep(){                                   // スリープ実行用の関数
     WiFi.disconnect();                          // Wi-Fiの切断
+    led(60,0,0);                                // LEDを赤色で点灯
     Serial.print(" Btn  = ");                   // 「Btn = 」をシリアル出力表示
     Serial.println(digitalRead(PIN_BTN));       // ボタン状態をシリアル表示
     int i = 0;                                  // ループ用の数値変数i
