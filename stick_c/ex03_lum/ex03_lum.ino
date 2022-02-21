@@ -47,7 +47,7 @@ void setup(){                                   // 起動時に一度だけ実�
     pinMode(M5_LED,OUTPUT);                     // 内蔵LED用GPIOを出力に設定
     digitalWrite(M5_LED,LOW);                   // LED ON
     M5.begin();                                 // M5StickC用Lcdライブラリの起動
-    bh1750Setup(19,22);                         // 照度センサの初期化
+    bh1750Setup(0,26);                          // 照度センサの初期化
     M5.Axp.ScreenBreath(7+2);                   // LCDの輝度を2に設定
     M5.Lcd.setRotation(1);                      // LCDを横向き表示に設定
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定

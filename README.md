@@ -1,5 +1,5 @@
 # m5
-IoT Code Examples for ESP32, M5Stack, M5Stick C Plus, ATOM Lite
+IoT Code Examples for ESP32, M5Stack, M5Stick C, M5Stick C Plus, ATOM, ATOM  Lite
 
 ## サンプル集
 
