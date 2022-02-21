@@ -4,16 +4,6 @@ Example 0: Hello, world! for M5StickC PLUS
 ・本体のボタンを押すと、ボタンに応じてメッセージを表示します。
 
                                           Copyright (c) 2019-2022 Wataru KUNINO
-*******************************************************************************
-【参考文献】
-Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
-
-M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
-https://docs.m5stack.com/en/api/stickc/system_m5stickc
-
-【引用コード】
-https://github.com/bokunimowakaru/m5s/tree/master/m5StickC/example01_hello
 *******************************************************************************/
 
 #include <M5StickCPlus.h>                       // M5StickC Plus 用ライブラリ
@@ -50,3 +40,15 @@ void loop(){                                    // 繰り返し実行する関�
         M5.Lcd.println("Screen Cleared");       // LCDへメッセージを表示
     }
 }
+
+/*******************************************************************************
+【参考文献】
+Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
+
+M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
+https://docs.m5stack.com/en/api/stickc/system_m5stickc
+
+【引用コード】
+https://github.com/bokunimowakaru/m5s/tree/master/m5StickC/example01_hello
+*******************************************************************************/

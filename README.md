@@ -1,69 +1,68 @@
 # m5
-IoT Code Examples for ESP32, M5Stack, M5Stick C Plus, ATOM Lite  
+IoT Code Examples for ESP32, M5Stack, M5Stick C Plus, ATOM Lite
 
-## ƒTƒ“ƒvƒ‹W
+## ã‚µãƒ³ãƒ—ãƒ«é›†
 
-ESP32ŠJ”­ƒ{[ƒh ESP32-DevKitC, ƒ‚ƒWƒ…[ƒ‹ ESP32-WROOM-32, M5Stack, M5Stick C Plus, ATOM Lite ‚É‘Î‰ž‚µ‚½ƒTƒ“ƒvƒ‹EƒvƒƒOƒ‰ƒ€W‚Å‚·B
+ESP32é–‹ç™ºãƒœãƒ¼ãƒ‰ ESP32-DevKitC, ãƒ¢ã‚¸ãƒ¥ãƒ¼ãƒ« ESP32-WROOM-32, M5Stack, M5Stick C Plus, ATOM Lite ã«å¯¾å¿œã—ãŸã‚µãƒ³ãƒ—ãƒ«ãƒ»ãƒ—ãƒ­ã‚°ãƒ©ãƒ é›†ã§ã™ã€‚
 
-## –{ƒRƒ“ƒeƒ“ƒc‚ÌÅV”Å‚Æƒ_ƒEƒ“ƒ[ƒh•û–@  
+## æœ¬ã‚³ãƒ³ãƒ†ãƒ³ãƒ„ã®æœ€æ–°ç‰ˆã¨ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰æ–¹æ³•
 
-    ÅV”Å‚Ì•Û‘¶æ  
+    æœ€æ–°ç‰ˆã®ä¿å­˜å…ˆ
     - https://bokunimo.net/git/m5/
-    
-    ƒ_ƒEƒ“ƒ[ƒh•û–@(GitHub‚©‚ç)
+
+    ãƒ€ã‚¦ãƒ³ãƒ­ãƒ¼ãƒ‰æ–¹æ³•(GitHubã‹ã‚‰)
     - git clone https://bokunimo.net/git/m5/
 
-## Žå‚ÈƒtƒHƒ‹ƒ_–¼AƒvƒƒOƒ‰ƒ€–¼
+## ä¸»ãªãƒ•ã‚©ãƒ«ãƒ€åã€ãƒ—ãƒ­ã‚°ãƒ©ãƒ å
 
-–{ƒŒƒ|ƒWƒgƒŠ‚ÉŽû˜^‚µ‚½Žå‚ÈƒvƒƒOƒ‰ƒ€‚ÌƒtƒHƒ‹ƒ_–¼Aƒtƒ@ƒCƒ‹–¼‚Ìˆê——‚ðŽ¦‚µ‚Ü‚·B  
+æœ¬ãƒ¬ãƒã‚¸ãƒˆãƒªã«åŽéŒ²ã—ãŸä¸»ãªãƒ—ãƒ­ã‚°ãƒ©ãƒ ã®ãƒ•ã‚©ãƒ«ãƒ€åã€ãƒ•ã‚¡ã‚¤ãƒ«åã®ä¸€è¦§ã‚’ç¤ºã—ã¾ã™ã€‚
 
-|ƒtƒHƒ‹ƒ_–¼ |“à—e                                                  |
+|ãƒ•ã‚©ãƒ«ãƒ€å |å†…å®¹                                                  |
 |-----------|------------------------------------------------------|
-|atom       |M5Stack» ATOM / ATOM Lite / ’Êí‚Ì ESP32-WROOM-32 —p |
-|core       |M5Stack» Core —p                                     |
-|stick_cplus|M5Stack» M5Stick C Plus —p                           |
-|pictures   |ŠÖ˜A‰æ‘œƒtƒ@ƒCƒ‹                                      |
-|tools      |ŠÖ˜Aƒc[ƒ‹                                            |
-|LICENSE    |ƒ‰ƒCƒZƒ“ƒX“à—e(MITƒ‰ƒCƒZƒ“ƒX:—vŒ —˜•\Ž¦E–³•ÛØ)      |
+|atom       |M5Stackè£½ ATOM / ATOM Lite / é€šå¸¸ã® ESP32-WROOM-32 ç”¨ |
+|core       |M5Stackè£½ Core ç”¨                                     |
+|stick_cplus|M5Stackè£½ M5Stick C Plus ç”¨                           |
+|pictures   |é–¢é€£ç”»åƒãƒ•ã‚¡ã‚¤ãƒ«                                      |
+|tools      |é–¢é€£ãƒ„ãƒ¼ãƒ«                                            |
+|LICENSE    |ãƒ©ã‚¤ã‚»ãƒ³ã‚¹å†…å®¹(MITãƒ©ã‚¤ã‚»ãƒ³ã‚¹:è¦æ¨©åˆ©è¡¨ç¤ºãƒ»ç„¡ä¿è¨¼)      |
 
-|ƒtƒHƒ‹ƒ_–¼ |“à—e                                                                               |
+|ãƒ•ã‚©ãƒ«ãƒ€å |å†…å®¹                                                                               |
 |-----------|-----------------------------------------------------------------------------------|
-|ex00_hello |Arduino IDE ƒCƒ“ƒXƒg[ƒ‹Œã‚Ì“®ìŠm”F—pƒvƒƒOƒ‰ƒ€                                   |
-|ex01_led   |LED§Œä—pƒvƒƒOƒ‰ƒ€BHTTPƒT[ƒo‹@”\‚É‚æ‚èƒuƒ‰ƒEƒU‚©‚ç§Œä‰Â”\                      |
-|ex02_sw    |‰Ÿ‚µƒ{ƒ^ƒ“‚Ì‘—MƒvƒƒOƒ‰ƒ€Bex01_led‚ÌLED‚Ì§Œä‚âLINE‚Ö‚Ì‘—M‚ª‰Â”\                |
-|ex03_lum   |Æ“xƒZƒ“ƒT‚Ì‘—MƒvƒƒOƒ‰ƒ€BÆ“x’l‚ðƒNƒ‰ƒEƒh(Ambient)‚É‘—M‚µƒOƒ‰ƒt‰»‚ª‰Â”\        |
-|ex04_lcd   |¬Œ^‰t»‚Ö‚Ì•\Ž¦ƒvƒƒOƒ‰ƒ€Bex02A03A05‚Ì‘—Mƒf[ƒ^‚Ì•\Ž¦‚ª‰Â”\                   |
-|ex05_hum   |‰·“x{Ž¼“xƒZƒ“ƒT‚Ì‘—MƒvƒƒOƒ‰ƒ€B‰Æ‚¶‚ã‚¤‚Ì•”‰®‚ÉÝ’u‚·‚ê‚Î‹ZŠÂ‹«‚ÌŠÄŽ‹‚ª‰Â”\   |
-|ex06_pir   |lŠ´ƒZƒ“ƒTEƒ†ƒjƒbƒgiPIR Motion Sensorj‚ðŽg‚Á‚½Wi-FilŠ´ƒZƒ“ƒT—pƒvƒƒOƒ‰ƒ€       |
-|ex07_ir_in |ÔŠOüƒŠƒ‚ƒRƒ“Eƒ†ƒjƒbƒgiIR Unitj‚ÅƒŠƒ‚ƒRƒ“ƒR[ƒh‚ðŽæ“¾‚·‚éƒvƒƒOƒ‰ƒ€            |
-|ex08_ir_out|ÔŠOüƒŠƒ‚ƒRƒ“Eƒ†ƒjƒbƒgiIR Unitj‚ðŽg‚Á‚½Wi-FiÔŠOüEƒŠƒ‚ƒRƒ“—pƒvƒƒOƒ‰ƒ€       |
-|ex09_talk  |Wi-FiƒRƒ“ƒVƒFƒ‹ƒWƒFm‰¹ºƒAƒiƒEƒ“ƒX’S“–n‰¹º‡¬ AquesTalk Pico LSI ATP3012—p     |
-|ex10_cam   |Wi-FiƒRƒ“ƒVƒFƒ‹ƒWƒFmƒJƒƒ‰’S“–nGrove - Serial Camera Kit—p                       |
+|ex00_hello |Arduino IDE ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«å¾Œã®å‹•ä½œç¢ºèªç”¨ãƒ—ãƒ­ã‚°ãƒ©ãƒ                                    |
+|ex01_led   |LEDåˆ¶å¾¡ç”¨ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã€‚HTTPã‚µãƒ¼ãƒæ©Ÿèƒ½ã«ã‚ˆã‚Šãƒ–ãƒ©ã‚¦ã‚¶ã‹ã‚‰åˆ¶å¾¡å¯èƒ½                      |
+|ex02_sw    |æŠ¼ã—ãƒœã‚¿ãƒ³ã®é€ä¿¡ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã€‚ex01_ledã®LEDã®åˆ¶å¾¡ã‚„LINEã¸ã®é€ä¿¡ãŒå¯èƒ½                |
+|ex03_lum   |ç…§åº¦ã‚»ãƒ³ã‚µã®é€ä¿¡ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã€‚ç…§åº¦å€¤ã‚’ã‚¯ãƒ©ã‚¦ãƒ‰(Ambient)ã«é€ä¿¡ã—ã‚°ãƒ©ãƒ•åŒ–ãŒå¯èƒ½        |
+|ex04_lcd   |å°åž‹æ¶²æ™¶ã¸ã®è¡¨ç¤ºãƒ—ãƒ­ã‚°ãƒ©ãƒ ã€‚ex02ã€03ã€05ã®é€ä¿¡ãƒ‡ãƒ¼ã‚¿ã®è¡¨ç¤ºãŒå¯èƒ½                   |
+|ex05_hum   |æ¸©åº¦ï¼‹æ¹¿åº¦ã‚»ãƒ³ã‚µã®é€ä¿¡ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã€‚å®¶ã˜ã‚…ã†ã®éƒ¨å±‹ã«è¨­ç½®ã™ã‚Œã°å±…ä½ç’°å¢ƒã®ç›£è¦–ãŒå¯èƒ½   |
+|ex06_pir   |äººæ„Ÿã‚»ãƒ³ã‚µãƒ»ãƒ¦ãƒ‹ãƒƒãƒˆï¼ˆPIR Motion Sensorï¼‰ã‚’ä½¿ã£ãŸWi-Fiäººæ„Ÿã‚»ãƒ³ã‚µç”¨ãƒ—ãƒ­ã‚°ãƒ©ãƒ        |
+|ex07_gps   |GNSS/GPSä½ç½®æƒ…å ±ã‚’é€ä¿¡ã™ã‚‹ä½ç½®æƒ…å ±é€ä¿¡ãƒ—ãƒ­ã‚°ãƒ©ãƒ                                    |
+|ex08_ir_out|èµ¤å¤–ç·šãƒªãƒ¢ã‚³ãƒ³ãƒ»ãƒ¦ãƒ‹ãƒƒãƒˆï¼ˆIR Unitï¼‰ã‚’ä½¿ã£ãŸWi-Fièµ¤å¤–ç·šãƒ»ãƒªãƒ¢ã‚³ãƒ³ç”¨ãƒ—ãƒ­ã‚°ãƒ©ãƒ        |
+|ex09_talk  |Wi-Fiã‚³ãƒ³ã‚·ã‚§ãƒ«ã‚¸ã‚§ï¼»éŸ³å£°ã‚¢ãƒŠã‚¦ãƒ³ã‚¹æ‹…å½“ï¼½éŸ³å£°åˆæˆ AquesTalk Pico LSI ATP3012ç”¨     |
 
-## Arduino IDE —p‚Ì ESP32 ŠJ”­ŠÂ‹«‚ÌƒZƒbƒgƒAƒbƒv  
+## Arduino IDE ç”¨ã® ESP32 é–‹ç™ºç’°å¢ƒã®ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—
 
-ESP32ŠJ”­ƒ{[ƒhi ESP32-WROOM-32 “‹Új‚ÅŽg—p‚·‚éê‡A‰º‹L‚ÌŽè‡‚ÅŠJ”­ŠÂ‹«‚ðƒZƒbƒgƒAƒbƒv‚µA
-uatomvƒtƒHƒ‹ƒ_“à‚ÌƒTƒ“ƒvƒ‹‚ðŽg—p‚µ‚Ä‚­‚¾‚³‚¢B  
+ESP32é–‹ç™ºãƒœãƒ¼ãƒ‰ï¼ˆ ESP32-WROOM-32 æ­è¼‰ï¼‰ã§ä½¿ç”¨ã™ã‚‹å ´åˆã€ä¸‹è¨˜ã®æ‰‹é †ã§é–‹ç™ºç’°å¢ƒã‚’ã‚»ãƒƒãƒˆã‚¢ãƒƒãƒ—ã—ã€
+ã€Œatomã€ãƒ•ã‚©ãƒ«ãƒ€å†…ã®ã‚µãƒ³ãƒ—ãƒ«ã‚’ä½¿ç”¨ã—ã¦ãã ã•ã„ã€‚
 
-	atom ƒtƒHƒ‹ƒ_ : ESP32ŠJ”­ƒ{[ƒh ESP32-WROOM-32 ‘Î‰žƒTƒ“ƒvƒ‹  
+	atom ãƒ•ã‚©ãƒ«ãƒ€ : ESP32é–‹ç™ºãƒœãƒ¼ãƒ‰ ESP32-WROOM-32 å¯¾å¿œã‚µãƒ³ãƒ—ãƒ«
 
-1. Arduino IDE (https://www.arduino.cc/en/software/) ‚ðƒCƒ“ƒXƒg[ƒ‹‚·‚éB  
-2. Arduino IDE ‚ð‹N“®‚µA[ƒtƒ@ƒCƒ‹]ƒƒjƒ…[“à‚Ì[ŠÂ‹«Ý’è]‚ðŠJ‚«Au’Ç‰Á‚Ìƒ{[ƒhƒ}ƒl[ƒWƒƒ‚ÌURLv‚Ì—“‚É‰º‹L‚ÌuˆÀ’è”Âv‚ð’Ç‰Á‚·‚éB  
+1. Arduino IDE (https://www.arduino.cc/en/software/) ã‚’ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã™ã‚‹ã€‚
+2. Arduino IDE ã‚’èµ·å‹•ã—ã€[ãƒ•ã‚¡ã‚¤ãƒ«]ãƒ¡ãƒ‹ãƒ¥ãƒ¼å†…ã®[ç’°å¢ƒè¨­å®š]ã‚’é–‹ãã€ã€Œè¿½åŠ ã®ãƒœãƒ¼ãƒ‰ãƒžãƒãƒ¼ã‚¸ãƒ£ã®URLã€ã®æ¬„ã«ä¸‹è¨˜ã®ã€Œå®‰å®šæ¿ã€ã‚’è¿½åŠ ã™ã‚‹ã€‚
 
-    ˆÀ’è”Â  
-    - https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json  
+    å®‰å®šæ¿
+    - https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
 
-    ŠJ”­“rã”Å  
-    - https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json  
+    é–‹ç™ºé€”ä¸Šç‰ˆ
+    - https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json
 
-    ŽQl•¶Œ£  
-    - https://github.com/espressif/arduino-esp32 (ÅVî•ñ)  
-    - https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html (î•ñ‚ªŒÃ‚¢ê‡‚ª‚ ‚é‚Ì‚Å’ˆÓ)  
+    å‚è€ƒæ–‡çŒ®
+    - https://github.com/espressif/arduino-esp32 (æœ€æ–°æƒ…å ±)
+    - https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html (æƒ…å ±ãŒå¤ã„å ´åˆãŒã‚ã‚‹ã®ã§æ³¨æ„)
 
-3. [ƒc[ƒ‹]ƒƒjƒ…[“à‚Ì[ƒ{[ƒh]‚©‚çƒ{[ƒhƒ}ƒl[ƒWƒƒ‚ðŠJ‚«AŒŸõ‘‹‚Éuesp32v‚ð“ü—ÍŒãAesp32 by Espressif Systems ‚ðƒCƒ“ƒXƒg[ƒ‹‚·‚éB  
+3. [ãƒ„ãƒ¼ãƒ«]ãƒ¡ãƒ‹ãƒ¥ãƒ¼å†…ã®[ãƒœãƒ¼ãƒ‰]ã‹ã‚‰ãƒœãƒ¼ãƒ‰ãƒžãƒãƒ¼ã‚¸ãƒ£ã‚’é–‹ãã€æ¤œç´¢çª“ã«ã€Œesp32ã€ã‚’å…¥åŠ›å¾Œã€esp32 by Espressif Systems ã‚’ã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ã™ã‚‹ã€‚
 
-4. [ƒc[ƒ‹]ƒƒjƒ…[“à‚Ì[ƒ{[ƒh]‚Å ESP32C3 DEev Module ‚ð‘I‘ð‚·‚éB  
+4. [ãƒ„ãƒ¼ãƒ«]ãƒ¡ãƒ‹ãƒ¥ãƒ¼å†…ã®[ãƒœãƒ¼ãƒ‰]ã§ ESP32C3 DEev Module ã‚’é¸æŠžã™ã‚‹ã€‚
 
-by bokunimo.net(https://bokunimo.net/)  
-- ƒuƒƒO (https://bokuniomo.net/blog/)  
-- ƒJƒeƒSƒŠESP (https://bokunimo.net/blog/category/esp/)  
+by bokunimo.net(https://bokunimo.net/)
+- ãƒ–ãƒ­ã‚° (https://bokuniomo.net/blog/)
+- ã‚«ãƒ†ã‚´ãƒªESP (https://bokunimo.net/blog/category/esp/)
