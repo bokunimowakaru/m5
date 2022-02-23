@@ -220,6 +220,7 @@ void loop(){                                    // 繰り返し実行する関�
 }
 
 void sleep(){                                   // スリープ実行用の関数
+    delay(100);                                 // 送信完了の待ち時間処理
     WiFi.disconnect();                          // Wi-Fiの切断
     digitalWrite(M5_LED,LOW);                   // LED ON
     lcd_log(" Btn  = " + String(!digitalRead(PIN_BTN))); // ボタン状態を表示
@@ -230,7 +231,6 @@ void sleep(){                                   // スリープ実行用の関�
     }
     digitalWrite(M5_LED,HIGH);                  // LED OFF
     lcd_log("Sleep...");                        // 「Sleep」をLCD表示
-    delay(100);                                 // 待ち時間処理
     esp_sleep_enable_ext0_wakeup(PIN_BTN_GPIO_NUM,0);   // 割込み設定
     esp_deep_sleep(SLEEP_P);                    // Deep Sleepモードへ移行
 }

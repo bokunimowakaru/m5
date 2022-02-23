@@ -117,9 +117,9 @@ void loop(){                                    // 繰り返し実行する関�
 }
 
 void sleep(){                                   // スリープ実行用の関数
+    delay(100);                                 // 送信完了の待ち時間処理
     WiFi.disconnect();                          // Wi-Fiの切断
     led_off();                                  // RGB LEDの消灯
     Serial.println("Sleep...");                 // 「Sleep」をシリアル出力表示
-    delay(100);                                 // 待ち時間処理
     esp_deep_sleep(SLEEP_P);                    // Deep Sleepモードへ移行
 }

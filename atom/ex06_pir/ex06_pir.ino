@@ -117,6 +117,7 @@ void loop(){                                    // 繰り返し実行する関�
 }
 
 void sleep(){                                   // スリープ実行用の関数
+    delay(100);                                 // 送信完了の待ち時間処理
     WiFi.disconnect();                          // Wi-Fiの切断
     int i = 0;                                  // ループ用の数値変数i
     while(i<100){                               // スイッチ・ボタン解除待ち
@@ -133,7 +134,6 @@ void sleep(){                                   // スリープ実行用の関�
     if(PIR) pir_wake = 1;                       // 次回、IOがHighのときに起動
     led_off();                                  // RGB LEDの消灯
     Serial.println("Sleep...");                 // 「Sleep」をシリアル出力表示
-    delay(10);                                  // 待ち時間処理
     esp_sleep_enable_ext0_wakeup(PIN_PIR_GPIO_NUM, pir_wake);   // 割込み設定
     esp_deep_sleep_start();                     // Deep Sleepモードへ移行
 }

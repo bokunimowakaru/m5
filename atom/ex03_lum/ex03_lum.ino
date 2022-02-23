@@ -59,7 +59,7 @@ void setup(){                                   // 起動時に一度だけ実�
     led_setup(PIN_LED_RGB);                     // RGB LEDの初期設定(ポート設定)
     Serial.begin(115200);                       // 動作確認のためのシリアル出力
     Serial.println("M5 LUM");                   // 「M5 LUM」をシリアル出力
-
+    
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
     while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
@@ -99,7 +99,7 @@ void loop(){                                    // 繰り返し実行する関�
 }
 
 void sleep(){                                   // スリープ実行用の関数
-    delay(200);                                 // 送信待ち時間
+    delay(100);                                 // 送信完了の待ち時間処理
     WiFi.disconnect();                          // Wi-Fiの切断
     led_off();                                  // (RGB LED)LEDの消灯
     Serial.println("Sleep...");                 // 「Sleep」をシリアル出力表示
