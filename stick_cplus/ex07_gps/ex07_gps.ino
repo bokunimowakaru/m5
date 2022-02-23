@@ -9,16 +9,6 @@ Example 7: GPS(GNSS)の位置情報を取得し、Wi-Fiで送信する
                                                Copyright (c) 2022 Wataru KUNINO
 ********************************************************************************
 ★ご注意★・GPS Unitの電源を入れてから位置情報が得られるまで数分以上を要します
-********************************************************************************
-【参考文献】
-Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
-
-M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
-https://docs.m5stack.com/en/api/stickc/system_m5stickc
-
-【引用コード】
-https://github.com/bokunimowakaru/SORACOM-LoRaWAN/blob/master/examples/cqp_ex05_gps_bin
 *******************************************************************************/
 
 #include <M5StickCPlus.h>                       // M5StickC Plus 用ライブラリ
@@ -234,3 +224,15 @@ void sleep(){                                   // スリープ実行用の関�
     esp_sleep_enable_ext0_wakeup(PIN_BTN_GPIO_NUM,0);   // 割込み設定
     esp_deep_sleep(SLEEP_P);                    // Deep Sleepモードへ移行
 }
+
+/*******************************************************************************
+【参考文献】
+Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
+
+M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
+https://docs.m5stack.com/en/api/stickc/system_m5stickc
+
+【引用コード】
+https://github.com/bokunimowakaru/SORACOM-LoRaWAN/blob/master/examples/cqp_ex05_gps_bin
+*******************************************************************************/

@@ -1,32 +1,23 @@
 /*******************************************************************************
-Example 5: ESP32 (IoTセンサ) Wi-Fi 温湿度計 SENSIRION製 SHT30/SHT31/SHT35 版
-・デジタルI2Cインタフェース搭載センサから取得した温湿度を送信するIoTセンサです。
+Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for M5Stick C
+・照度センサ から取得した照度値を送信するIoTセンサです。
 
-    使用機材(例)：M5Stick C + ENV II/III HAT
+    使用機材(例)：M5StickC Plus + HAT-DLIGHT
 
-注意: ENV HATのバージョンによって搭載されているセンサが異なります。
-      このプログラムは SHT30 用です。ENV HAT には対応していません。
-
-ENV HAT     DHT12 + BMP280 + BMM150 ※非対応
-ENV II HAT  SHT30 + BMP280 + BMM150
-ENV III HAT SHT30 + QMP6988
-
-                                          Copyright (c) 2016-2022 Wataru KUNINO
+                                          Copyright (c) 2021-2022 Wataru KUNINO
 *******************************************************************************/
 
-#include <M5StickC.h>                           // M5StickC用ライブラリ
+#include <M5StickCPlus.h>                       // M5StickC Plus 用ライブラリ
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <WiFiUdp.h>                            // UDP通信を行うライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
 #include "esp_sleep.h"                          // ESP32用Deep Sleep ライブラリ
 
-#define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
+#define SSID "1234ABCD"                         // 無線LANアクセスポイントSSID
 #define PASS "password"                         // パスワード
 #define PORT 1024                               // 送信のポート番号
 #define SLEEP_P 30*1000000ul                    // スリープ時間 30秒(uint32_t)
-#define DEVICE "humid_5,"                       // デバイス名(5字+"_"+番号+",")
-RTC_DATA_ATTR int disp = 0;                     // メータ表示番号 0～
-unsigned long lcd_ms = millis();                // 表示してからの経過時間
+#define DEVICE "illum_5,"                       // デバイス名(5字+"_"+番号+",")
 
 /******************************************************************************
  Ambient 設定
@@ -52,48 +43,27 @@ unsigned long lcd_ms = millis();                // 表示してからの経過�
  *****************************************************************************/
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
-void disp_init(){ switch(disp){                 // アナログ・メータの初期表示用
-    case 0: analogMeterInit("Celsius", "Temp.", 0, 40); break;
-    case 1: analogMeterInit("RH%", "Humi.", 0, 100); break;
-    case 2: analogMeterInit("mV", "Batt.", 3000, 5000); break;
-    default: analogMeterInit("mA", "Batt.I", 0, 160);
-}}
-
 void setup(){                                   // 起動時に一度だけ実行する関数
     pinMode(M5_LED,OUTPUT);                     // 内蔵LED用GPIOを出力に設定
     digitalWrite(M5_LED,LOW);                   // LED ON
     M5.begin();                                 // M5StickC用Lcdライブラリの起動
-    shtSetup(0,26);                             // 湿度センサの初期化
+    bh1750Setup(0,26);                          // 照度センサの初期化
     M5.Axp.ScreenBreath(7+2);                   // LCDの輝度を2に設定
     M5.Lcd.setRotation(1);                      // LCDを横向き表示に設定
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
-    disp_init();                                // アナログメータ表示の初期化
     digitalWrite(M5_LED,HIGH);                  // LED OFF
+    analogMeterInit("lx", "Illum", 0, 1000);    // アナログ・メータの初期表示
 }
 
 void loop(){                                    // 繰り返し実行する関数
     M5.update();                                // ボタン状態の取得
-    if(M5.BtnA.wasPressed()){                   // (過去に)ボタンが押された時
-        disp++;                                 // 画面番号を更新
-        if(disp>3) disp=0;                      // 画面数3超過時に0に戻す
-        disp_init();                            // アナログメータ表示の初期化
-        lcd_ms = millis();                      // スリープ時間の猶予管理用
-    }
-    if(millis()%500) return;                    // 以下は500msに1回だけ実行する
+    float lux = getLux();                       // 照度(lux)を取得
+    if(lux < 0.) sleep();                       // 取得失敗時に末尾のsleepを実行
 
-    float temp = getTemp();                     // 温度を取得して変数tempに代入
-    float hum = getHum();                       // 湿度を取得して変数humに代入
-    float batt = (float)M5.Axp.GetVbatData() * 1.1;
-    if(temp < -100. || hum < 0.) sleep();       // 取得失敗時に末尾のsleepを実行
-
-    M5.Axp.ScreenBreath(7 + 2 - (millis() - lcd_ms > 3000));    // 輝度設定
-    switch(disp){                               // 画面番号に応じて針を動かす
-        case 0: analogMeterNeedle(temp,5); break;   // 温度メータ
-        case 1: analogMeterNeedle(hum,5); break;    // 湿度メータ
-        case 2: analogMeterNeedle(batt, 5); break;  // 内蔵電池メータ
-        default: analogMeterNeedle((float)M5.Axp.GetIdischargeData(), 5);
-    }
+    M5.Axp.ScreenBreath(7 + 2 - (millis() > 3000)); // 起動後3秒以上でLCDを暗く
+    analogMeterNeedle(lux,5);                   // 照度に応じてメータ針を設定
+    
     M5.Lcd.setTextColor(BLACK,WHITE);           // 文字の色を黒、背景色を白に
     M5.Lcd.setCursor(0,0);                      // 表示位置を原点(左上)に設定
     if(WiFi.status() != WL_CONNECTED ){         // Wi-Fi未接続のとき
@@ -101,23 +71,19 @@ void loop(){                                    // 繰り返し実行する関�
         if(millis() > 30000) sleep();           // 30秒超過でスリープ
         return;                                 // loop関数を繰り返す
     }
-    M5.Lcd.println(WiFi.localIP());             // 本機のアドレスをシリアル出力
-    // M5.Lcd.println(UDPTO_IP);                // UDPの宛先IPアドレスを出力
-    if(millis() - lcd_ms < 6000) return;
+    M5.Lcd.println(WiFi.localIP());             // 本機のアドレスをLCDに表示
+    if(M5.BtnA.read() || millis()<6000) return; // 起動後6秒以下はメータ更新
 
-    String S = String(DEVICE);                  // 送信データSにデバイス名を代入
-    S += String(temp,1) + ", ";                 // 変数tempの値を追記
-    S += String(hum,1);                         // 変数humの値を追記
+    String S = String(DEVICE) + String(lux,0);  // 送信データSにデバイス名を代入
     Serial.println(S);                          // 送信データSをシリアル出力表示
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
     udp.println(S);                             // 送信データSをUDP送信
     udp.endPacket();                            // UDP送信の終了(実際に送信する)
-
     if(strcmp(Amb_Id,"00000") == 0) sleep();    // Ambient未設定時にsleepを実行
+
     S = "{\"writeKey\":\""+String(Amb_Key);     // (項目)writeKey,(値)ライトキー
-    S += "\",\"d1\":\"" + String(temp,2);       // (項目)d1,(値)温度
-    S += "\",\"d2\":\"" + String(hum,2) + "\"}"; // (項目名)d2,(値)湿度
+    S += "\",\"d1\":\"" + String(lux) + "\"}";  // (項目)d1,(値)照度
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
     String url = "http://ambidata.io/api/v2/channels/"+String(Amb_Id)+"/data";
@@ -144,14 +110,13 @@ void sleep(){                                   // スリープ実行用の関�
 /******************************************************************************
 【参考文献】
 Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/m5stickc/arduino
+https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
 
-M5StickC Arduino Library API 情報：
+M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
 https://docs.m5stack.com/en/api/stickc/system_m5stickc
 
 【引用コード】
-https://github.com/bokunimowakaru/esp/tree/master/2_example/example09_hum_sht31
-https://github.com/bokunimowakaru/esp/tree/master/2_example/example41_hum_sht31
-https://github.com/bokunimowakaru/m5s/tree/master/example04d_temp_hum_sht
-https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex05_hum
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example06_lum
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example38_lum
+https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex03_lum
 *******************************************************************************/

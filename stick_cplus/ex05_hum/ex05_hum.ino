@@ -2,7 +2,7 @@
 Example 5: ESP32 (IoTセンサ) Wi-Fi 温湿度計 SENSIRION製 SHT30/SHT31/SHT35 版
 ・デジタルI2Cインタフェース搭載センサから取得した温湿度を送信するIoTセンサです。
 
-    使用機材(例)：M5Stick C + ENV II/III HAT
+    使用機材(例)：M5StickC Plus + ENV II/III HAT
 
 注意: ENV HATのバージョンによって搭載されているセンサが異なります。
       このプログラムは SHT30 用です。ENV HAT には対応していません。
@@ -14,7 +14,7 @@ ENV III HAT SHT30 + QMP6988
                                           Copyright (c) 2016-2022 Wataru KUNINO
 *******************************************************************************/
 
-#include <M5StickC.h>                           // M5StickC用ライブラリ
+#include <M5StickCPlus.h>                       // M5StickC Plus 用ライブラリ
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <WiFiUdp.h>                            // UDP通信を行うライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
@@ -84,7 +84,7 @@ void loop(){                                    // 繰り返し実行する関�
 
     float temp = getTemp();                     // 温度を取得して変数tempに代入
     float hum = getHum();                       // 湿度を取得して変数humに代入
-    float batt = (float)M5.Axp.GetVbatData() * 1.1;
+    float batt = M5.Axp.GetBatVoltage() * 1000; // バッテリ電圧の取得
     if(temp < -100. || hum < 0.) sleep();       // 取得失敗時に末尾のsleepを実行
 
     M5.Axp.ScreenBreath(7 + 2 - (millis() - lcd_ms > 3000));    // 輝度設定
@@ -92,7 +92,7 @@ void loop(){                                    // 繰り返し実行する関�
         case 0: analogMeterNeedle(temp,5); break;   // 温度メータ
         case 1: analogMeterNeedle(hum,5); break;    // 湿度メータ
         case 2: analogMeterNeedle(batt, 5); break;  // 内蔵電池メータ
-        default: analogMeterNeedle((float)M5.Axp.GetIdischargeData(), 5);
+        default: analogMeterNeedle(fabs(M5.Axp.GetBatCurrent()), 5);
     }
     M5.Lcd.setTextColor(BLACK,WHITE);           // 文字の色を黒、背景色を白に
     M5.Lcd.setCursor(0,0);                      // 表示位置を原点(左上)に設定
@@ -144,9 +144,9 @@ void sleep(){                                   // スリープ実行用の関�
 /******************************************************************************
 【参考文献】
 Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/m5stickc/arduino
+https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
 
-M5StickC Arduino Library API 情報：
+M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
 https://docs.m5stack.com/en/api/stickc/system_m5stickc
 
 【引用コード】

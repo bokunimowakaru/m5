@@ -63,6 +63,7 @@ void loop(){                                    // 繰り返し実行する関�
 
     M5.Axp.ScreenBreath(7 + 2 - (millis() > 3000)); // 起動後3秒以上でLCDを暗く
     analogMeterNeedle(lux,5);                   // 照度に応じてメータ針を設定
+
     M5.Lcd.setTextColor(BLACK,WHITE);           // 文字の色を黒、背景色を白に
     M5.Lcd.setCursor(0,0);                      // 表示位置を原点(左上)に設定
     if(WiFi.status() != WL_CONNECTED ){         // Wi-Fi未接続のとき
@@ -71,6 +72,7 @@ void loop(){                                    // 繰り返し実行する関�
         return;                                 // loop関数を繰り返す
     }
     M5.Lcd.println(WiFi.localIP());             // 本機のアドレスをシリアル出力
+    if(M5.BtnA.read() || millis()<6000) return; // 起動後6秒以下はメータ更新
 
     String S = String(DEVICE) + String(lux,0);  // 送信データSにデバイス名を代入
     Serial.println(S);                          // 送信データSをシリアル出力表示
@@ -110,7 +112,7 @@ void sleep(){                                   // スリープ実行用の関�
 Arduino IDE 開発環境イントール方法：
 https://docs.m5stack.com/en/quick_start/m5stickc/arduino
 
-M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
+M5StickC Arduino Library API 情報：
 https://docs.m5stack.com/en/api/stickc/system_m5stickc
 
 【引用コード】
