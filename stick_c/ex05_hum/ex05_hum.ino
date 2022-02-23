@@ -134,13 +134,13 @@ void loop(){                                    // 繰り返し実行する関�
 }
 
 void sleep(){                                   // スリープ実行用の関数
-    while(M5.BtnA.read());                      // ボタン開放待ち
-    delay(200);                                 // 送信待ち時間
     WiFi.disconnect();                          // Wi-Fiの切断
-    Serial.println("Sleep...");                 // 「Sleep」をシリアル出力表示
+    while(M5.BtnA.read());                      // ボタン開放待ち
     M5.Axp.ScreenBreath(0);                     // LCD用バックライトの消灯
     M5.Lcd.fillScreen(BLACK);                   // LCDの消去
     M5.Axp.SetLDO2(false);                      // LCDバックライト用電源OFF
+    Serial.println("Sleep...");                 // 「Sleep」をシリアル出力表示
+    delay(100);                                 // 待ち時間処理
     esp_sleep_enable_ext0_wakeup(GPIO_NUM_37,0); // ボタン割込み設定(G37)
     esp_deep_sleep(SLEEP_P);                    // Deep Sleepモードへ移行
 }
