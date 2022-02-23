@@ -26,7 +26,7 @@ Austin, TX, USA
 http://sundial.com
 *******************************************************************************/
 
-#define SOFTWARE_SERIAL
+// #define SOFTWARE_SERIAL      // ソフトウェアによるシリアル接続に使用
 
 #include <Arduino.h>
 #ifdef SOFTWARE_SERIAL

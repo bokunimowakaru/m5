@@ -8,6 +8,8 @@ Example 7: GPS(GNSS)の位置情報を取得し、Wi-Fiで送信する
 
                                                Copyright (c) 2022 Wataru KUNINO
 ********************************************************************************
+★ご注意★・GPS Unitの電源を入れてから位置情報が得られるまで数分以上を要します
+********************************************************************************
 【参考文献】
 Arduino IDE 開発環境イントール方法：
 https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
@@ -220,7 +222,7 @@ void loop(){                                    // 繰り返し実行する関�
 void sleep(){                                   // スリープ実行用の関数
     WiFi.disconnect();                          // Wi-Fiの切断
     digitalWrite(M5_LED,LOW);                   // LED ON
-    lcd_log(" Btn  = " + String(digitalRead(PIN_BTN)));  // ボタン状態を表示
+    lcd_log(" Btn  = " + String(!digitalRead(PIN_BTN))); // ボタン状態を表示
     int i = 0;                                  // ループ用の数値変数i
     while(i<100){                               // スイッチ・ボタン解除待ち
         i = digitalRead(PIN_BTN) ? i+1 : 0;     // ボタン開放時にiに1を加算

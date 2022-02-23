@@ -1,3 +1,31 @@
+/*******************************************************************************
+本ソースは下記からダウンロードしたものを基にして作成しました。(2018/4/14～)
+    https://github.com/mikalhart/TinyGPS
+
+元のライセンスは本フォルダの下記にコピーしてあります。
+    ./lib_TinyGPS_LICENSE.txt
+
+改変部のライセンスは以下の通りです。
+    /LICENSE
+    MIT License
+    Copyright (c) 2022 Wataru KUNINO
+*******************************************************************************/
+
+/*******************************************************************************
+TinyGPS
+********************************************************************************
+A compact Arduino NMEA (GPS) parsing library http://arduiniana.org
+
+Mikal Hart
+mikalhart
+Block or report user
+
+The Sundial Group
+Austin, TX, USA
+
+http://sundial.com
+*******************************************************************************/
+
 /*
 TinyGPS - a small GPS library for Arduino providing basic NMEA parsing
 Based on work by and "distance_to" and "course_to" courtesy of Maarten Lamers.
@@ -44,14 +72,15 @@ class TinyGPS
 {
 public:
   enum {
-    GPS_INVALID_AGE = 0xFFFFFFFF,      GPS_INVALID_ANGLE = 999999999, 
+    GPS_INVALID_AGE = 0xFFFFFFFF,      GPS_INVALID_ANGLE = 999999999,
     GPS_INVALID_ALTITUDE = 999999999,  GPS_INVALID_DATE = 0,
-    GPS_INVALID_TIME = 0xFFFFFFFF,		 GPS_INVALID_SPEED = 999999999, 
+    GPS_INVALID_TIME = 0xFFFFFFFF,		 GPS_INVALID_SPEED = 999999999,
     GPS_INVALID_FIX_TIME = 0xFFFFFFFF, GPS_INVALID_SATELLITES = 0xFF,
     GPS_INVALID_HDOP = 0xFFFFFFFF
   };
 
   static const float GPS_INVALID_F_ANGLE, GPS_INVALID_F_ALTITUDE, GPS_INVALID_F_SPEED;
+  static const char GPS_TERM_NAMES[4][6];
 
   TinyGPS();
   bool encode(char c); // process one character received from GPS
@@ -80,7 +109,7 @@ public:
   inline unsigned long hdop() { return _hdop; }
 
   void f_get_position(float *latitude, float *longitude, unsigned long *fix_age = 0);
-  void crack_datetime(int *year, byte *month, byte *day, 
+  void crack_datetime(int *year, byte *month, byte *day,
     byte *hour, byte *minute, byte *second, byte *hundredths = 0, unsigned long *fix_age = 0);
   float f_altitude();
   float f_course();
@@ -98,6 +127,8 @@ public:
 #ifndef _GPS_NO_STATS
   void stats(unsigned long *chars, unsigned short *good_sentences, unsigned short *failed_cs);
 #endif
+
+  static const char **getTermName(void);
 
 private:
   enum {_GPS_SENTENCE_GPGGA, _GPS_SENTENCE_GPRMC, _GPS_SENTENCE_OTHER};
@@ -143,7 +174,7 @@ private:
   int gpsstrcmp(const char *str1, const char *str2);
 };
 
-#if !defined(ARDUINO) 
+#if !defined(ARDUINO)
 // Arduino 0012 workaround
 #undef int
 #undef char
@@ -151,7 +182,7 @@ private:
 #undef byte
 #undef float
 #undef abs
-#undef round 
+#undef round
 #endif
 
 #endif
