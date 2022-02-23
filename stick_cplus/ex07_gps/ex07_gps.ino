@@ -29,9 +29,10 @@ https://github.com/bokunimowakaru/SORACOM-LoRaWAN/blob/master/examples/cqp_ex05_
 #define SSID "1234ABCD"                         // 無線LANアクセスポイント SSID
 #define PASS "password"                         // パスワード
 #define PORT 1024                               // 送信のポート番号
-#define SLEEP_P 10*60*1000000ul                 // スリープ時間 10分(uint32_t)
+#define SLEEP_P 30*1000000ul                    // スリープ時間 30秒(uint32_t)
 #define DEVICE "gns_s_5,"                       // デバイス名(5字+"_"+番号+",")
-#define GPS_TIMEOUT_MS 30*1000                  // GPS測定の時間制限
+#define LOGUDP "log_s_0,"                       // デバイス名(5字+"_"+番号+",")
+#define GPS_TIMEOUT_MS 6*1000                   // GPS測定の時間制限
 #define WIFI_TIMEOUT_MS GPS_TIMEOUT_MS+10*1000  // Wi-Fi接続の時間制限
 
 /******************************************************************************
@@ -46,14 +47,16 @@ int wake = (int)esp_sleep_get_wakeup_cause();   // 起動理由を変数wakeに�
 int clickType = 0;                              // 操作:1=Norm,2=Double,3=Long
 String btn_S[]={"No","Single","Double","Long"}; // ボタン名
 
-TinyGPS gps;                                // GPSライブラリのインスタンスを定義
-float lat, lon, alt;                        // 緯度・経度・標高
+TinyGPS gps;                                    // GPSライブラリのインスタンスを定義
+float lat=0., lon=0., alt=0.;                   // 緯度・経度・標高
+unsigned short sat=0;
+unsigned long hdop=0, age=0;
 
-struct LoRaPayload{                         // LoRaWAN送信用の変数(11バイト以下)
-  uint8_t gpsHeader=0x21;                   // GPS_HEADER(uint8型 1バイト)
-  int32_t lat;                              // 緯度(int32型 4バイト) 1,000,000倍
-  int32_t lon;                              // 経度(int32型 4バイト) 1,000,000倍
-  int16_t alt;                              // 標高(int16型 2バイト) 単位＝ｍ
+struct LoRaPayload{                             // LoRaWAN送信用の変数(11バイト以下)
+  uint8_t gpsHeader=0x21;                       // GPS_HEADER(uint8型 1バイト)
+  int32_t lat=0;                                // 緯度(int32型 4バイト) 1,000,000倍
+  int32_t lon=0;                                // 経度(int32型 4バイト) 1,000,000倍
+  int16_t alt=0;                                // 標高(int16型 2バイト) 単位＝ｍ
 };
 
 int get_clickType(){                            // ボタン操作内容を取得する
@@ -79,12 +82,13 @@ void lcd_log(String S){
         lcd_line = 16;
         M5.Lcd.setCursor(0,8);
         for(int y=1;y<16;y++){
-            M5.Lcd.fillRect(0, 8*y, 240, 8, BLACK);
+            M5.Lcd.fillRect(6*strlen(lcd_buf[y]), 8*y, 240, 8, BLACK);
             M5.Lcd.println(lcd_buf[y]);
             memcpy(lcd_buf[y-1],lcd_buf[y],41);
         }
     }
-    M5.Lcd.println(S);
+    M5.Lcd.setCursor(0, 8*lcd_line);
+    M5.Lcd.print(S);
     S.toCharArray(lcd_buf[lcd_line-1],41);
 }
 
@@ -94,7 +98,7 @@ void lcd_log_full(String S){
     if(lcd_line>16){
         lcd_line = 16;
     }
-    if(millis() > lcd_time + 100){
+    if(millis() > lcd_time + 300){
         if(lcd_line != 1) M5.Lcd.fillRect(0, 8*lcd_line, 240, 8, BLACK);
         lcd_line = 1;
     }
@@ -133,10 +137,9 @@ void setup(){                                   // 起動時に一度だけ実�
     pinMode(M5_LED,OUTPUT);                     // LEDのIOを出力に設定
     digitalWrite(M5_LED,LOW);                   // LED ON
     if(wake == ESP_SLEEP_WAKEUP_EXT0) clickType=1;  // ボタンで起動
-    else if(wake != ESP_SLEEP_WAKEUP_TIMER) sleep();
     clickType = get_clickType();                // ボタン操作内容を取得
-    while(!digitalRead(PIN_BTN));           // 操作完了待ち
-    delay(100);                             // チャタリング防止用
+    while(!digitalRead(PIN_BTN));               // 操作完了待ち
+    delay(100);                                 // チャタリング防止用
     digitalWrite(M5_LED,HIGH);                  // LED OFF
 
     WiFi.mode(WIFI_OFF);                        // 無線LANをOFFモードに設定
@@ -148,41 +151,50 @@ void setup(){                                   // 起動時に一度だけ実�
     setupGps();                                 // GPS初期化
 
     if(clickType == 2){                         // ダブルクリック時
-        boolean cls = 0;
+        WiFi.mode(WIFI_STA);                    // 無線LANをSTAモードに設定
+        WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイント接続
         while(digitalRead(PIN_BTN)){            // ボタン未押下状態でモニタ
             char s[128];                        // 最大文字長127文字
             boolean i = getGpsRawData(s,128);   // GPS生データを取り込む
             if(s[0] != 0){
                 Serial.println(s);              // データがあるときは表示
-                lcd_log_full(s);                // データがあるときは表示
+                for(int i=0;i<2;i++) if(strstr(s,gps.GPS_TERM_NAMES[i])){
+                    lcd_log(s);                 // 位置情報のときにLCDに表示
+                }
+                if(WiFi.status() == WL_CONNECTED){
+                    WiFiUDP udp;                      // UDP通信用のインスタンス定義
+                    udp.beginPacket(UDPTO_IP, PORT);  // UDP送信先を設定
+                    udp.print(LOGUDP);                // ログ用ヘッダを送信
+                    udp.println(s);                   // 値を送信
+                    udp.endPacket();                  // UDP送信の終了(実際に送信)
+                }
             }
         }
     }
+
     boolean i=1,res=0;
     while(clickType <= 1 && !res){              // 通常起動かつGPSデータ未取得時
-        res = getGpsPos(gps,&lat,&lon,&alt);    // GPSデータ取得
-        if(millis() > GPS_TIMEOUT_MS || !digitalRead(PIN_BTN)) sleep();
+        res = getGpsPos(gps,&lat,&lon,&alt,&sat,&hdop,&age);    // GPSデータ取得
+        lcd_log("GPS: " + String(sat) + " satellites");
         digitalWrite(M5_LED,(i^=1));            // LEDの点滅で動作表示
+        if(millis() > GPS_TIMEOUT_MS || !digitalRead(PIN_BTN)) sleep();
     }
+
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
     while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
-        digitalWrite(M5_LED,((millis()/500)%2)); // LEDを点滅
+        if(i) lcd_log("Wi-Fi: STAT = " + String(WiFi.status()));
+        digitalWrite(M5_LED,(i^=1));            // LEDの点滅で動作表示
         if(millis() > WIFI_TIMEOUT_MS) sleep(); // 時間超過でスリープ
         delay(500);                             // 待ち時間処理
     }
-    lcd_log("UDP: " + String(WiFi.localIP()) + " -> " + String(UDPTO_IP));
+    lcd_log("Wi-Fi: " + String(WiFi.localIP()) + " -(UDP)-> " + String(UDPTO_IP));
 }
 
 void loop(){                                    // 繰り返し実行する関数
     LoRaPayload data;                           // 送信用の構造体変数dataを定義
 
-unsigned long chars;
-unsigned short sentences;
-unsigned short failed;
-
-//    if(getGpsPos(gps,&lat,&lon,&alt)){      // GPSから位置情報を取得
-    if(getGpsPos(gps,&lat,&lon,&alt,&chars,&sentences,&failed)){      // GPSから位置情報を取得
+    if(getGpsPos(gps,&lat,&lon,&alt,&sat,&hdop,&age)){      // GPSから位置情報を取得
         data.lat=(int32_t)(lat*1.e6);   // 緯度を構造体変数dataへ保存
         data.lon=(int32_t)(lon*1.e6);   // 経度を構造体変数dataへ保存
         data.alt=(int16_t)(alt);        // 標高を構造体変数dataへ保存
@@ -193,19 +205,16 @@ unsigned short failed;
         Serial.print(", alt = ");       // 標高をシリアル出力表示
         Serial.println(data.alt);       // 単位＝ m メートル
         delay(100);                     // シリアル出力の完了待ち
-    }else{
-        data.lat=0; data.lon=0; data.alt=0;
     }
 
-    String S = String(DEVICE);             // 送信データ保持用の文字列変数
-    S += String(int(data.lat)) + ", ";     // 緯度値を送信データに追記
-    S += String(int(data.lon)) + ", ";     // 経度値を送信データに追記
-//  S += String(int(data.alt));            // 標高値を送信データに追記
-    S += String(int(data.alt)) + ", ";            // 標高値を送信データに追記
-    S += String(chars) + ", ";            // 標高値を送信データに追記
-    S += String(sentences) + ", ";            // 標高値を送信データに追記
-    S += String(failed);            // 標高値を送信データに追記
-    lcd_log(S);                                 // LCDに表示
+    String S = String(DEVICE);              // 送信データ保持用の文字列変数
+    S += String(int(data.lat)) + ", ";      // 緯度値を送信データに追記
+    S += String(int(data.lon)) + ", ";      // 経度値を送信データに追記
+    S += String(int(data.alt)) + ", ";      // 標高値を送信データに追記
+    S += String(sat) + ", ";                // 衛生数を送信データに追記
+    S += String(hdop) + ", ";               // DHOP値を送信データに追記
+    S += String(age);                       // 取得経過時間を送信データに追記
+    lcd_log("GPS: " + S);                       // LCDに表示
 
     WiFiUDP udp;                                // UDP通信用のインスタンス定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
@@ -232,9 +241,8 @@ void sleep(){                                   // スリープ実行用の関�
         delay(1);                               // 待ち時間処理
     }
     digitalWrite(M5_LED,HIGH);                  // LED OFF
-    lcd_log("Sleep...");                 // 「Sleep」をシリアル出力表示
+    lcd_log("Sleep...");                        // 「Sleep」をシリアル出力表示
     delay(100);                                 // 待ち時間処理
     esp_sleep_enable_ext0_wakeup(PIN_BTN_GPIO_NUM,0);   // 割込み設定
-    // esp_deep_sleep_start();                     // Deep Sleepモードへ移行
     esp_deep_sleep(SLEEP_P);                    // Deep Sleepモードへ移行
 }
