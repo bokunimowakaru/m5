@@ -38,8 +38,6 @@ Updated by Bodmer for variable meter size
 // Define meter size as 1 for M5.Lcd.rotation(0) or 1.3333 for M5.Lcd.rotation(1)
 #define M_SIZE 0.6666
 
-#include <M5StickC.h>
-
 #define TFT_GREY 0x5AEB
 
 String analogMeterUnit1="Celsius";
