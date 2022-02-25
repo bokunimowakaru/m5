@@ -94,9 +94,6 @@ void loop(){                                    // 繰り返し実行する関�
         M5.Lcd.fillRect(0,210, 320,30, BLACK);  // 表示部の背景を塗る
     }else{
         M5.Lcd.fillRect(0,210, 320,30,TFT_RED); // 表示部の背景を塗る
-        if(wgbt > 32.){                         // 32℃を超えている時
-            beep();                             // スピーカからビープ音を鳴らす
-        }
     }
 
     String S = "WGBT= " + String(wgbt,1);       // WGBT値を文字列変数Sに代入
