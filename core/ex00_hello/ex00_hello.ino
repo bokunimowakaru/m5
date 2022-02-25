@@ -1,6 +1,6 @@
 /******************************************************************************
 Example 0: Hello, world! for M5Stack
-・起動時にスピーカから音を鳴らし、LCDにタイトルを表示します。
+・LCDに文字を表示します。
 ・本体上面のボタンを押すと、ボタンに応じたメッセージを表示します。
 
                                           Copyright (c) 2019-2022 Wataru KUNINO
@@ -19,11 +19,6 @@ https://github.com/bokunimowakaru/m5s/tree/master/example01_hello
 #include <M5Stack.h>                            // M5Stack用ライブラリ組み込み
 
 void setup(){                                   // 起動時に一度だけ実行する関数
-    M5.Speaker.begin();                         // M5Stack用スピーカの起動
-    M5.Speaker.tone(880);                       // スピーカ出力 880Hzの音を出力
-    delay(100);                                 // 100msの待ち時間処理
-    M5.Speaker.end();                           // スピーカ出力を停止する
-
     M5.Lcd.begin();                             // M5Stack用Lcdライブラリの起動
     M5.Lcd.fillScreen(BLACK);                   // LCDを消去
     M5.Lcd.setTextSize(2);                      // 文字表示サイズを2倍に設定
@@ -31,10 +26,7 @@ void setup(){                                   // 起動時に一度だけ実�
 }
 
 void loop(){                                    // 繰り返し実行する関数
-    M5.BtnA.read();                             // ボタンAの状態を確認
-    M5.BtnB.read();                             // ボタンBの状態を確認
-    M5.BtnC.read();                             // ボタンCの状態を確認
-
+    M5.update();                                // M5Stack用IO状態の更新
     int btnA = M5.BtnA.wasPressed();            // ボタンAの状態をbtnAへ代入
     int btnB = M5.BtnB.wasPressed();            // ボタンBの状態をbtnBへ代入
     int btnC = M5.BtnC.wasPressed();            // ボタンCの状態をbtnCへ代入
