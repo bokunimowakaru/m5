@@ -19,7 +19,7 @@ https://github.com/bokunimowakaru/m5s/tree/master/example01_hello
 #include <M5Core2.h>                            // M5Stack用ライブラリ組み込み
 
 void setup(){                                   // 起動時に一度だけ実行する関数
-    M5.Lcd.begin();                             // M5Stack用Lcdライブラリの起動
+    M5.begin();                                 // M5Stack用ライブラリの起動
     M5.Lcd.fillScreen(BLACK);                   // LCDを消去
     M5.Lcd.setTextSize(2);                      // 文字表示サイズを2倍に設定
     M5.Lcd.println("Example 0 M5Stack LCD");    // LCDにタイトルを表示
