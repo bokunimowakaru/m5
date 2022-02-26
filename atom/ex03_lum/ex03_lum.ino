@@ -5,18 +5,6 @@ Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for ATOM / ATOM Lite
     使用機材(例)：ATOM/ATOM Lite + ATOM-HAT(ATOM-MATEに付属) + HAT-DLIGHT
 
                                           Copyright (c) 2021-2022 Wataru KUNINO
-*******************************************************************************
-【参考文献】
-Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/atom/arduino
-
-ATOM Lite Arduino Library API 情報(本サンプルでは使用しない)：
-https://docs.m5stack.com/en/api/atom/system
-
-【引用コード】
-https://github.com/bokunimowakaru/esp/tree/master/2_example/example06_lum
-https://github.com/bokunimowakaru/esp/tree/master/2_example/example38_lum
-https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex03_lum
 *******************************************************************************/
 
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
@@ -105,3 +93,19 @@ void sleep(){                                   // スリープ実行用の関�
     Serial.println("Sleep...");                 // 「Sleep」をシリアル出力表示
     esp_deep_sleep(SLEEP_P);                    // Deep Sleepモードへ移行
 }
+
+/******************************************************************************
+【参考文献】
+Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/atom/arduino
+
+ATOM Lite Arduino Library API 情報(本サンプルでは使用しない)：
+https://docs.m5stack.com/en/api/atom/system
+
+BH1750FVI データシート 2011.11 - Rev.D (ローム)
+
+【引用コード】
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example06_lum
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example38_lum
+https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex03_lum
+*******************************************************************************/

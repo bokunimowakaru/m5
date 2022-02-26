@@ -55,8 +55,8 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     shtSetup();                                 // 湿度センサの初期化
     M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
-    analogMeterSetNames("Temp.","Humi.");       // メータのタイトルを登録
     analogMeterInit("Celsius",0,40,"RH%",0,100); //メータ初期化
+    analogMeterSetNames("Temp.","Humi.");       // メータのタイトルを登録
     lineGraphInit(disp_min,disp_max);           // グラフ初期化(縦軸の範囲指定)
     M5.Lcd.println("ex.05 M5Stack Temp & Hum (SHT30)");
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定

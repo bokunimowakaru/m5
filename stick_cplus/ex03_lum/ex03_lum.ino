@@ -115,6 +115,8 @@ https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
 M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
 https://docs.m5stack.com/en/api/stickc/system_m5stickc
 
+BH1750FVI データシート 2011.11 - Rev.D (ローム)
+
 【引用コード】
 https://github.com/bokunimowakaru/esp/tree/master/2_example/example06_lum
 https://github.com/bokunimowakaru/esp/tree/master/2_example/example38_lum

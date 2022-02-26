@@ -1,20 +1,13 @@
 /*******************************************************************************
-Example 5: ESP32 (IoTセンサ) Wi-Fi 温湿度計 SENSIRION製 SHT30/SHT31/SHT35 版
-・デジタルI2Cインタフェース搭載センサから取得した温湿度を送信するIoTセンサです。
+Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for M5Stack Core
+・照度センサ から取得した照度値を送信するIoTセンサです。
 
-    使用機材(例)：M5Sack Core2 + ENV II/III Unit
+    使用機材(例)：M5Stack Core + DLIGHT Unit
 
-注意: ENV HATのバージョンによって搭載されているセンサが異なります。
-      このプログラムは SHT30 用です。ENV Unit には対応していません。
-
-ENV Unit     DHT12 + BMP280 + BMM150 ※非対応
-ENV II Unit  SHT30 + BMP280 + BMM150
-ENV III Unit SHT30 + QMP6988
-
-                                          Copyright (c) 2016-2022 Wataru KUNINO
+                                          Copyright (c) 2021-2022 Wataru KUNINO
 *******************************************************************************/
 
-#include <M5Core2.h>                            // M5Stack用ライブラリ組み込み
+#include <M5Stack.h>                            // M5Stack用ライブラリの組み込み
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <WiFiUdp.h>                            // UDP通信を行うライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
@@ -23,9 +16,7 @@ ENV III Unit SHT30 + QMP6988
 #define PASS "password"                         // パスワード
 #define PORT 1024                               // 送信のポート番号
 #define SLEEP_P 30*1000000ul                    // スリープ時間 30秒(uint32_t)
-#define DEVICE "humid_3,"                       // デバイス名(5字+"_"+番号+",")
-RTC_DATA_ATTR int disp_min = 14;                // 折れ線グラフの最小値
-RTC_DATA_ATTR int disp_max = 34;                // 折れ線グラフの最大値
+#define DEVICE "illum_3,"                       // デバイス名(5字+"_"+番号+",")
 
 /******************************************************************************
  Ambient 設定
@@ -53,27 +44,17 @@ IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    shtSetup();                                 // 湿度センサの初期化
+    bh1750Setup();                              // 照度センサの初期化
     M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
-    analogMeterInit("Celsius",0,40,"RH%",0,100); //メータ初期化
-    analogMeterSetNames("Temp.","Humi.");       // メータのタイトルを登録
-    lineGraphInit(disp_min,disp_max);           // グラフ初期化(縦軸の範囲指定)
+    analogMeterInit("lx", "Illum", 0, 1000);    // アナログ・メータの初期表示
     M5.Lcd.println("ex.05 M5Stack Temp & Hum (SHT30)");
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
 }
 
 void loop(){                                    // 繰り返し実行する関数
     M5.update();                                // ボタン状態の取得
-    int btn=M5.BtnA.wasPressed()+2*M5.BtnB.wasPressed()+4*M5.BtnC.wasPressed();
-    switch(btn){
-        case 1: disp_min = 24; disp_max = 34; break;  // 夏季向けの表示
-        case 2: disp_min = 14; disp_max = 34; break;  // 通常の表示
-        case 4: disp_min = 14; disp_max = 24; break;  // 冬季向けの表示
-        default: btn = 0; break;
-    }
-    if(btn) lineGraphInit(disp_min,disp_max);   // ボタン操作時にグラフ初期化
     if(millis()%(SLEEP_P/1000) == 0){           // SLEEP_P間隔で下記を実行
-        WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイントへ接続
+        WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイント接続
     }
     if(millis()%500) return;                    // 以下は500msに1回だけ実行する
 
@@ -82,32 +63,15 @@ void loop(){                                    // 繰り返し実行する関�
     M5.Lcd.printf("(%d) ",WiFi.status());        // Wi-Fi状態番号を表示
     M5.Lcd.print((SLEEP_P/1000 - millis()%(SLEEP_P/1000))/1000);
 
-    float temp = getTemp();                     // 温度を取得して変数tempに代入
-    float hum = getHum();                       // 湿度を取得して変数humに代入
-    if(temp < -100. || hum < 0.) return;        // 取得失敗時に戻る
+    float lux = getLux();                       // 照度(lux)を取得
+    if(lux < 0.) return;                        // 取得失敗時にloopの先頭に戻る
+    analogMeterNeedle(lux,5);                   // 照度に応じてメータ針を設定
 
-    float wgbt = 0.725*temp + 0.0368*hum + 0.00364*temp*hum - 3.246 + 0.5;
-    analogMeterNeedle(0,temp);                  // メータに温度を表示
-    analogMeterNeedle(1,hum);                   // メータに湿度を表示
-    lineGraphPlot(wgbt);                        // WGBTをグラフ表示
-    if(12. < wgbt && wgbt < 30.){               // 12℃より大かつ30℃より小の時
-        M5.Lcd.fillRect(0,210, 320,30, BLACK);  // 表示部の背景を塗る
-    }else{
-        M5.Lcd.fillRect(0,210, 320,30,TFT_RED); // 表示部の背景を塗る
-    }
-
-    String S = "WGBT= " + String(wgbt,1);       // WGBT値を文字列変数Sに代入
-    S += "C ("+String(temp,1)+"C, "+String(hum,0)+"%)"; // 温度と湿度をSに追記
+    String S = "Illuminance= " + String(lux,0); // 照度値を文字列変数Sに代入
     M5.Lcd.drawCentreString(S, 160, 210, 4);    // 文字列を表示
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
 
-    M5.Lcd.fillRect(0, 202, 320, 8, BLACK);     // 表示部の背景を塗る
-    M5.Lcd.setCursor(0, 202);                   // 文字位置を設定
-    M5.Lcd.println(WiFi.localIP());             // 本機のアドレスをシリアル出力
-
-    S = String(DEVICE);                         // 送信データSにデバイス名を代入
-    S += String(temp,1) + ", ";                 // 変数tempの値を追記
-    S += String(hum,1);                         // 変数humの値を追記
+    S = String(DEVICE) + String(lux,0);         // 送信データSにデバイス名を代入
     Serial.println(S);                          // 送信データSをシリアル出力表示
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
@@ -116,8 +80,7 @@ void loop(){                                    // 繰り返し実行する関�
 
     if(strcmp(Amb_Id,"00000") != 0){            // Ambient未設定時にsleepを実行
         S = "{\"writeKey\":\""+String(Amb_Key); // (項目)writeKey,(値)ライトキー
-        S += "\",\"d1\":\"" + String(temp,2);   // (項目)d1,(値)温度
-        S += "\",\"d2\":\"" + String(hum,2);    // (項目名)d2,(値)湿度
+        S += "\",\"d1\":\"" + String(lux);      // (項目)d1,(値)照度
         S += "\"}";
         HTTPClient http;                        // HTTPリクエスト用インスタンス
         http.setConnectTimeout(15000);          // タイムアウトを15秒に設定する
@@ -135,14 +98,15 @@ void loop(){                                    // 繰り返し実行する関�
 /******************************************************************************
 【参考文献】
 Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/core2/arduino
+https://docs.m5stack.com/en/quick_start/m5core/arduino
 
 M5Stack Arduino Library API 情報：
-https://docs.m5stack.com/en/api/core2/system
+https://docs.m5stack.com/en/api/core/system
+
+BH1750FVI データシート 2011.11 - Rev.D (ローム)
 
 【引用コード】
-https://github.com/bokunimowakaru/esp/tree/master/2_example/example09_hum_sht31
-https://github.com/bokunimowakaru/esp/tree/master/2_example/example41_hum_sht31
-https://github.com/bokunimowakaru/m5s/tree/master/example04d_temp_hum_sht
-https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex05_hum
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example06_lum
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example38_lum
+https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex03_lum
 *******************************************************************************/
