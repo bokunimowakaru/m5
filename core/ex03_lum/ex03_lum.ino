@@ -17,6 +17,7 @@ Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for M5Stack Core
 #define PORT 1024                               // 送信のポート番号
 #define SLEEP_P 30*1000000ul                    // スリープ時間 30秒(uint32_t)
 #define DEVICE "illum_3,"                       // デバイス名(5字+"_"+番号+",")
+RTC_DATA_ATTR int disp_max = 1000;              // メータの最大値
 
 /******************************************************************************
  Ambient 設定
@@ -46,20 +47,31 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     bh1750Setup();                              // 照度センサの初期化
     M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
-    analogMeterInit("lx", "Illum", 0, 1000);    // アナログ・メータの初期表示
-    M5.Lcd.println("ex.05 M5Stack Temp & Hum (SHT30)");
+    analogMeterInit("lx","Illum", 0, disp_max); // アナログ・メータの初期表示
+    M5.Lcd.println("ex.03 M5Stack Lum (BH1750)");   // タイトルの表示
+    String S = "[ 100 ]      [ 1k ]      [ 10k ]";  // ボタン名を定義
+    M5.Lcd.drawCentreString(S, 160, 208, 4);    // 文字列を表示
+
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
 }
 
 void loop(){                                    // 繰り返し実行する関数
     M5.update();                                // ボタン状態の取得
+    int btn=M5.BtnA.wasPressed()+2*M5.BtnB.wasPressed()+4*M5.BtnC.wasPressed();
+    switch(btn){
+        case 1: disp_max = 100; break;          // 夜間の室内向けの設定
+        case 2: disp_max = 1000; break;         // 日中の室内向けの設定
+        case 4: disp_max = 10000; break;        // 屋外向けの設定
+        default: btn = 0; break;
+    }
+    if(btn) analogMeterInit(0,disp_max);        // ボタン操作時にグラフ初期化
     if(millis()%(SLEEP_P/1000) == 0){           // SLEEP_P間隔で下記を実行
         WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイント接続
     }
     if(millis()%500) return;                    // 以下は500msに1回だけ実行する
 
-    M5.Lcd.fillRect(283, 194, 37, 8, BLACK);    // Wi-Fi接続の待ち時間
-    M5.Lcd.setCursor(283, 194);                 // 文字位置を設定
+    M5.Lcd.fillRect(283, 168, 37, 8, BLACK);    // Wi-Fi接続の待ち時間
+    M5.Lcd.setCursor(283, 168);                 // 文字位置を設定
     M5.Lcd.printf("(%d) ",WiFi.status());        // Wi-Fi状態番号を表示
     M5.Lcd.print((SLEEP_P/1000 - millis()%(SLEEP_P/1000))/1000);
 
@@ -67,9 +79,17 @@ void loop(){                                    // 繰り返し実行する関�
     if(lux < 0.) return;                        // 取得失敗時にloopの先頭に戻る
     analogMeterNeedle(lux,5);                   // 照度に応じてメータ針を設定
 
+    if(lux > disp_max * 3 / 4){                 // メータ値が3/4以上のとき
+        M5.Lcd.fillRect(0,178, 320,28,TFT_RED); // 表示部の背景を赤色に塗る
+    }else{
+        M5.Lcd.fillRect(0,178, 320,28, BLACK);  // 表示部の背景を黒色に塗る
+    }
     String S = "Illuminance= " + String(lux,0); // 照度値を文字列変数Sに代入
-    M5.Lcd.drawCentreString(S, 160, 210, 4);    // 文字列を表示
+    S += " lx";                                 // 単位を追記
+    M5.Lcd.drawCentreString(S, 160, 180, 4);    // 文字列を表示
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
+    M5.Lcd.setCursor(172, 168);                 // 文字位置を設定
+    M5.Lcd.print(WiFi.localIP());               // 本機のアドレスをシリアル出力
 
     S = String(DEVICE) + String(lux,0);         // 送信データSにデバイス名を代入
     Serial.println(S);                          // 送信データSをシリアル出力表示

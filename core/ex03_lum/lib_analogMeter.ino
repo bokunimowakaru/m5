@@ -184,6 +184,12 @@ void analogMeterInit(String unit_S, String name_S, int min_val, int max_val){
   analogMeterInit();
 }
 
+void analogMeterInit(int min_val, int max_val){
+  analogMeterMinVal = min_val;
+  analogMeterMaxVal = max_val;
+  analogMeterInit();
+}
+
 void analogMeterInit(String unit_S){
   analogMeterUnit = unit_S;
   analogMeterInit();
