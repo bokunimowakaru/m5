@@ -3,7 +3,7 @@ IoT Code Examples for ESP32, M5Stack, M5Stick C, M5Stick C Plus, ATOM, ATOM  Lit
 
 ## サンプル集
 
-ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5Stick C Plus, ATOM Lite に対応したサンプル・プログラム集です。
+ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5Stick C, M5Stick C Plus, ATOM Lite に対応したサンプル・プログラム集です。
 
 ## 本コンテンツの最新版とダウンロード方法
 
@@ -61,7 +61,10 @@ ESP32開発ボード（ ESP32-WROOM-32 搭載）で使用する場合、下記�
 
 3. [ツール]メニュー内の[ボード]からボードマネージャを開き、検索窓に「esp32」を入力後、esp32 by Espressif Systems をインストールする。
 
-4. [ツール]メニュー内の[ボード]で ESP32C3 DEev Module を選択する。
+4. [ツール]メニュー内の[ボード]で ESP32 Dev Module を選択する。
+
+5. M5Stack Atomの場合は、[ツール]メニュー内の[Upload Speed]で115200を選択する。
+その他のM5Stack/M5Stickの場合は、M5Stack社のインストール方法を参照してください。
 
 by bokunimo.net(https://bokunimo.net/)
 - ブログ (https://bokuniomo.net/blog/)
