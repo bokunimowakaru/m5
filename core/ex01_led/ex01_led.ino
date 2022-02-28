@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 1: Wi-Fi コンシェルジェ 照明担当 for ATOM / ATOM Lite
+Example 1: Wi-Fi コンシェルジェ 照明担当 for M5Sack Core
 ・HTTPによるWebサーバ機能搭載 Wi-FiコンシェルジェがLEDを制御します。
 ・RGB LEDが無くても、電球の画像の切換で動作確認できます。
 
@@ -75,12 +75,12 @@ void loop(){                                    // 繰り返し実行する関�
 /*******************************************************************************
 【参考文献】
 Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/atom/arduino
+https://docs.m5stack.com/en/quick_start/m5core/arduino
 
-ATOM Lite Arduino Library API 情報(本サンプルでは使用しない)：
-https://docs.m5stack.com/en/api/atom/system
+M5Stack Arduino Library API 情報：
+https://docs.m5stack.com/en/api/core/system
 
 【引用コード】
 https://github.com/bokunimowakaru/esp/tree/master/2_example/example16_led
 https://github.com/bokunimowakaru/esp/tree/master/2_example/example48_led
-********************************************************************************
+*******************************************************************************/
