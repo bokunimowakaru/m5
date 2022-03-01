@@ -78,9 +78,9 @@ int get_clickType(){                            // ボタン操作内容を取�
 
 String ip2s(uint32_t ip){                       // IPアドレスを文字列に変換
     String S;
-    for(int i=3;i>=0;i--){
-        S += String((ip>>(8*ip))%256);
-        if(i) S += ".";
+    for(int i=0;i<=3;i++){
+        S += String((ip>>(8*i))%256);
+        if(i<3) S += ".";
     }
     return S;
 }
@@ -101,7 +101,7 @@ void lcd_log(String S){                         // LCDにログを表示する
     }
     M5.Lcd.setCursor(0, 8*lcd_line);
     M5.Lcd.print(S);
-    S.toCharArray(lcd_buf[lcd_line-1],41);
+    S.toCharArray(lcd_buf[lcd_line-1],40);
 }
 
 void lcd_cls(){                                 // LCDを消去する関数

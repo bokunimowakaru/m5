@@ -79,6 +79,7 @@ void btnUpdate(){                               // ボタン状態に応じて�
         tx_en = 3;                              // 送信要否tx_en(3:ONを送信)
         M5.Lcd.drawJpgFile(SD, "/on_sw.jpg");   // LCDにJPEGファイルon_swを表示
     }
+    if(tx_en) M5.Lcd.setCursor(0, 0);           // LCD文字表示位置を原点に
 }
 
 void setup(){                                   // 起動時に一度だけ実行する関数
@@ -102,10 +103,13 @@ void loop(){                                    // 繰り返し実行する関�
 
     WiFiUDP udp;                                // UDP通信用のインスタンス定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
+    M5.Lcd.print("udp: ");                      // 「udp:」をLCDに表示
     if(tx_en == 1){                             // OFFを送信の時
         udp.println("Pong");                    // メッセージ"Pong"を送信
+        M5.Lcd.println("Pong");                 // "Pong"をLCD表示
     }else{                                      // その他の送信の時
         udp.println("Ping");                    // メッセージ"Ping"を送信
+        M5.Lcd.println("Ping");                 // "Ping"をLCD表示
     }
     udp.endPacket();                            // UDP送信の終了(実際に送信)
     delay(200);                                 // 送信待ち時間
@@ -116,7 +120,7 @@ void loop(){                                    // 繰り返し実行する関�
 
     if(strlen(LINE_TOKEN) > 42){                // LINE_TOKEN設定時
         url = "https://notify-api.line.me/api/notify";  // LINEのURLを代入
-        Serial.println(url);                    // 送信URLを表示
+        M5.Lcd.println(url);                    // 送信URLをLCD表示
         http.begin(url);                        // HTTPリクエスト先を設定する
         http.addHeader("Content-Type","application/x-www-form-urlencoded");
         http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
@@ -126,7 +130,7 @@ void loop(){                                    // 繰り返し実行する関�
     if(strcmp(LED_IP,"192.168.1.0")){           // 子機IPアドレス設定時
         url = "http://" + String(LED_IP) + "/?L="; // アクセス先URL
         url += String(tx_en == 1 ? 0 : 1);      // L=OFF時0、その他1
-        Serial.println(url);                    // 送信URLを表示
+        M5.Lcd.println(url);                    // 送信URLをLCD表示
         http.begin(url);                        // HTTPリクエスト先を設定する
         http.GET();                             // ワイヤレスLEDに送信する
         http.end();                             // HTTP通信を終了する
