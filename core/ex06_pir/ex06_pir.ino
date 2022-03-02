@@ -124,8 +124,9 @@ void loop(){                                    // 繰り返し実行する関�
         http.POST("message=センサが反応しました。(" + S.substring(8) + ")");
         http.end();                             // HTTP通信を終了する
     }
-    delay(100);                                 // 送信完了の待ち時間処理
+    delay(100);                                 // 送信完了待ち＋連続送信防止
     M5.Lcd.fillRect(0, 182, 320, 26, BLACK);    // Detectedを消す
     WiFi.disconnect();                          // Wi-Fiの切断
+    while(digitalRead(PIN_PIR) ^ PIR_XOR) delay(100); // センサの解除待ち
     trig = false;
 }
