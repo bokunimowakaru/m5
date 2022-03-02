@@ -98,6 +98,7 @@ void loop(){                                    // 繰り返し実行する関�
             WiFi.begin(SSID,PASS);              // 無線LANアクセスポイント接続
             M5.Lcd.fillRect(0, 182, 320, 26, DARKCYAN);
             M5.Lcd.drawCentreString("Detected", 160, 184, 4);
+            analogMeterNeedle(0,1);
             trig = true;
         }
     }
