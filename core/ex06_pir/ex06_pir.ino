@@ -60,7 +60,6 @@ RTC_DATA_ATTR int disp_max = 200;               // メータの最大値
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 boolean pir;                                    // 人感センサ値orドアセンサ状態
-boolean prev;                                   // 前回値
 boolean trig = false;                           // 送信用トリガ
 int count = 99999;                              // センサ検知時に約0.5秒毎に1増
 
@@ -92,19 +91,17 @@ void loop(){                                    // 繰り返し実行する関�
         float v = - 20. * log10(count/2);
         analogMeterNeedle(v,10);                // 経過時間に応じてメータ針を設定
     }
-    if(pir == prev) return;                     // 前回値と同じなら元に戻る
-
     boolean PIR = pir ^ PIR_XOR;                // 検知状態を1、非検知を0に
     if(PIR){
         count = 1;
-        if(!trig) WiFi.begin(SSID,PASS);        // 無線LANアクセスポイント接続
-        trig = true;
-        M5.Lcd.fillRect(0, 182, 320, 26, DARKCYAN);
-        M5.Lcd.drawCentreString("Detected", 160, 184, 4);
+        if(!trig){
+            WiFi.begin(SSID,PASS);              // 無線LANアクセスポイント接続
+            M5.Lcd.fillRect(0, 182, 320, 26, DARKCYAN);
+            M5.Lcd.drawCentreString("Detected", 160, 184, 4);
+            trig = true;
+        }
     }
-    delay(100);                                 // チャタリング防止
-    prev = pir;                                 // 前回値を保持
-    if(!trig) return;                           // 送信トリガが無いときに戻る
+    if(!trig) return;                           // 送信トリガなしの時に戻る
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
 
     String S = String(DEVICE);                  // 送信データ保持用の文字列変数
