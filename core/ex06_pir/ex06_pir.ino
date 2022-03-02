@@ -49,7 +49,7 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex06_pir
 #define PORT 1024                               // 受信ポート番号
 #define DEVICE "pir_s_5,"                       // 人感センサ時デバイス名
 #define PIR_XOR 0                               // センサ送信値の論理反転の有無
-RTC_DATA_ATTR int disp_max = 200;               // メータの最大値
+RTC_DATA_ATTR int disp_max = 40;                // メータの最大値
 
 /******************************************************************************
  UDP 宛先 IP アドレス設定
@@ -61,7 +61,7 @@ IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 boolean pir;                                    // 人感センサ値orドアセンサ状態
 boolean trig = false;                           // 送信用トリガ
-int count = 99999;                              // センサ検知時に約0.5秒毎に1増
+int count = 999999;                             // センサ検知時に約0.5秒毎に1増
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
@@ -70,7 +70,7 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
     analogMeterInit("-dBsec.","PIR", -disp_max, 0);  // アナログ・メータの初期表示
     M5.Lcd.println("ex.06 M5Stack PIR (AS312)"); // タイトルの表示
-    String S = "[   20   ]      [200]      [2000]"; // ボタン名を定義
+    String S = "[   20   ]      [40]      [100]"; // ボタン名を定義
     M5.Lcd.drawCentreString(S, 160, 208, 4);    // 文字列を表示
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
 }
@@ -81,8 +81,8 @@ void loop(){                                    // 繰り返し実行する関�
     int btn=M5.BtnA.wasPressed()+2*M5.BtnB.wasPressed()+4*M5.BtnC.wasPressed();
     switch(btn){
         case 1: disp_max = 20; break;           // 最大20dB秒まで表示
-        case 2: disp_max = 200; break;          // 最大200dB秒まで表示
-        case 4: disp_max = 2000; break;         // 最大2000dB秒まで表示
+        case 2: disp_max = 40; break;           // 最大40dB秒まで表示
+        case 4: disp_max = 100; break;          // 最大100dB秒まで表示
         default: btn = 0; break;
     }
     if(btn) analogMeterInit(-disp_max,0);       // ボタン操作時にグラフ初期化
@@ -125,8 +125,8 @@ void loop(){                                    // 繰り返し実行する関�
         http.end();                             // HTTP通信を終了する
     }
     delay(100);                                 // 送信完了待ち＋連続送信防止
-    M5.Lcd.fillRect(0, 182, 320, 26, BLACK);    // Detectedを消す
     WiFi.disconnect();                          // Wi-Fiの切断
     while(digitalRead(PIN_PIR) ^ PIR_XOR) delay(100); // センサの解除待ち
+    M5.Lcd.fillRect(0, 182, 320, 26, BLACK);    // Detectedを消す
     trig = false;
 }
