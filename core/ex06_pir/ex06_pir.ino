@@ -62,7 +62,7 @@ IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 boolean pir;                                    // 人感センサ値orドアセンサ状態
 boolean prev;                                   // 前回値
 boolean trig = false;                           // 送信用トリガ
-int count = 0;                                  // センサ検知時に約0.5秒毎に1増
+int count = 99999;                              // センサ検知時に約0.5秒毎に1増
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
@@ -99,6 +99,8 @@ void loop(){                                    // 繰り返し実行する関�
         count = 1;
         if(!trig) WiFi.begin(SSID,PASS);        // 無線LANアクセスポイント接続
         trig = true;
+        M5.Lcd.fillRect(0, 182, 320, 26, DARKCYAN);
+        M5.Lcd.drawCentreString("Detected", 160, 184, 4);
     }
     delay(100);                                 // チャタリング防止
     prev = pir;                                 // 前回値を保持
@@ -126,6 +128,7 @@ void loop(){                                    // 繰り返し実行する関�
         http.end();                             // HTTP通信を終了する
     }
     delay(100);                                 // 送信完了の待ち時間処理
+    M5.Lcd.fillRect(0, 182, 320, 26, BLACK);    // Detectedを消す
     WiFi.disconnect();                          // Wi-Fiの切断
     trig = false;
 }
