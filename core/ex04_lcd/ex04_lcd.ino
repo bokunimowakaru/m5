@@ -69,6 +69,7 @@ WiFiUDP udp;                                    // UDP通信用のインスタ�
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
+    M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
     M5.Lcd.setTextColor(WHITE);                 // 文字色を白(背景なし)に設定
     M5.Lcd.print("M5 LCD ");                    // 「M5 LCD」をLCDに出力
 

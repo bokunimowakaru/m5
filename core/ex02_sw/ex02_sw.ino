@@ -84,6 +84,7 @@ void btnUpdate(){                               // ボタン状態に応じて�
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
+    M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
     M5.Lcd.drawJpgFile(SD, "/off_sw.jpg");      // LCDにJPEGファイルoff_sw表示
     M5.Lcd.println("M5 SW UDP LINE LED");       // 「SW UDP」をシリアル出力表示
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定

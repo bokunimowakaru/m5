@@ -20,6 +20,7 @@ https://github.com/bokunimowakaru/m5s/tree/master/example01_hello
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.Lcd.begin();                             // M5Stack用Lcdライブラリの起動
+    M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
     M5.Lcd.fillScreen(BLACK);                   // LCDを消去
     M5.Lcd.setTextSize(2);                      // 文字表示サイズを2倍に設定
     M5.Lcd.println("Example 0 M5Stack LCD");    // LCDにタイトルを表示

@@ -54,6 +54,7 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     led_setup(PIN_LED_RGB);                     // RGB LED 初期設定(ポート設定)
     ledControl(led_stat);                       // LED制御関数ledControlを実行
+    M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
     M5.Lcd.println("M5 LED HTTP");              // タイトル「LED HTTP」を表示
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
