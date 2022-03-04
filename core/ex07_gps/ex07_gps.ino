@@ -21,8 +21,13 @@ Example 7: GPS(GNSS)の位置情報を取得し、Wi-Fiで送信する
 #define PORT 1024                               // 送信のポート番号
 #define DEVICE "gns_s_3,"                       // デバイス名(5字+"_"+番号+",")
 #define LOGUDP "log_s_0,"                       // デバイス名(5字+"_"+番号+",")
-RTC_DATA_ATTR int mode = 0;                     // 0:日本地図 1:TEXT 2:Raw
-String mode_S[3] = {"Map","Text","Raw"};
+RTC_DATA_ATTR int mode = 0;                     // 0:日本地図 1:座標表示 2:Raw
+String mode_S[3] = {"Map","Lat/Lon","Raw"};
+const float japan[5][4]={   {129.87,32.76, 21,194},
+                            {135.00,34.65,104,178},
+                            {139.74,35.66,176,173},
+                            {139.15,37.83,171,133},
+                            {141.92,45.50,231,  3}};
 
 /******************************************************************************
  Ambient 設定
@@ -49,9 +54,11 @@ String mode_S[3] = {"Map","Text","Raw"};
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 TinyGPS gps;                                    // GPSライブラリのインスタンス
-float lat=0., lon=0., alt=0.;                   // 緯度・経度・標高
-unsigned short sat=0;
-unsigned long hdop=0, age=0;
+float lat_origin =  35.+40./60.+37.8311/3600.;  // 緯度
+float lon_origin = 139.+44./60.+51.5282/3600.;  // 経度
+float alt_origin = 30.300;                      // 標高
+float lat, lon, alt;
+boolean gps_avail = false;                      // GPSデータの有無
 boolean trig = false;                           // 送信用トリガ
 unsigned long base_ms = 0;                      // センサ検知時の時刻
 
@@ -88,8 +95,29 @@ String ip2s(uint32_t ip){                       // IPアドレスを文字列に
     return S;
 }
 
-void lcd_cls(){                                 // LCDを消去する関数
-    M5.Lcd.fillScreen(BLACK);                   // 表示内容を消去
+void lcd_cls(int mode){                             // LCDを消去する関数
+    switch(mode){
+        case 0:
+            M5.Lcd.drawJpgFile(SD, "/japan.jpg");   // LCDに日本地図japan.jpgを表示
+            M5.Lcd.setTextColor(BLACK);         // 文字色を黒(背景なし)に設定
+            break;
+        case 1:
+            M5.Lcd.fillScreen(BLACK);           // 表示内容を消去
+            M5.Lcd.setTextColor(WHITE,BLACK);   // 文字色を白(背景なし)に設定
+            M5.Lcd.drawLine(0, 120, 320, 120, LIGHTGREY);
+            M5.Lcd.drawLine(160, 0, 160, 240, LIGHTGREY);
+            M5.Lcd.drawCircle(160,120,100,LIGHTGREY);
+            if(gps_avail){
+                lat_origin = lat;
+                lon_origin = lon;
+                alt_origin = alt;
+            }
+            break;
+        case 2:
+            M5.Lcd.fillScreen(BLACK);           // 表示内容を消去
+            M5.Lcd.setTextColor(WHITE,BLACK);   // 文字色を白(背景黒)に設定
+            break;
+    }
     M5.Lcd.setCursor(0,0);                      // 文字表示位置を0,0に
     M5.Lcd.print(" M5 GNSS/GPS ");              // 「GNSS/GPS」をLCD表示
     M5.Lcd.print(mode_S[mode] + " ");           // 起動操作をLCD表示
@@ -100,7 +128,7 @@ void lcd_cls(){                                 // LCDを消去する関数
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
     M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
-    M5.Lcd.drawJpgFile(SD, "/japan.jpg");       // LCDに日本地図japan.jpgを表示
+    lcd_cls(mode);                              // 画面を消去する関数を実行
     setupGps();                                 // GPS初期化
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
 }
@@ -109,18 +137,60 @@ void loop(){                                    // 繰り返し実行する関�
     M5.update();                                // ボタン状態の取得
     int btn=M5.BtnA.wasPressed()+2*M5.BtnB.wasPressed()+4*M5.BtnC.wasPressed();
     switch(btn){
-        case 1: mode = 0; break;                // 0:日本地図
-        case 2: mode = 1; break;                // 1:TEXT
-        case 4: mode = 2; break;                // 2:Raw + UDP送信
+        case 1: mode = 0; lcd_cls(mode); break; // 0:日本地図
+        case 2: mode = 1; lcd_cls(mode); break; // 1:座標表示
+        case 4: mode = 2; lcd_cls(mode); break; // 2:Raw + UDP送信
         default: btn = 0; break;
     }
 
-    if(mode == 1){                              // 地図表示モード
-        getGpsPos(gps,&lat,&lon,&alt,&sat,&hdop,&age);  // GPS情報取得
-        lcd_log("GPS: " + String(sat) + " satellites");         // ログをLCD表示
-    }
-
-    if(mode == 2){                              // ダブルクリック時
+    if(mode == 0){                              // 地図表示モード
+        gps_avail = getGpsPos(gps,&lat,&lon,&alt);  // GPSから位置情報を取得
+        if(gps_avail){
+            float max[2]={0,0};
+            float ind[2]={0,0};
+            for(int i=0;i<5;i++){
+                float d0 = lon - japan[i][0];
+                float d1 = lat - japan[i][1];
+                float d = sqrt(pow(d0,2)+pow(d1,2));
+                if(max[0] < d && d < max[1]){
+                    max[0] = d;
+                    ind[0] = i;
+                }else if(max[1] < d){
+                    max[0] = max[1];
+                    ind[0] = ind[1];
+                    max[1] = d;
+                    ind[1] = i;
+                }
+            }
+            int x=(int)(
+                japan[ind[1]][2]-japan[ind[0]][2])
+                *((lon-japan[ind[0]][0])/(japan[ind[1]][0])-japan[ind[0]][0])))
+                +japan[ind[0]][2]
+            );
+            int y=(int)(
+                (japan[ind[1]][3]-japan[ind[0]][3])
+                *((lon-japan[ind[0]][1])/(japan[ind[1]][1])-japan[ind[0]][1])))
+                +japan[ind[0]][3]
+            );;
+            if(x>=0 && x<320 && y>=0 && y<240) M5.Lcd.fillCircle(x,y,3,BLACK);
+            M5.Lcd.setCursor(0,8);
+            M5.Lcd.println("lat="+String(lat,6)+" ");
+            M5.Lcd.println("lon="+String(lon,6)+" ");
+            M5.Lcd.println("alt="+String(alt,0)+"m ");
+        }
+    }else if(mode == 1){                              // 座標表示モード
+        gps_avail = getGpsPos(gps,&lat,&lon,&alt);  // GPSから位置情報を取得
+        if(gps_avail){
+            int x = (int)(10. * 116.80 * (lon - lon_origin));
+            int y = (int)(10. * 143.12 * (lat - lat_origin));
+            if(x>=0 && x<320 && y>=0 && y<240) M5.Lcd.fillCircle(x,y,3,RED);
+            M5.Lcd.setCursor(0,8);
+            M5.Lcd.println("lat="+String(lat,6)+" ");
+            M5.Lcd.println("lon="+String(lon,6)+" ");
+            M5.Lcd.println("alt="+String(alt,0)+"m ");
+            M5.Lcd.println("dis="+String(sqrt(pow(x,2)+pow(y,2))/100,3)+"km ");
+        }
+    }else if(mode == 3){                              // Raw表示 + UDP送信
         char s[128];                            // 最大文字長127文字
         boolean i = getGpsRawData(s,128);       // GPS生データを取り込む
         if(s[0] != 0){
@@ -148,16 +218,12 @@ void loop(){                                    // 繰り返し実行する関�
 
     // lcd_log("Wi-Fi: STAT = " + String(WiFi.status()));
 
-    if(trig && WiFi.status() == WL_CONNECTED){
-        getGpsPos(gps,&lat,&lon,&alt,&sat,&hdop,&age);  // GPSから位置情報を取得
+    if(gps_avail && trig && WiFi.status() == WL_CONNECTED){
         if(alt>1000) alt = 0.;                      // 測定不可時の対応
         String S = String(DEVICE);                  // 送信データ保持用の文字列変数
         S += String(lat,6) + ", ";                  // 緯度値を送信データに追記
         S += String(lon,6) + ", ";                  // 経度値を送信データに追記
-        S += String(alt,0) + ", ";                  // 標高値を送信データに追記
-        S += String(sat) + ", ";                    // 衛生数を送信データに追記
-        S += String(hdop) + ", ";                   // DHOP値を送信データに追記
-        S += String(age);                           // 取得経過時間を追記
+        S += String(alt,0);                         // 標高値を送信データに追記
         lcd_log("GPS: " + S);                       // LCDに表示
 
         WiFiUDP udp;                                // UDP通信用のインスタンス定義
@@ -193,6 +259,9 @@ https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
 
 M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
 https://docs.m5stack.com/en/api/stickc/system_m5stickc
+
+https://www.hiramine.com/physicalcomputing/general/gps_nmeaformat.html
+NMEA
 
 【引用コード】
 https://github.com/bokunimowakaru/SORACOM-LoRaWAN/blob/master/examples/cqp_ex05_gps_bin
