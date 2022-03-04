@@ -147,7 +147,7 @@ void loop(){                                    // 繰り返し実行する関�
         gps_avail = getGpsPos(gps,&lat,&lon,&alt);  // GPSから位置情報を取得
         if(gps_avail){
             float max[2]={0,0};
-            float ind[2]={0,0};
+            int ind[2]={0,0};
             for(int i=0;i<5;i++){
                 float d0 = lon - japan[i][0];
                 float d1 = lat - japan[i][1];
