@@ -163,15 +163,15 @@ void loop(){                                    // 繰り返し実行する関�
                 }
             }
             int x=(int)(
-                japan[ind[1]][2]-japan[ind[0]][2])
-                *((lon-japan[ind[0]][0])/(japan[ind[1]][0])-japan[ind[0]][0])))
+                (japan[ind[1]][2]-japan[ind[0]][2])
+                *((lon-japan[ind[0]][0])/(japan[ind[1]][0]-japan[ind[0]][0]))
                 +japan[ind[0]][2]
             );
             int y=(int)(
                 (japan[ind[1]][3]-japan[ind[0]][3])
-                *((lon-japan[ind[0]][1])/(japan[ind[1]][1])-japan[ind[0]][1])))
+                *((lon-japan[ind[0]][1])/(japan[ind[1]][1]-japan[ind[0]][1]))
                 +japan[ind[0]][3]
-            );;
+            );
             if(x>=0 && x<320 && y>=0 && y<240) M5.Lcd.fillCircle(x,y,3,BLACK);
             M5.Lcd.setCursor(0,8);
             M5.Lcd.println("lat="+String(lat,6)+" ");
