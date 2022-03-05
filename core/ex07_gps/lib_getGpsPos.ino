@@ -61,7 +61,7 @@ bool getGpsRawData(char *s, int len){
         if(ss.available()){
             char c = ss.read();
             if(c =='$') en = 1; // 開始
-            if(c =='*') en = 0; // 終了
+            // if(c =='*') en = 0; // 終了
             if(c =='\r' || c =='\n') return 1;
             if(en){
                 s[i] = c;

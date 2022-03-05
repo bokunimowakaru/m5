@@ -8,7 +8,9 @@ Example 7: GPS(GNSS)の位置情報を取得し、Wi-Fiで送信する
 
                                                Copyright (c) 2022 Wataru KUNINO
 ********************************************************************************
-★ご注意★・GPS Unitの電源を入れてから位置情報が得られるまで数分以上を要します
+★ご注意★・屋外での視覚用にLCDの★輝度を最大に設定★してあります。
+          ・GPS Unit を Grove互換端子に接続してください。
+          ・GPS Unitの電源を入れてから位置情報が得られるまで数分以上を要します。
 *******************************************************************************/
 
 #include <M5StickCPlus.h>                       // M5StickC Plus 用ライブラリ
@@ -125,7 +127,7 @@ void setup(){                                   // 起動時に一度だけ実�
 
     WiFi.mode(WIFI_OFF);                        // 無線LANをOFFモードに設定
     M5.begin();                                 // M5Stack用ライブラリの起動
-    M5.Axp.ScreenBreath(7+2);                   // LCDの輝度を2に設定
+    M5.Axp.ScreenBreath(7+5);                   // LCDの輝度を5(最大)に設定
     M5.Lcd.setRotation(1);                      // LCDを横向き表示に設定
     M5.Lcd.setTextFont(1);                      // 8x6ピクセルのフォント
     lcd_cls();                                  // LCD消去
