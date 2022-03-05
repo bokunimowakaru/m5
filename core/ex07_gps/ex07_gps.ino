@@ -219,8 +219,8 @@ void loop(){                                    // 繰り返し実行する関�
     }else if(mode == 1){                        // 座標表示モード
         gps_avail = getGpsPos(gps,&lat,&lon,&alt);  // GPSから位置情報を取得
         if(gps_avail){
-            float x = 10. * 116.80 * (lon - lon_origin);
-            float y = 10. * 143.12 * (lat - lat_origin);
+            float x =  9055. * (lon - lon_origin);
+            float y = 11095. * (lat - lat_origin);
             if(x>-160 && x<160 && y>-120 && y<120){
                 M5.Lcd.fillCircle(160+(int)x,120-(int)y,3,RED);
             }
