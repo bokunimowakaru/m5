@@ -16,6 +16,8 @@ Example 1: Wi-Fi コンシェルジェ 照明担当 for M5Sack Core
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
 #define PASS "password"                         // パスワード
 
+// #define M5STACK_V1
+
 WebServer server(80);                           // Webサーバ(ポート80=HTTP)定義
 int led_stat = 0;                               // LED状態用変数led_statを定義
 

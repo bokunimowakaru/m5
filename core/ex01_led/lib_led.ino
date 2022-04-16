@@ -38,7 +38,9 @@ void ws2812_control_init(void){
     config.gpio_num = (gpio_num_t)_PIN_LED;
     config.mem_block_num = 3;
     // glancek commented on 30 Mar 2021; not work without flag = 0
-    config.flags = 0;
+    #ifndef M5STACK_V1
+       config.flags = 0;
+    #endif
     config.tx_config.loop_en = false;
     config.tx_config.carrier_en = false;
     config.tx_config.idle_output_en = true;
