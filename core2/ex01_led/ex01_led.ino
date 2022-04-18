@@ -38,7 +38,8 @@ void handleRoot(){
     tx = getHtml(led_stat);                     // HTMLコンテンツを取得
     server.send(200, "text/html", tx);          // HTMLコンテンツを送信
     ledControl(led_stat);                       // LED制御関数ledControlを実行
-    M5.Lcd.println("LED="+String(led_stat));    // LED状態led_stat値を表示
+    String S = "L=" + String(led_stat);         // 表示用変数Sにled_stat値を代入
+    M5.Lcd.drawString(S,0,0);                   // LCDに変数Sの内容を表示
 }
 
 void btnUpdate(){                               // ボタン状態に応じてLEDを制御
