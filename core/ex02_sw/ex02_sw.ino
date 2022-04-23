@@ -54,32 +54,23 @@ Example 2: ESP32 (IoTセンサ) Wi-Fi ボタン for M5Sack Core
  *****************************************************************************/
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
-int sw_stat = 0;                                // スイッチ状態用の変数を定義
-int tx_en = 0;                                  // 送信要否tx_en(0:送信無効)
 String btn_S[]={"No","OFF","Ping","ON"};        // 送信要否状態0～3の名称
 
-void btnUpdate(){                               // ボタン状態に応じて画面切換
-    tx_en = 0;                                  // 送信無効に設定
+int btnUpdate(){                                // ボタン状態に応じて画面切換
     M5.update();                                // M5Stack用IO状態の更新
-    int btnA = M5.BtnA.wasPressed();            // ボタンAの状態をbtnAへ代入
-    int btnB = M5.BtnB.wasPressed();            // ボタンCの状態をbtnCへ代入
-    int btnC = M5.BtnC.wasPressed();            // ボタンCの状態をbtnCへ代入
-    if( btnA && sw_stat ){                      // ボタンAかつsw_stat=1のとき
+    delay(1);                                   // ボタンの誤作動防止用
+    int tx_en = 0;                              // 送信要否tx_en(0:送信無効)
+    if( M5.BtnA.wasPressed() ){                 // ボタンAが押されたとき
         M5.Lcd.drawJpgFile(SD, "/off_sw.jpg");  // LCDにJPEGファイルoff_sw表示
-        sw_stat = 0;                            // スイッチ状態を0(OFF)に
         tx_en = 1;                              // 送信要否tx_en(1:OFFを送信)
-    }else if( btnB ){                           // ボタンBが押されたとき
-        if(sw_stat == 0){                       // 現在がOFFのとき
-            M5.Lcd.drawJpgFile(SD, "/on_sw.jpg"); // LCDにJPEGファイルon_sw
-        }
-        sw_stat = 1;                            // スイッチ状態を1(ON)に
-        tx_en = 2;                              // 送信要否tx_en(2:Ping / 3:ON)
-    }else if( btnC && !sw_stat ){               // ボタンCかつsw_stat=0のとき
-        sw_stat = 1;                            // スイッチ状態を1(ON)に
-        tx_en = 3;                              // 送信要否tx_en(3:ONを送信)
+    }else if( M5.BtnB.wasPressed() ){           // ボタンBが押されたとき
+        tx_en = 2;                              // 送信要否tx_en(2:Ping)
+    }else if( M5.BtnC.wasPressed() ){           // ボタンCが押されたとき
         M5.Lcd.drawJpgFile(SD, "/on_sw.jpg");   // LCDにJPEGファイルon_swを表示
+        tx_en = 3;                              // 送信要否tx_en(3:ONを送信)
     }
     if(tx_en) M5.Lcd.setCursor(0, 0);           // LCD文字表示位置を原点に
+    return tx_en;                               // 送信要否を応答する
 }
 
 void setup(){                                   // 起動時に一度だけ実行する関数
@@ -99,7 +90,7 @@ void setup(){                                   // 起動時に一度だけ実�
 }
 
 void loop(){                                    // 繰り返し実行する関数
-    btnUpdate();                                // ボタン状態を確認
+    int tx_en = btnUpdate();                    // ボタン状態と送信要否の確認
     if(tx_en==0) return;                        // 送信要求が無い(0)の時に戻る
 
     WiFiUDP udp;                                // UDP通信用のインスタンス定義
