@@ -18,8 +18,6 @@ Example 2: ESP32 (IoTセンサ) Wi-Fi ボタン for M5Sack Core
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <WiFiUdp.h>                            // UDP通信を行うライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
-#include "on_sw_jpg.h"                          // ON状態のスイッチのJPEGデータ
-#include "off_sw_jpg.h"                         // OFF状態のスイッチのJPEGデータ
 
 /******************************************************************************
  LINE Notify 設定
@@ -63,12 +61,12 @@ int btnUpdate(){                                // ボタン状態に応じて�
     delay(1);                                   // ボタンの誤作動防止用
     int tx_en = 0;                              // 送信要否tx_en(0:送信無効)
     if( M5.BtnA.wasPressed() ){                 // ボタンAが押されたとき
-        M5.Lcd.drawJpg(off_sw_jpg,off_sw_jpg_len);  // LCDにJPEG画像off_swを表示
+        M5.Lcd.drawJpgFile(SD, "/off_sw.jpg");  // LCDにJPEGファイルoff_sw表示
         tx_en = 1;                              // 送信要否tx_en(1:OFFを送信)
     }else if( M5.BtnB.wasPressed() ){           // ボタンBが押されたとき
         tx_en = 2;                              // 送信要否tx_en(2:Ping)
     }else if( M5.BtnC.wasPressed() ){           // ボタンCが押されたとき
-        M5.Lcd.drawJpg(on_sw_jpg,on_sw_jpg_len);   // LCDにJPEG画像on_swを表示
+        M5.Lcd.drawJpgFile(SD, "/on_sw.jpg");   // LCDにJPEGファイルon_swを表示
         tx_en = 3;                              // 送信要否tx_en(3:ONを送信)
     }
     if(tx_en) M5.Lcd.setCursor(0, 0);           // LCD文字表示位置を原点に
@@ -78,7 +76,7 @@ int btnUpdate(){                                // ボタン状態に応じて�
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
     M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
-    M5.Lcd.drawJpg(off_sw_jpg,off_sw_jpg_len);  // LCDにJPEGファイルoff_sw表示
+    M5.Lcd.drawJpgFile(SD, "/off_sw.jpg");      // LCDにJPEGファイルoff_sw表示
     M5.Lcd.println("M5 SW UDP LINE LED");       // 「SW UDP」をシリアル出力表示
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
