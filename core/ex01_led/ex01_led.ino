@@ -24,10 +24,10 @@ int led_stat = 0;                               // LED状態用変数led_statを
 void ledControl(boolean on){                    // LED制御関数
     if(on){                                     // on=trueのとき
         led(20);                                // RGB LEDを点灯(輝度20)
-        M5.Lcd.drawJpg(on_jpg,on_jpg_len);      // LCDにJPEGファイルonを表示
+        M5.Lcd.drawJpg(on_jpg,on_jpg_len);      // LCDにJPEG画像onを表示
     }else{                                      // on=falseのとき
         led(0);                                 // RGB LEDを消灯
-        M5.Lcd.drawJpg(off_jpg,off_jpg_len);    // LCDにJPEGファイルoffを表示
+        M5.Lcd.drawJpg(off_jpg,off_jpg_len);    // LCDにJPEG画像offを表示
     }
 }
 
