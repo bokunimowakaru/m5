@@ -11,6 +11,8 @@ Example 1: Wi-Fi コンシェルジェ 照明担当 for M5Sack Core2
 #include <M5Core2.h>                            // M5Stack用ライブラリ組み込み
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <WebServer.h>                          // HTTPサーバ用ライブラリ
+#include "on_jpg.h"                             // 点灯した電球のJPEGデータ
+#include "off_jpg.h"                            // 消灯した電球のJPEGデータ
 
 #define PIN_LED_RGB 21                          // RGB LED
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
@@ -22,10 +24,10 @@ int led_stat = 0;                               // LED状態用変数led_statを
 void ledControl(boolean on){                    // LED制御関数
     if(on){                                     // on=trueのとき
         led(20);                                // RGB LEDを点灯(輝度20)
-        M5.Lcd.drawJpgFile(SD, "/on.jpg");      // LCDにJPEGファイルonを表示
+        M5.Lcd.drawJpg(on_jpg,on_jpg_len);      // LCDにJPEGファイルonを表示
     }else{                                      // on=falseのとき
         led(0);                                 // RGB LEDを消灯
-        M5.Lcd.drawJpgFile(SD, "/off.jpg");     // LCDにJPEGファイルoffを表示
+        M5.Lcd.drawJpg(off_jpg,off_jpg_len);    // LCDにJPEGファイルoffを表示
     }
 }
 
