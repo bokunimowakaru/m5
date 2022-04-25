@@ -23,6 +23,7 @@ Example 7: GPS(GNSS)の位置情報を取得し、Wi-Fiで送信する
 #include <WiFiUdp.h>                            // UDP通信を行うライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
 #include "lib_TinyGPS.h"                        // GPS通信用ライブラリ
+#include "japan_jpg.h"                          // 日本地図のJPEGデータ
 
 #define SSID "1234ABCD"                         // 無線LANアクセスポイント SSID
 #define PASS "password"                         // パスワード
@@ -136,8 +137,9 @@ void lcd_head(){
 void lcd_cls(int mode){                             // LCDを消去する関数
     switch(mode){
         case 0:
-            M5.Lcd.drawJpgFile(SD, "/japan.jpg");   // LCDに日本地図japan.jpgを表示
-            // M5.Lcd.setTextColor(BLACK,WHITE);       // 文字色を黒(背景白)に設定
+            M5.Lcd.drawJpg(japan_jpg,japan_jpg_len); // LCDに日本地図を表示
+            // M5.Lcd.drawJpgFile(SD, "/japan.jpg"); // LCDにjapan.jpgを表示
+            // M5.Lcd.setTextColor(BLACK,WHITE);     // 文字色を黒(背景白)に設定
             M5.Lcd.setTextColor(WHITE,BLACK);   // 文字色を白(背景なし)に設定
             break;
         case 1:
