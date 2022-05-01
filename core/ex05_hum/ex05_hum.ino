@@ -103,7 +103,7 @@ void loop(){                                    // 繰り返し実行する関�
 
     M5.Lcd.fillRect(0, 202, 320, 8, BLACK);     // 表示部の背景を塗る
     M5.Lcd.setCursor(0, 202);                   // 文字位置を設定
-    M5.Lcd.println(WiFi.localIP());             // 本機のアドレスをシリアル出力
+    M5.Lcd.println(WiFi.localIP());             // 本機のアドレスをLCDに表示
 
     S = String(DEVICE);                         // 送信データSにデバイス名を代入
     S += String(temp,1) + ", ";                 // 変数tempの値を追記

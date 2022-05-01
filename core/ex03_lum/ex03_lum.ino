@@ -89,7 +89,7 @@ void loop(){                                    // 繰り返し実行する関�
     M5.Lcd.drawCentreString(S, 160, 180, 4);    // 文字列を表示
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
     M5.Lcd.setCursor(172, 168);                 // 文字位置を設定
-    M5.Lcd.print(WiFi.localIP());               // 本機のアドレスをシリアル出力
+    M5.Lcd.print(WiFi.localIP());               // 本機のアドレスをLCDに表示
 
     S = String(DEVICE) + String(lux,0);         // 送信データSにデバイス名を代入
     Serial.println(S);                          // 送信データSをシリアル出力表示
