@@ -7,7 +7,7 @@ Example 2: ESP32 (IoTセンサ) Wi-Fi ボタン for M5Sack Core2
 ・別の子機となる Wi-Fi コンシェルジェ証明担当(ワイヤレスLED子機)のIPアドレスを
 　設定すれば、右ボタンを押下したときに子機のLEDをON、左ボタンでOFFに制御。
 
-    使用機材(例)：M5Sack Core
+    使用機材(例)：M5Sack Core2
 
                                           Copyright (c) 2021-2022 Wataru KUNINO
 ********************************************************************************
@@ -78,7 +78,7 @@ int btnUpdate(){                                // ボタン状態に応じて�
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
     M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
-    M5.Lcd.drawJpgFile(SD, "/off_sw.jpg");      // LCDにJPEGファイルoff_sw表示
+    M5.Lcd.drawJpg(off_sw_jpg,off_sw_jpg_len);  // LCDにJPEGファイルoff_sw表示
     M5.Lcd.println("M5 SW UDP LINE LED");       // 「SW UDP」をシリアル出力表示
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
