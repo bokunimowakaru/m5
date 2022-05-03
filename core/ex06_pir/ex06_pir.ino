@@ -53,7 +53,7 @@ RTC_DATA_ATTR int disp_max = 80;                // メータの最大値
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 boolean pir;                                    // 人感センサ値orドアセンサ状態
-boolean trig = false;                           // 送信用トリガ
+boolean trig = false;                           // 送信用トリガ(Wi-Fi接続待ち)
 boolean led = false;                            // ワイヤレスLED端末の状態
 unsigned long base_ms = 0;                      // センサ検知時の時刻
 unsigned long wifi_ms = 0;                      // Wi-Fi接続開始時刻
@@ -62,7 +62,7 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     pinMode(PIN_PIR,INPUT);                     // センサ接続したポートを入力に
     M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
-    analogMeterInit("-dBmsec.","PIR", -disp_max, 0);  // アナログ・メータの初期表示
+    analogMeterInit("-dBmsec.","PIR", -disp_max, 0);  // アナログメータ初期表示
     M5.Lcd.println("ex.06 M5Stack PIR (AS312)"); // タイトルの表示
     String S = "[60]         [80]        [100]"; // ボタン名を定義
     M5.Lcd.drawCentreString(S, 165, 208, 4);    // ボタン名を表示
@@ -84,29 +84,29 @@ void loop(){                                    // 繰り返し実行する関�
     analogMeterNeedle(v,10);                    // 経過時間に応じてメータ値設定
     delay(33);                                  // 表示の点滅低減
     boolean PIR = pir ^ PIR_XOR;                // 検知状態を1、非検知を0に
-    if(PIR){
-        analogMeterNeedle(0,1);
-        if(!trig){
+    if(PIR){                                    // 検知状態の時
+        analogMeterNeedle(0,1);                 // 針位置を最大値(0・右)に移動
+        if(!trig){                              // Wi-Fi接続待ちではないとき
             WiFi.begin(SSID,PASS);              // 無線LANアクセスポイント接続
-            wifi_ms = millis();
-            M5.Lcd.fillRect(0, 182, 320, 26, DARKCYAN);
-            M5.Lcd.drawCentreString("Detected", 160, 184, 4);
-            trig = true;
-            led = true;
+            wifi_ms = millis();                 // 接続処理の開始時刻を保持
+            M5.Lcd.fillRect(0, 182, 320, 26, DARKCYAN);       // 背景色の設定
+            M5.Lcd.drawCentreString("Detected", 160, 184, 4); // 検知をLCD表示
+            trig = true;                        // Wi-Fi接続待ち状態を保持
+            led = true;                         // ワイヤレスLチカ端末をON
         }
-        base_ms = millis()-1;                   // 検知時刻を保持
+        base_ms = millis()-1;                   // 人感センサの検知時刻を保持
     }
     if(!trig && led && (v < -disp_max)){        // LEDのOFF制御判定部
         WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイント接続
-        wifi_ms = millis();
-        trig = true;
-        led = false;
+        wifi_ms = millis();                     // 接続処理の開始時刻を保持
+        trig = true;                            // Wi-Fi接続待ち状態を保持
+        led = false;                            // ワイヤレスLチカ端末をOFF
     }
     if(trig && millis() - wifi_ms > 5000){      // Wi-Fi未接続で5秒以上経過
-        trig = false;
+        trig = false;                           // Wi-Fi接続待ち状態を解除
         WiFi.disconnect();                      // Wi-Fiの切断
         M5.Lcd.fillRect(0, 182, 320, 26, RED);  // Detectedを消す
-        M5.Lcd.drawCentreString("Wi-Fi ERROR", 160, 184, 4);
+        M5.Lcd.drawCentreString("Wi-Fi ERROR", 160, 184, 4); // エラー表示
     }
     if(trig && WiFi.status() == WL_CONNECTED){  // 送信トリガありWi-Fi接続状態
         String S = String(DEVICE);              // 送信データ保持用の文字列変数
@@ -139,7 +139,7 @@ void loop(){                                    // 繰り返し実行する関�
         WiFi.disconnect();                      // Wi-Fiの切断
         while(digitalRead(PIN_PIR) ^ PIR_XOR) delay(100); // センサの解除待ち
         M5.Lcd.fillRect(0, 182, 320, 26, BLACK); // Detectedを消す
-        trig = false;
+        trig = false;                           // Wi-Fi接続待ち状態を解除
     }
 }
 
