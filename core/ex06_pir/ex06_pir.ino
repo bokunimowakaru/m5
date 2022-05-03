@@ -27,13 +27,22 @@ Example 6: ESP32 (IoTセンサ) Wi-Fi 人感センサ子機 for M5Stack Core
  *****************************************************************************/
 #define LINE_TOKEN  "your_token"                // LINE Notify トークン★要設定
 
+/******************************************************************************
+ Wi-Fi コンシェルジェ証明担当（ワイヤレスLED子機） の設定
+ ******************************************************************************
+ ※ex01_led または ex01_led_io が動作する、別のESP32C3搭載デバイスが必要です
+    1. ex01_led/ex01_led_io搭載デバイスのシリアルターミナルでIPアドレスを確認
+    2. 下記のLED_IPのダブルコート(")内に貼り付け
+ *****************************************************************************/
+#define LED_IP "192.168.1.0"                    // LED搭載子のIPアドレス★要設定
+
 #define PIN_PIR 22                              // G22にセンサ(人感/ドア)を接続
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントSSID
 #define PASS "password"                         // パスワード
 #define PORT 1024                               // 受信ポート番号
 #define DEVICE "pir_s_3,"                       // 人感センサ時デバイス名
 #define PIR_XOR 0                               // センサ送信値の論理反転の有無
-RTC_DATA_ATTR int disp_max = 60;                // メータの最大値
+RTC_DATA_ATTR int disp_max = 80;                // メータの最大値
 
 /******************************************************************************
  UDP 宛先 IP アドレス設定
@@ -45,7 +54,9 @@ IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 boolean pir;                                    // 人感センサ値orドアセンサ状態
 boolean trig = false;                           // 送信用トリガ
+boolean led = false;                            // ワイヤレスLED端末の状態
 unsigned long base_ms = 0;                      // センサ検知時の時刻
+unsigned long wifi_ms = 0;                      // Wi-Fi接続開始時刻
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
@@ -77,13 +88,21 @@ void loop(){                                    // 繰り返し実行する関�
         analogMeterNeedle(0,1);
         if(!trig){
             WiFi.begin(SSID,PASS);              // 無線LANアクセスポイント接続
+            wifi_ms = millis();
             M5.Lcd.fillRect(0, 182, 320, 26, DARKCYAN);
             M5.Lcd.drawCentreString("Detected", 160, 184, 4);
             trig = true;
+            led = true;
         }
         base_ms = millis()-1;                   // 検知時刻を保持
     }
-    if(trig && millis() - base_ms > 5000){      // Wi-Fi未接続で5秒以上経過
+    if(!trig && led && (v < -disp_max)){        // LEDのOFF制御判定部
+        WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイント接続
+        wifi_ms = millis();
+        trig = true;
+        led = false;
+    }
+    if(trig && millis() - wifi_ms > 5000){      // Wi-Fi未接続で5秒以上経過
         trig = false;
         WiFi.disconnect();                      // Wi-Fiの切断
         M5.Lcd.fillRect(0, 182, 320, 26, RED);  // Detectedを消す
@@ -101,13 +120,19 @@ void loop(){                                    // 繰り返し実行する関�
         HTTPClient http;                        // HTTPリクエスト用インスタンス
         http.setConnectTimeout(15000);          // タイムアウトを15秒に設定する
         String url;                             // URLを格納する文字列変数を生成
-        if(strlen(LINE_TOKEN) > 42){            // LINE_TOKEN設定時
+        if(led && strlen(LINE_TOKEN) > 42){     // LINE_TOKEN設定時
             url = "https://notify-api.line.me/api/notify";  // LINEのURLを代入
-            Serial.println(url);                // 送信URLを表示
             http.begin(url);                    // HTTPリクエスト先を設定する
             http.addHeader("Content-Type","application/x-www-form-urlencoded");
             http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
             http.POST("message=センサが反応しました。(" + S.substring(8) + ")");
+            http.end();                         // HTTP通信を終了する
+        }
+        if(strcmp(LED_IP,"192.168.1.0")){       // 子機IPアドレス設定時
+            url = "http://" + String(LED_IP) + "/?L="; // アクセス先URL
+            url += String(led ? 1 : 0);         // true時1、false時0
+            http.begin(url);                    // HTTPリクエスト先を設定する
+            http.GET();                         // ワイヤレスLEDに送信する
             http.end();                         // HTTP通信を終了する
         }
         delay(100);                             // 送信完了待ち＋連続送信防止
