@@ -303,10 +303,10 @@ void loop(){                                    // 繰り返し実行する関�
 /*******************************************************************************
 【参考文献】
 Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/m5stickc_plus/arduino
+https://docs.m5stack.com/en/quick_start/m5core/arduino
 
-M5StickC Arduino Library API 情報 (旧モデル M5StackC 用)：
-https://docs.m5stack.com/en/api/stickc/system_m5stickc
+M5Stack Arduino Library API 情報：
+https://docs.m5stack.com/en/api/core/system
 
 GPSのNMEAフォーマット(hiramine.com)
 https://www.hiramine.com/physicalcomputing/general/gps_nmeaformat.html

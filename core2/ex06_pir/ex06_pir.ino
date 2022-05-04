@@ -146,10 +146,10 @@ void loop(){                                    // 繰り返し実行する関�
 /*******************************************************************************
 【参考文献】
 Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/m5core/arduino
+https://docs.m5stack.com/en/quick_start/core2/arduino
 
 M5Stack Arduino Library API 情報：
-https://docs.m5stack.com/en/api/core/system
+https://docs.m5stack.com/en/api/core2/system
 
 SB412A データシート (NANYANG SENBA OPTICAL AND ELECTRONIC CO. LTD.)
 
