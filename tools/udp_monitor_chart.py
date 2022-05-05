@@ -56,6 +56,7 @@ csvs = {\
     #'accem':[('Accelerometer X','g'),('Accelerometer Y','g'),('Accelerometer Z','g')],\
     'accem':[('Accelerometer X','m/s2'),('Accelerometer Y','m/s2'),('Accelerometer Z','m/s2')],\
     'actap':[('Power','W'),('Cumulative','Wh'),('Time','Seconds')],\
+    'count':[('Counter','')],\
     'meter':[('Power','W'),('Cumulative','Wh'),('Time','Seconds')],\
     'awsin':[('Participants',''),('Cumulative','')],\
     'xb_ac':[('Usage Time','h'),('Consumption','kWh'),('Prev. Usage Time','h'),('Consumption','kWh')],\
@@ -85,7 +86,7 @@ csvs_range = {\
     ('CO2','ppm'):              (0,2000),\
     ('CH4','ppm'):              (0,2000),\
     ('TVOC','ppb'):             (0,5000),\
-    ('Counter',''):             (0,10),\
+    ('Counter',''):             (0,30),\
     ('Fingers',''):             (0,5),\
     ('Accelerometer X','m/s2'): (-9.8,9.8),\
     ('Accelerometer Y','m/s2'): (-9.8,9.8),\
