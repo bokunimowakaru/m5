@@ -76,9 +76,7 @@ void setup(){                                   // 起動時に一度だけ実�
 
     BLEDevice::init("");                        // BLE通信ライブラリの初期化
     pBLEScan = BLEDevice::getScan();            // BLEスキャナの実体化
-    pBLEScan->setActiveScan(true);              // 常時スキャンの有効化
-    pBLEScan->setInterval(100);                 // スキャン間隔
-    pBLEScan->setWindow(99);                    // スキャン期間(Interval以下)
+    pBLEScan->setActiveScan(false);             // 能動スキャンの無効化
     // analogMeterNeedle(pBLEScan->start(5).getCount()); // メータ針を移動
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
@@ -155,34 +153,23 @@ void loop(){                                    // 繰り返し実行する関�
     }
 }
 
-/*
-   Based on Neil Kolban example for IDF: https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleScan.cpp
-   Ported to Arduino ESP32 by Evandro Copercini
-*/
+/*******************************************************************************
+【参考文献】
+Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/m5core/arduino
 
-/* 参考文献
-ESP32 BLE for Arduino
+M5Stack Arduino Library API 情報：
+https://docs.m5stack.com/en/api/core/system
+
+ESP32 BLE for Arduino：
 https://github.com/espressif/arduino-esp32/tree/master/libraries/BLE
 https://github.com/espressif/arduino-esp32/blob/master/libraries/BLE/examples/BLE_scan/BLE_scan.ino
-
+   ************************************************************************************************
+   Based on Neil Kolban example for IDF:
+   https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleScan.cpp
+   Ported to Arduino ESP32 by Evandro Copercini
+   ************************************************************************************************
 https://github.com/espressif/arduino-esp32/blob/master/libraries/BLE/src/BLEScan.h
 https://github.com/espressif/arduino-esp32/blob/master/libraries/BLE/src/BLEDevice.h
 https://github.com/espressif/arduino-esp32/blob/master/libraries/BLE/src/BLEAddress.h
-
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 060001092002**********************************************
-Advertised Device: Name: , Address: **:**:**:**:**:**, serviceUUID: 0000fd6f-0000-1000-8000-00805f9b34fb
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010**************, txPower: 8
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010************, txPower: 8
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010************
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 060001092002**********************************************
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010************, txPower: 12
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 5900************
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0012020001
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: e00000**********, serviceUUID: 0000fe9f-0000-1000-8000-00805f9b34fb
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010************, txPower: 12
-Advertised Device: Name: , Address: **:**:**:**:**:**, serviceUUID: 273e5100-6b90-4779-83b8-b8bf1dadac35
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010**************, txPower: 8
-Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0012******
-Devices found: 14
-Scan done!
-*/
+*******************************************************************************/
