@@ -64,7 +64,7 @@ RTC_DATA_ATTR int disp_max = 8;                 // メータの最大値
  *****************************************************************************/
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
-BLEScan* pBLEScan;                              // BLEスキャナ用ポインタ
+BLEScan *pBLEScan;                              // BLEスキャナ用ポインタ
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
@@ -76,7 +76,7 @@ void setup(){                                   // 起動時に一度だけ実�
 
     BLEDevice::init("");                        // BLE通信ライブラリの初期化
     pBLEScan = BLEDevice::getScan();            // BLEスキャナの実体化
-    // analogMeterNeedle(pBLEScan->start(5).getCount()); // メータ針を移動
+    // analogMeterNeedle((*pBLEScan).start(5).getCount()); // メータ針を移動
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
 }
@@ -92,17 +92,31 @@ void loop(){                                    // 繰り返し実行する関�
     }
     if(btn) analogMeterInit(0,disp_max);        // ボタン操作時にグラフ初期化
 
-    BLEScanResults devs = pBLEScan->start(30);  // 30秒間のBLEスキャンの実行
+    BLEScanResults devs =(*pBLEScan).start(30); // 30秒間のBLEスキャンの実行
     int count = 0;                              // カウント値を保持する変数count
     for(int i = 0; i < devs.getCount(); i++){   // 発見したBLE機器数の繰り返し
         BLEAdvertisedDevice dev = devs.getDevice(i);    // 発見済BLEの情報を取得
-        BLEAddress mac = dev.getAddress();      // BLEアドレスを取得
         int rssi = dev.getRSSI();               // RSSI受信強度を取得
-        Serial.printf("%s, %d\n", mac.toString().c_str(), rssi); // シリアル出力
         if( rssi >= -80 ) count++;              // -80dBm以上のときにカウント
+        /*
+        // BLEアドレスの取得とシリアル出力
+        BLEAddress mac = dev.getAddress();
+        Serial.printf("%d, %s, %d, ", i+1, mac.toString().c_str(), rssi);
+        
+        // BLEデバイス名の取得とシリアル出力
+        String name = dev.getName().c_str();
+        Serial.print(name + ", ");
+        
+        // ペイロードの取得とシリアル出力
+        uint8_t *data = dev.getPayload();
+        int data_n = dev.getPayloadLength();
+        Serial.print(String(data_n) + ", ");
+        for(int i=0 ; i<data_n; i++) Serial.printf("%02X ", data[i]);
+        Serial.println();
+        */
     }
     analogMeterNeedle(count,5);                 // 発見数に応じてメータ針を設定
-    pBLEScan->clearResults();                   // BLEScanのバッファのクリア
+    (*pBLEScan).clearResults();                 // BLEScanのバッファのクリア
 
     if(count >= disp_max * 3 / 4){              // メータ値が3/4以上のとき
         M5.Lcd.fillRect(0,178, 320,28,TFT_RED); // 表示部の背景を赤色に塗る
