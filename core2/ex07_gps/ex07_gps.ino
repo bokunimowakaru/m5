@@ -17,8 +17,7 @@ Example 7: GPS(GNSS)の位置情報を取得し、Wi-Fiで送信する
           ・GPS Unitの電源を入れてから位置情報が得られるまで数分以上を要します。
 *******************************************************************************/
 
-
-
+#include <M5Core2.h>                            // M5Stack用ライブラリの組み込み
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <WiFiUdp.h>                            // UDP通信を行うライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ

@@ -1,0 +1,188 @@
+/*******************************************************************************
+Example 3: ESP32 (IoTセンサ) Wi-Fi BLEビーコン・センサ for M5Stack Core
+・Bluetooth LE のアドバタイジング送信数を送信するIoTセンサです。
+
+    使用機材(例)：M5Stack Core
+
+※Arduino IDEの[ツール]メニュー→[Partition Scheme]で[No OTA]または[Minimal SPIFFS]を
+　選択してからM5Stackに書き込んでください。
+※M5Stackのボタン状態は30秒に1回しか確認しないので、ボタンを押しながらリセット操作をするか
+　レンジが変わるまで待ち続けてください。
+
+                                          Copyright (c) 2022 Wataru KUNINO
+*******************************************************************************/
+
+#include <M5Core2.h>                            // M5Stack用ライブラリの組み込み
+#include <WiFi.h>                               // ESP32用WiFiライブラリ
+#include <WiFiUdp.h>                            // UDP通信を行うライブラリ
+#include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
+#include <BLEDevice.h>                          // BLE通信用ライブラリ
+#include <BLEScan.h>                            // BLEビーコンのスキャン用
+#include <BLEAdvertisedDevice.h>                // アドバタイズ情報取得用
+#define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
+#define PASS "password"                         // パスワード
+#define PORT 1024                               // 送信のポート番号
+#define SLEEP_P 30*1000000ul                    // Wi-Fi送信間隔 30秒(uint32_t)
+#define DEVICE "count_3,"                       // デバイス名(5字+"_"+番号+",")
+RTC_DATA_ATTR int disp_max = 8;                 // メータの最大値
+
+/******************************************************************************
+ Ambient 設定
+ ******************************************************************************
+ ※Ambientのアカウント登録と、チャネルID、ライトキーの取得が必要です。
+    1. https://ambidata.io/ へアクセス
+    2. 右上の[ユーザ登録(無料)]ボタンでメールアドレス、パスワードを設定して
+       アカウントを登録
+    3. [チャネルを作る]ボタンでチャネルIDを新規作成する
+    4. 「チャネルID」を下記のAmb_Idのダブルコート(")内に貼り付ける
+    5. 「ライトキー」を下記のAmb_Keyに貼り付ける
+   (参考文献)
+    IoTデータ可視化サービスAmbient(アンビエントデーター社) https://ambidata.io/
+*******************************************************************************/
+#define Amb_Id  "00000"                         // AmbientのチャネルID
+#define Amb_Key "0000000000000000"              // Ambientのライトキー
+
+/******************************************************************************
+ LINE Notify 設定
+ ******************************************************************************
+ ※LINE アカウントと LINE Notify 用のトークンが必要です。
+    1. https://notify-bot.line.me/ へアクセス
+    2. 右上のアカウントメニューから「マイページ」を選択
+    3. トークン名「esp32」を入力
+    4. 送信先のトークルームを選択する(「1:1でLINE Notifyから通知を受け取る」等)
+    5. [発行する]ボタンでトークンが発行される
+    6. [コピー]ボタンでクリップボードへコピー
+    7. 下記のLINE_TOKENのダブルコート(")内に貼り付け
+ *****************************************************************************/
+#define LINE_TOKEN  "your_token"                // LINE Notify トークン★要設定
+
+/******************************************************************************
+ UDP 宛先 IP アドレス設定
+ ******************************************************************************
+ カンマ区切りでUPD宛先IPアドレスを設定してください。
+ 末尾を255にすると接続ネットワーク(アクセスポイント)にブロードキャスト
+ *****************************************************************************/
+IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
+
+BLEScan* pBLEScan;                              // BLEスキャナ用ポインタ
+
+void setup(){                                   // 起動時に一度だけ実行する関数
+    M5.begin();                                 // M5Stack用ライブラリの起動
+    M5.Lcd.setBrightness(31);                   // 輝度を下げる（省エネ化）
+    analogMeterInit("devices","Counter", 0, disp_max);  // メータの初期表示
+    M5.Lcd.println("ex.11 M5Stack BLE Beacon Counter"); // タイトルの表示
+    String S = "[ 8 ]         [ 32 ]     [ 120 ]";      // ボタン名を定義
+    M5.Lcd.drawCentreString(S, 160, 208, 4);    // 文字列を表示
+
+    BLEDevice::init("");                        // BLE通信ライブラリの初期化
+    pBLEScan = BLEDevice::getScan();            // BLEスキャナの実体化
+    pBLEScan->setActiveScan(true);              // 常時スキャンの有効化
+    pBLEScan->setInterval(100);                 // スキャン間隔
+    pBLEScan->setWindow(99);                    // スキャン期間(Interval以下)
+    // analogMeterNeedle(pBLEScan->start(5).getCount()); // メータ針を移動
+    WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
+    WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
+}
+
+void loop(){                                    // 繰り返し実行する関数
+    M5.update();                                // ボタン状態の取得
+    int btn=M5.BtnA.isPressed()+2*M5.BtnB.isPressed()+4*M5.BtnC.isPressed();
+    switch(btn){
+        case 1: disp_max = 8; break;            // メータ最大値8 家庭向け
+        case 2: disp_max = 32; break;           // メータ最大値32 会議室向け
+        case 4: disp_max = 120; break;          // メータ最大値120 大人数用
+        default: btn = 0; break;                // 押されていない時、誤作動時
+    }
+    if(btn) analogMeterInit(0,disp_max);        // ボタン操作時にグラフ初期化
+
+    BLEScanResults devs = pBLEScan->start(30);  // 30秒間のBLEスキャンの実行
+    int count = 0;                              // カウント値を保持する変数count
+    for(int i = 0; i < devs.getCount(); i++){   // 発見したBLE機器数の繰り返し
+        BLEAdvertisedDevice dev = devs.getDevice(i);    // 発見済BLEの情報を取得
+        BLEAddress mac = dev.getAddress();      // BLEアドレスを取得
+        int rssi = dev.getRSSI();               // RSSI受信強度を取得
+        Serial.printf("%s, %d\n", mac.toString().c_str(), rssi); // シリアル出力
+        if( rssi >= -80 ) count++;              // -80dBm以上のときにカウント
+    }
+    analogMeterNeedle(count,5);                 // 発見数に応じてメータ針を設定
+    pBLEScan->clearResults();                   // BLEScanのバッファのクリア
+
+    if(count >= disp_max * 3 / 4){              // メータ値が3/4以上のとき
+        M5.Lcd.fillRect(0,178, 320,28,TFT_RED); // 表示部の背景を赤色に塗る
+    }else{
+        M5.Lcd.fillRect(0,178, 320,28, BLACK);  // 表示部の背景を黒色に塗る
+    }
+    String S = "BLE Devices = "+String(count);  // count値を文字列変数Sに代入
+    M5.Lcd.drawCentreString(S, 160, 180, 4);    // 文字列を表示
+    M5.Lcd.setCursor(196, 168);                 // 文字位置を設定
+    M5.Lcd.fillRect(196, 168, 124, 8, BLACK);   // 表示部の背景を黒色に塗る
+    if(WiFi.status() != WL_CONNECTED){          // Wi-Fiが未接続の時
+        M5.Lcd.print("WiFi ERROR");             // エラーをLCDに表示
+        WiFi.disconnect();                      // Wi-Fiの切断
+        delay(5000);                            // 待ち時間処理
+        WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイント接続
+        return;                                 // Wi-Fi未接続のときに戻る
+    }
+    M5.Lcd.print(WiFi.localIP());               // 本機のアドレスをLCDに表示
+
+    S = String(DEVICE) + String(count);         // 送信データSにデバイス名を代入
+    Serial.println(S);                          // 送信データSをシリアル出力表示
+    WiFiUDP udp;                                // UDP通信用のインスタンスを定義
+    udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
+    udp.println(S);                             // 送信データSをUDP送信
+    udp.endPacket();                            // UDP送信の終了(実際に送信する)
+
+    HTTPClient http;                            // HTTPリクエスト用インスタンス
+    http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
+    String url;                                 // URLを格納する変数を生成
+    if(strlen(LINE_TOKEN) > 42 && count >= disp_max * 3 / 4){ // LINE送信条件
+        url = "https://notify-api.line.me/api/notify";  // LINEのURLを代入
+        http.begin(url);                        // HTTPリクエスト先を設定する
+        http.addHeader("Content-Type","application/x-www-form-urlencoded");
+        http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
+        http.POST("message=密集度は " + String(count)  + " です。");
+        http.end();                             // HTTP通信を終了する
+    }
+    if(strcmp(Amb_Id,"00000") != 0){            // Ambient未設定時にsleepを実行
+        S = "{\"writeKey\":\""+String(Amb_Key); // (項目)writeKey,(値)ライトキー
+        S += "\",\"d1\":\"" + String(count);    // (項目)d1,(値)count
+        S += "\"}";
+        url = "http://ambidata.io/api/v2/channels/"+String(Amb_Id)+"/data";
+        http.begin(url);                        // HTTPリクエスト先を設定する
+        http.addHeader("Content-Type","application/json"); // JSON形式を設定する
+        http.POST(S);                           // センサ値をAmbientへ送信する
+        http.end();                             // HTTP通信を終了する
+    }
+}
+
+/*
+   Based on Neil Kolban example for IDF: https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleScan.cpp
+   Ported to Arduino ESP32 by Evandro Copercini
+*/
+
+/* 参考文献
+ESP32 BLE for Arduino
+https://github.com/espressif/arduino-esp32/tree/master/libraries/BLE
+https://github.com/espressif/arduino-esp32/blob/master/libraries/BLE/examples/BLE_scan/BLE_scan.ino
+
+https://github.com/espressif/arduino-esp32/blob/master/libraries/BLE/src/BLEScan.h
+https://github.com/espressif/arduino-esp32/blob/master/libraries/BLE/src/BLEDevice.h
+https://github.com/espressif/arduino-esp32/blob/master/libraries/BLE/src/BLEAddress.h
+
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 060001092002**********************************************
+Advertised Device: Name: , Address: **:**:**:**:**:**, serviceUUID: 0000fd6f-0000-1000-8000-00805f9b34fb
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010**************, txPower: 8
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010************, txPower: 8
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010************
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 060001092002**********************************************
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010************, txPower: 12
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 5900************
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0012020001
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: e00000**********, serviceUUID: 0000fe9f-0000-1000-8000-00805f9b34fb
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010************, txPower: 12
+Advertised Device: Name: , Address: **:**:**:**:**:**, serviceUUID: 273e5100-6b90-4779-83b8-b8bf1dadac35
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0010**************, txPower: 8
+Advertised Device: Name: , Address: **:**:**:**:**:**, manufacturer data: 4c0012******
+Devices found: 14
+Scan done!
+*/
