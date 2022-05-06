@@ -13,7 +13,7 @@ Example 11: ESP32 (IoTセンサ) Wi-Fi BLEビーコン・センサ for M5Stack C
 #include <BLEAdvertisedDevice.h>                // アドバタイズ情報取得用
 RTC_DATA_ATTR int disp_max = 8;                 // メータの最大値
 
-BLEScan* pBLEScan;                              // BLEスキャナ用ポインタ
+BLEScan *pBLEScan;                              // BLEスキャナ用ポインタ
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
@@ -26,7 +26,7 @@ void setup(){                                   // 起動時に一度だけ実�
 }
 
 void loop(){                                    // 繰り返し実行する関数
-    BLEScanResults devs = pBLEScan->start(30);  // 30秒間のBLEスキャンの実行
+    BLEScanResults devs =(*pBLEScan).start(30); // 30秒間のBLEスキャンの実行
     int count = 0;                              // カウント値を保持する変数count
     for(int i = 0; i < devs.getCount(); i++){   // 発見したBLE機器数の繰り返し
         BLEAdvertisedDevice dev = devs.getDevice(i);    // 発見済BLEの情報を取得
@@ -36,7 +36,7 @@ void loop(){                                    // 繰り返し実行する関�
         if( rssi >= -80 ) count++;              // -80dBm以上のときにカウント
     }
     analogMeterNeedle(count,5);                 // 発見数に応じてメータ針を設定
-    pBLEScan->clearResults();                   // BLEScanのバッファのクリア
+    (*pBLEScan).clearResults();                 // BLEScanのバッファのクリア
 
     if(count >= disp_max * 3 / 4){              // メータ値が3/4以上のとき
         M5.Lcd.fillRect(0,178, 320,28,TFT_RED); // 表示部の背景を赤色に塗る
