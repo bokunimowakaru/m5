@@ -129,11 +129,6 @@ void loop(){                                    // 繰り返し実行する関�
         Serial.println();
         */
     }
-    int co2 = sgp30_getCo2();                   // CO2センサ値を取得
-    print_co2(co2,sgp30_getTvoc());             // CO2センサ値を表示
-    analogMeterNeedle(1,co2);                   // メータ針を移動
-    lineGraphPlot(co2 * line_max / 1000, 1);
-
     analogMeterNeedle(0,count,5);               // 発見数に応じてメータ針を設定
     lineGraphPlot(count,0);
     (*pBLEScan).clearResults();                 // BLEScanのバッファのクリア
@@ -145,6 +140,12 @@ void loop(){                                    // 繰り返し実行する関�
     }
     String S = "BLE Devices = "+String(count);  // count値を文字列変数Sに代入
     M5.Lcd.drawCentreString(S, 160, 206, 4);    // 文字列を表示
+
+    int co2 = sgp30_getCo2();                   // CO2センサ値を取得
+    print_co2(co2,sgp30_getTvoc());             // CO2センサ値を表示
+    analogMeterNeedle(1,co2);                   // メータ針を移動
+    lineGraphPlot(co2 * line_max / 1000, 1);
+
     M5.Lcd.setCursor(232, 194);                 // 文字位置を設定
     M5.Lcd.fillRect(232, 194, 88, 8, BLACK);    // 表示部の背景を黒色に塗る
     if(WiFi.status() != WL_CONNECTED){          // Wi-Fiが未接続の時

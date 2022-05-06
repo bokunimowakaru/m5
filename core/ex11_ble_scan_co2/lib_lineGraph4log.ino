@@ -34,7 +34,7 @@ void lineGraphCls(){
 		int y = 200;
 		M5.Lcd.drawLine(x, 8/LggY + LgaY, x, 208/LggY + LgaY, TFT_LIGHTGREY);
 		if(i % 3 == 1){
-			M5.Lcd.drawCentreString(String(240 - (60*(i/3)) ), x, y/LggY + LgaY, 1);
+			M5.Lcd.drawCentreString(String((240 - (60*(i/3)))/2 ), x, y/LggY + LgaY, 1);
 		}
 	}
 }
