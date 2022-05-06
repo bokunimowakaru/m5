@@ -23,7 +23,6 @@ void setup(){                                   // 起動時に一度だけ実�
 
     BLEDevice::init("");                        // BLE通信ライブラリの初期化
     pBLEScan = BLEDevice::getScan();            // BLEスキャナの実体化
-    pBLEScan->setActiveScan(false);             // 能動スキャンの無効化
 }
 
 void loop(){                                    // 繰り返し実行する関数

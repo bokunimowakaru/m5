@@ -74,7 +74,6 @@ void setup(){                                   // 起動時に一度だけ実�
 
     BLEDevice::init("");                        // BLE通信ライブラリの初期化
     pBLEScan = BLEDevice::getScan();            // BLEスキャナの実体化
-    pBLEScan->setActiveScan(false);             // 能動スキャンの無効化
     // analogMeterNeedle(pBLEScan->start(5).getCount()); // メータ針を移動
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイント接続
