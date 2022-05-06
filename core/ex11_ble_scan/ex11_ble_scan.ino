@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 3: ESP32 (IoTセンサ) Wi-Fi BLEビーコン・センサ for M5Stack Core
+Example 11: ESP32 (IoTセンサ) Wi-Fi BLEビーコン・センサ for M5Stack Core
 ・Bluetooth LE のアドバタイジング送信数を送信するIoTセンサです。
 
     使用機材(例)：M5Stack Core

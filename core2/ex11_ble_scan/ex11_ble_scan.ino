@@ -1,11 +1,9 @@
 /*******************************************************************************
-Example 3: ESP32 (IoTセンサ) Wi-Fi BLEビーコン・センサ for M5Stack Core
+Example 11: ESP32 (IoTセンサ) Wi-Fi BLEビーコン・センサ for M5Stack Core2
 ・Bluetooth LE のアドバタイジング送信数を送信するIoTセンサです。
 
-    使用機材(例)：M5Stack Core
+    使用機材(例)：M5Stack Core2
 
-※Arduino IDEの[ツール]メニュー→[Partition Scheme]で[No OTA]または[Minimal SPIFFS]を
-　選択してからM5Stackに書き込んでください。
 ※M5Stackのボタン状態は30秒に1回しか確認しないので、ボタンを押しながらリセット操作をするか
 　レンジが変わるまで待ち続けてください。
 
