@@ -30,10 +30,24 @@ void loop(){                                    // 繰り返し実行する関�
     int count = 0;                              // カウント値を保持する変数count
     for(int i = 0; i < devs.getCount(); i++){   // 発見したBLE機器数の繰り返し
         BLEAdvertisedDevice dev = devs.getDevice(i);    // 発見済BLEの情報を取得
-        BLEAddress mac = dev.getAddress();      // BLEアドレスを取得
         int rssi = dev.getRSSI();               // RSSI受信強度を取得
-        Serial.printf("%s, %d\n", mac.toString().c_str(), rssi); // シリアル出力
         if( rssi >= -80 ) count++;              // -80dBm以上のときにカウント
+
+        // BLEアドレスの取得とシリアル出力
+        BLEAddress mac = dev.getAddress();
+        Serial.printf("%d, %s, %d, ", i+1, mac.toString().c_str(), rssi);
+
+        // BLEデバイス名の取得とシリアル出力
+        String name = dev.getName().c_str();
+        Serial.print(name + ", ");
+
+        // ペイロードの取得とシリアル出力
+        uint8_t *data = dev.getPayload();
+        int data_n = dev.getPayloadLength();
+        Serial.print(String(data_n) + ", ");
+        for(int i=0 ; i<data_n; i++) Serial.printf("%02X ", data[i]);
+        Serial.println();
+
     }
     analogMeterNeedle(count,5);                 // 発見数に応じてメータ針を設定
     (*pBLEScan).clearResults();                 // BLEScanのバッファのクリア
