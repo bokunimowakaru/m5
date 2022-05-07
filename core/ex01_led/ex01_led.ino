@@ -46,6 +46,7 @@ void handleRoot(){
 
 void btnUpdate(){                               // ボタン状態に応じてLEDを制御
     M5.update();                                // M5Stack用IO状態の更新
+    delay(10);    // 誤作動防止(参考文献 github.com/m5stack/M5Stack/issues/52 )
     int btnA = M5.BtnA.wasPressed();            // ボタンAの状態をbtnAへ代入
     int btnC = M5.BtnC.wasPressed();            // ボタンCの状態をbtnCへ代入
     if( btnA == 1 ) led_stat = 0;               // ボタンA押下時led_stat=0を代入

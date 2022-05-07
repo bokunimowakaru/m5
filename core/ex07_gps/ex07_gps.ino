@@ -173,6 +173,7 @@ void setup(){                                   // 起動時に一度だけ実�
 
 void loop(){                                    // 繰り返し実行する関数
     M5.update();                                // ボタン状態の取得
+    delay(1);                                   // ボタンの誤作動防止
     int btn=M5.BtnA.wasPressed()+2*M5.BtnB.wasPressed()+4*M5.BtnC.wasPressed();
     switch(btn){                                // ボタンに応じた処理
         case 1: mode = 0; lcd_cls(mode); break; // 0:日本地図
