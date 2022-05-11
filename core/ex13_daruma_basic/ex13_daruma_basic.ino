@@ -28,13 +28,12 @@ void dispBar(int level=bar100){                 // 棒グラフを描画する�
     delay(33);                                  // 33ミリ秒の待ち時間処理
 }
 
-void disp(String filename, String msg=""){      // LCDにJPEGファイルを表示する
-    drawJpgHeadFile(filename);                  // filenameに応じた画像をLCD表示
+void dispText(String msg=""){                   // LCDに文字を表示する
     M5.Lcd.setTextColor(WHITE);                 // テキスト文字の色を設定(白)
     for(int x=-2; x<=2; x+=2) for(int y=-2; y<=2; y+=2) if(x||y){
         M5.Lcd.drawCentreString(msg,160+x,120+y,4);
     }                                           // テキストの背景を描画する
-    M5.Lcd.setTextColor(0);                     // テキスト文字の色を設定(黒)
+    M5.Lcd.setTextColor(BLACK);                 // テキスト文字の色を設定(黒)
     M5.Lcd.drawCentreString(msg,160,120,4);     // 文字列を表示
     barPrev = 0;                                // 棒グラフが消えるのでリセット
 }
@@ -42,39 +41,42 @@ void disp(String filename, String msg=""){      // LCDにJPEGファイルを表�
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
     pinMode(PIN_PIR,INPUT);                     // センサ接続したポートを入力に
-    disp("daruma3","Example 13 Daruma-san");    // 持ち手＋タイトルを表示
-    disp("daruma2");                            // 顔を表示
-    disp("daruma4");                            // タイトルを表示
+    drawJpgHeadFile("daruma3", 0, 0);           // filenameに応じた画像をLCD表示
+    dispText("Example 13 Daruma-san");          // タイトル文字を表示
+    drawJpgHeadFile("daruma2", 80, 32);         // 顔を表示
+    drawJpgHeadFile("daruma4", 172, 8);         // タイトル画像を表示
     while(digitalRead(PIN_PIR));                // 非検出状態になるまで待つ
     delay(3000);                                // 3秒間の待ち時間処理
-    disp("daruma3","GAME START");               // ゲーム開始
+    drawJpgHeadFile("daruma3", 0, 0);           // filenameに応じた画像をLCD表示
+    dispText("GAME START");                     // タイトル文字を表示
     delay(1000);                                // 1秒間の待ち時間処理
 }
 
 void loop(){                                    // 繰り返し実行する関数
-    disp("daruma0");                            // 顔を表示
+    drawJpgHeadFile("daruma0", 0, 0);           // filenameに応じた画像をLCD表示
     M5.Lcd.drawCentreString("BREAK",68,224,2);  // 文字列"BREAK"を表示
- 	for(int i=0; i <= 100; i++){                // 棒グラフを増加させる
+    for(int i=0; i <= 100; i++){                // 棒グラフを増加させる
         M5.update();                            // ボタン情報を更新
         dispBar(i);                             // 棒グラフの描画
         if(M5.BtnA.isPressed()){                // Aボタンが押されたとき
             M5.Lcd.fillRect(0,224,128,16,WHITE); // "BREAK"を消去
-            disp("daruma2","Cleared!");         // 顔を表示
-            end();                              // 終了関数endを実行
+            drawJpgHeadFile("daruma2", 80, 32); // 顔を表示
+            dispText("Cleared!");               // "Cleared"を表示
+            delay(5000);                        // 5秒間の待ち時間処理
             return;                             // loop関数の先頭に戻る
         }
         if(i==33){                              // 棒グラフ33%のとき
-            disp("daruma4");                    // タイトルを表示
+            drawJpgHeadFile("daruma4", 172, 8); // タイトル画像を表示
         }
     }
     M5.Lcd.fillRect(0,224,128,16,WHITE);        // "BREAK"を消去
-    disp("daruma2");                            // 顔を表示
+    drawJpgHeadFile("daruma2", 80, 32);         // 顔を表示
     delay(pir_delay);                           // PIRセンサの遅延分の待ち時間
-	for(int i=100; i >= 0; i--){                // 棒グラフを減らす処理
+    for(int i=100; i >= 0; i--){                // 棒グラフを減らす処理
         dispBar(i);                             // 棒グラフの描画
         pir = digitalRead(PIN_PIR);             // 人感センサ値を取得
         if(pir){                                // センサ反応時
-            disp("daruma2","Failed");           // "Failed"を表示
+            dispText("Failed");                 // "Failed"を表示
             end();                              // 終了関数endを実行
             return;                             // loop関数の先頭に戻る
         }
