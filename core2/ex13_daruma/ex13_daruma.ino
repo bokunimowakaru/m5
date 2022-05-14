@@ -9,7 +9,7 @@ Example 13 daruma for M5Stack Core2 ～PIR Sensor ユニットで だるまさ�
 #include <WiFiClientSecure.h>                   // TLS(SSL)通信用ライブラリ
 #include <HTTPClient.h>                         // HTTP通信用ライブラリ
 #include "root_ca.h"                            // HTTPS通信用ルート証明書
-#define PIN_PIR 22                              // G22にセンサ(人感/ドア)を接続
+#define PIN_PIR 33                              // 33にセンサ(人感/ドア)を接続
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
 #define PASS "password"                         // パスワード
 #define URL  "https://bokunimo.com/daruma/"     // クラウドサービスのURL
