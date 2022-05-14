@@ -106,6 +106,10 @@ int getPrisoners(int n = 0){                    // 鬼に捕まったユーザ�
     // Serial.println(S);                       // 受信結果をシリアル出力
     if(httpCode == 200){                        // HTTP接続に成功したとき
         n = S.substring(S.indexOf("\"n\":")+5).toInt(); // パースn
+        /* (参考) Arduino_JSON.h ベータ版パース方法(要#include <Arduino_JSON.h>)
+        JSONVar json = JSON.parse(S);           // JSON型のオブジェクトに変換
+        n = json["body"]["n"];                  // body内のnを抽出
+        */
     }                                           // パース方法は受信サンプル参照
     https.end();                                // HTTPクライアントの処理を終了
     client.stop();                              // TLS(SSL)通信の停止

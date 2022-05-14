@@ -101,6 +101,11 @@ void loop(){                                    // 繰り返し実行する関�
     if(httpCode == 200){                        // HTTP接続に成功したとき
         ken = S.substring(S.indexOf("\"net\":")+13).toInt();       // パースken
         rate = S.substring(S.indexOf("\"win rate\":")+12).toInt(); // パースrate
+        /* (参考) Arduino_JSON.h ベータ版パース方法(要#include <Arduino_JSON.h>)
+        JSONVar json = JSON.parse(S);           // JSON型のオブジェクトに変換
+        ken = json["body"]["net"][1];           // body内のnetの2番目の値を抽出
+        rate = json["body"]["win rate"];        // body内のwin rateを抽出
+        */
     }                                           // パース方法は受信サンプル参照
     https.end();                                // HTTPクライアントの処理を終了
     client.stop();                              // TLS(SSL)通信の停止

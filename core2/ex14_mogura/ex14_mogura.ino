@@ -66,6 +66,10 @@ int getRank(int pt){                            // 得点の順位を取得
     // Serial.println(S);                       // 受信結果をシリアル出力
     if(httpCode == 200){                        // HTTP接続に成功したとき
         rank = S.substring(S.indexOf("\"rank\":")+8).toInt(); // パースrank
+        /* (参考) Arduino_JSON.h ベータ版パース方法(要#include <Arduino_JSON.h>)
+        JSONVar json = JSON.parse(S);           // JSON型のオブジェクトに変換
+        rank = json["body"]["rank"];            // body内のrankを抽出
+        */
     }                                           // パース方法は受信サンプル参照
     https.end();                                // HTTPクライアントの処理を終了
     client.stop();                              // TLS(SSL)通信の停止
