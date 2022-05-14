@@ -11,21 +11,20 @@ Example 14 mogura for M5Stack ～ シンプル もぐらたたき ゲーム～
 #include "root_ca.h"                            // HTTPS通信用ルート証明書
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
 #define PASS "password"                         // パスワード
-#define URL  "https://bokunimo.com/mogura/"     // クラウドサービスのURL
+#define URL  "https://bokunimo.com/score/"      // クラウドサービスのURL
 
 /*******************************************************************************
-SSIDを送信したくない場合は、下記の USER にニックネームなどを入力してください。
+下記の USER にニックネームなどを入力してください。
 *******************************************************************************/
 
 String USER = "";                               // クラウドへ送信するユーザ名
 
 /*******************************************************************************
-ユーザ名 USER は、半角英文字と数字、8文字までを、2つの"の中に入力してください。
+ユーザ名 USER は、半角英文字と数字、8文字までです。スペースは使用できません。
 例） String USER = "wataru";
 ********************************************************************************
 ユーザ名 USER は下記の目的でアクセス元の端末を特定するために使用します。
 なるべく実名を避け、ニックネームなどを使用してください。
-（デフォルトでは、SSIDの一部(後部4文字)をユーザ名として利用します）
 クラウド・サーバとの通信にはHTTPSを使用し、ユーザ名などの情報は以下の目的、用途で
 使用します。
 
@@ -40,11 +39,12 @@ String USER = "";                               // クラウドへ送信する�
 ・データ消失については責任を負いません（誤った削除依頼で消失する場合もあります）
 ・削除依頼については対応しますが、適正な依頼かどうかは当方の判断に基づきます
 
-同意いただけない場合は、当該クエリ（user=）を削除してください。
+本プログラムを機器に書き込んだ時点で、同意いただけたものとします。
 *******************************************************************************/
 
 int mogura[3]={0,0,0};                          // モグラの上下位置(0～3)
 int pt = 0;                                     // 得点
+unsigned long start_ms = 0;                     // ゲーム開始時刻
 
 int getRank(int pt){                            // 得点の順位を取得
     int rank = 0;                               // 順位を保持する関数
@@ -69,6 +69,36 @@ int getRank(int pt){                            // 得点の順位を取得
     return rank;                                // 順位を応答
 }
 
+void getRankList(){                             // Top10リストを取得
+    M5.Lcd.fillRect(0, 0, 320, 240, WHITE);     // 画面を消去
+    String S = String(URL);                     // HTTPリクエスト用の変数
+    S += "?game=mogura&list";                   // リスト取得
+    WiFiClientSecure client;                    // TLS/TCP/IP接続部の実体を生成
+    client.setCACert(rootCACertificate);        // ルートCA証明書を設定
+    // client.setInsecure();                    // サーバ証明書を確認しない
+    HTTPClient https;                           // HTTP接続部の実体を生成
+    https.begin(client, S);                     // 初期化と接続情報の設定
+    int httpCode = https.GET();                 // HTTP接続の開始
+    S = https.getString();                      // 受信結果を変数Sへ代入
+    // Serial.println(httpCode);                // httpCodeをシリアル出力
+    // Serial.println(S);                       // 受信結果をシリアル出力
+    if(httpCode == 200){                        // HTTP接続に成功したとき
+        int p1=0, p2, p3=0;                     // 文字位置の保持用
+        String unit[] = {"st","nd","rd","th"};  // 単位
+        for(int i=0;i<10;i++){                  // Top10リスト表示
+            M5.Lcd.drawCentreString(String(i+1)+unit[i<4?i:3],32,i*24,4);
+            p1 = S.indexOf("\"id\":",p1) + 7;   // ユーザ名の文字位置を検索
+            p2 = S.indexOf("\"",p1);            // ユーザ名の終了位置を検索
+            M5.Lcd.drawString(S.substring(p1,p2),64,i*24,4); // ユーザ名を表示
+            p3 = S.indexOf("\"score\":",p3)+9;  // 得点の文字位置を検索
+            int p = S.substring(p3).toInt();    // 得点を取得
+            M5.Lcd.drawRightString(String(p)+" pt",316,i*24,4);
+        }
+    }                                           // パース方法は受信サンプル参照
+    https.end();                                // HTTPクライアントの処理を終了
+    client.stop();                              // TLS(SSL)通信の停止
+}
+
 void dispText(String msg){                      // LCDに文字表示する
     drawJpgHeadFile("mogura5",0,111);           // 文字を消去
     M5.Lcd.setTextColor(WHITE);                 // テキスト文字の色を設定(白)
@@ -81,12 +111,15 @@ void dispText(String msg){                      // LCDに文字表示する
 
 void setup(){                                   // 一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    drawJpgHeadFile("mogura");                  // 顔を表示
+    drawJpgHeadFile("mogura");                  // ゲーム画面をを表示
     dispText("Example 14 Mogura");              // タイトルを表示
-    delay(3000);                                // 3秒間の待ち時間処理
+    WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
+    WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
+    while(WiFi.status() != WL_CONNECTED);       // 接続に成功するまで待つ
     dispText("GAME START");                     // ゲーム開始を表示
     delay(1000);                                // 3秒間の待ち時間処理
     dispText("");                               // 文字を消去
+    start_ms = millis();                        // ゲーム開始時刻を変数に保持
 }
 
 void loop(){
@@ -112,16 +145,33 @@ void loop(){
             }
         }
     }
+    if(millis() - start_ms >= 30000){           // ゲーム開始から30秒以上が経過
+        dispText("GAME OVER");                  // ゲームオーバー表示
+        delay(1000);                            // 1秒間の待ち時間処理
+        end();                                  // ゲーム終了
+    }
 }
 
 void end(){
-    int rank = getRank(int pt)
-    dispText("Rank = "+String(rank)+" "+String(pt)+" pt");     // スコア表示
+    int rank = getRank(pt);
+    if(rank>0){
+        dispText("Rank = "+String(rank)+", Score = "+String(pt)+" pt"); // スコア表示
+    }else{
+        dispText(String(pt)+" pt"); // スコア表示
+    }
+    M5.Lcd.drawCentreString("Top 10",160,224,2); // 文字列を表示
     M5.Lcd.drawCentreString("GAME START",256,224,2); // 文字列を表示
     do{                                         // ボタンが押されるまで待機する
         M5.update();                            // ボタン情報を更新
         delay(10);                              // 待ち時間処理
-    }while(!M5.BtnC.wasPressed());              // ボタンが押されるまで繰り返す
+        if(M5.BtnB.wasPressed()){               // 中央ボタンが押されたとき
+            getRankList();                      // Top10リストの表示を実行
+            delay(1000);                        // 簡易的なチャタリング防止
+        }
+    }while(!M5.BtnC.wasPressed());              // 右ボタンが押されるまで
+    drawJpgHeadFile("mogura");                  // ゲーム画面をを表示
+    pt = 0;                                     // 得点のリセット
+    start_ms = millis();                        // ゲーム開始時刻を変数に保持
 }
 
 /*
@@ -131,4 +181,16 @@ void end(){
 簡易パーサ(n) indexOf("\"n\":")+5
         "rank": 6
         01234567890123
+
+Top10リスト：
+{"statusCode": 200, "body": {"status": "ok", "rank": 0, "list": [{"id": "BOKU", "score": 12}, {"id": "BOKU", "score": 10}, {"id": "BOKU", "score": 10}, {"id": "BOKU", "score": 9}, {"id": "BOKU", "score": 8}, {"id": "BOKU", "score": 7}, {"id": "BOKU", "score": 7}, {"id": "BOKU", "score": 7}, {"id": "BOKU", "score": 7}, {"id": "BOKU", "score": 7}]}}
+
+簡易パーサ(id) indexOf("\"id\":")+7
+        "id": "BOKU"
+        01234567890123
+
+簡易パーサ(score) indexOf("\"score\":")+7
+        "score": 12
+        01234567890123
+
 */
