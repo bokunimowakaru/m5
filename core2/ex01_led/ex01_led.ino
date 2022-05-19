@@ -14,7 +14,7 @@ Example 1: Wi-Fi コンシェルジェ 照明担当 for M5Sack Core2
 #include "on_jpg.h"                             // 点灯した電球のJPEGデータ
 #include "off_jpg.h"                            // 消灯した電球のJPEGデータ
 
-#define PIN_LED_RGB 21                          // RGB LED
+#define PIN_LED_RGB 32                          // RGB LED
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
 #define PASS "password"                         // パスワード
 
