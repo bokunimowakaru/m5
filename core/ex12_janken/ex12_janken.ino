@@ -91,14 +91,15 @@ void loop(){                                    // 繰り返し実行する関�
     String S = String(URL);                     // HTTPリクエスト用の変数
     S += "?user=" + USER;                       // ユーザ名のクエリを追加
     S += "&throw="+ String(jan);                // ジャンケンの手を追加
+    Serial.println("HTTP GET " + S);            // リクエスト内容をシリアル出力
     WiFiClientSecure client;                    // TLS/TCP/IP接続部の実体を生成
     client.setCACert(rootCACertificate);        // ルートCA証明書を設定
     HTTPClient https;                           // HTTP接続部の実体を生成
     https.begin(client, S);                     // 初期化と接続情報の設定
     int httpCode = https.GET();                 // HTTP接続の開始
-    S = https.getString();                      // 受信結果を変数Sへ代入
-    // Serial.println(httpCode);                // httpCodeをシリアル出力
-    // Serial.println(S);                       // 受信結果をシリアル出力
+    S = "HTTP Status " + String(httpCode);      // HTTPステータスを変数Sへ代入
+    S += "\n" + https.getString();              // 改行と受信結果を変数Sへ追加
+    Serial.println(S);                          // 受信結果をシリアル出力
     if(httpCode == 200){                        // HTTP接続に成功したとき
         ken = S.substring(S.indexOf("\"net\":")+13).toInt();       // パースken
         rate = S.substring(S.indexOf("\"win rate\":")+12).toInt(); // パースrate
