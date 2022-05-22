@@ -35,7 +35,7 @@ String USER = "";                               // クラウドへ送信する�
 ********************************************************************************
 送信データ（ユーザ名、IPアドレス等）はサーバ内に保存し、下記の目的で使用します。
 なるべく実名を避け、ニックネームなどを使用してください。
-（デフォルトでは、SSIDの一部(後部4文字)をユーザ名として利用します）
+（デフォルトでは、MACアドレス末尾1バイト(2桁)をユーザ名として利用します）
 ユーザ名はHTTPSを使用し、送信先のサーバの認証と暗号化を講じて送信します。
 
 【利用目的・用途】
@@ -72,7 +72,8 @@ void setup() {
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
     while(WiFi.status() != WL_CONNECTED);       // 接続に成功するまで待つ
     disp("janken88","Example 12 Janken");       // 持ち手＋タイトルを表示
-    if(USER == "") USER = String(SSID).substring(String(SSID).length()-4);
+    if(USER == "") USER = "Mac" + WiFi.macAddress().substring(15);
+    // 上記の行でMACアドレスの末尾1バイト(2桁)がユーザ名に設定される
 }
 
 void loop(){                                    // 繰り返し実行する関数
@@ -98,7 +99,7 @@ void loop(){                                    // 繰り返し実行する関�
     int httpCode = https.GET();                 // HTTP接続の開始
     S = "HTTP Status " + String(httpCode);      // HTTPステータスを変数Sへ代入
     S += "\n" + https.getString();              // 改行と受信結果を変数Sへ追加
-    Serial.println(S);                          // シリアルへ出力
+    Serial.println(S);                          // 受信結果をシリアル出力
     if(httpCode == 200){                        // HTTP接続に成功したとき
         ken = S.substring(S.indexOf("\"net\":")+13).toInt();       // パースken
         rate = S.substring(S.indexOf("\"win rate\":")+12).toInt(); // パースrate
