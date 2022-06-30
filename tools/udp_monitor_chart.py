@@ -207,6 +207,10 @@ def barChartHtml(colmun, range, val, color='lightgreen'):    # 棒グラフHTML�
 
 def wsgi_app(environ, start_response):              # HTTPアクセス受信時の処理
     path  = environ.get('PATH_INFO')                # リクエスト先のパスを代入
+    if not path.isprintable():
+        start_response('404 Not Found',[])          # 404エラー設定
+        return ['404 Not Found'.encode()]           # 応答メッセージ(404)を返却
+    # print('debug queries:',queries)               ## 確認用
     if (len(path)==16) and (path[1:5] == 'log_') and (path[5:10] in sensors) and (path[12:16] == '.csv'):
         filename = 'log_' + path[5:12] + '.csv'
         try:
@@ -220,6 +224,13 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
         start_response('404 Not Found',[])          # 404エラー設定
         return ['404 Not Found'.encode()]           # 応答メッセージ(404)を返却
 
+    queries  = environ.get('QUERY_STRING')
+    if (not queries.isprintable()) or (len(queries) > 256):
+        start_response('404 Not Found',[])          # 404エラー設定
+        return ['404 Not Found'.encode()]           # 応答メッセージ(404)を返却
+    queries  = queries.lower().split('&')
+    # print('debug queries:',queries)               ## 確認用
+
     html = '<html>\n<head>\n'                       # HTMLコンテンツを作成
     html += '<meta http-equiv="refresh" content="10;">\n'   # 自動再読み込み
     html += '</head>\n<body>\n'                     # 以下は本文
@@ -229,8 +240,6 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
         html += ' device</a>)</h1>\n'
     else:
         html += ' devices</a>)</h1>\n'
-    queries  = environ.get('QUERY_STRING').lower().split('&')
-    # print('debug queries:',queries) ##確認用
 
     sort_col = 'devices'
     filter_dev = list()
@@ -388,19 +397,24 @@ if argc >= 2:                                       # 入力パラメータ数�
         port = UDP_PORT                             # UDPポート番号を1024に
 else:
     port = UDP_PORT
-print('Listening UDP port', port, '...')            # ポート番号表示
-try:
-    sock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)# ソケットを作成
-    sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)    # オプション
-    sock.bind(('', port))                           # ソケットに接続
-except Exception as e:                              # 例外処理発生時
-    print(e)                                        # エラー内容を表示
-    exit()                                          # プログラムの終了
+sock = None
+thread = None
 
-thread = threading.Thread(target=httpd, daemon=True)# スレッドhttpdの実体化
-thread.start()                                      # スレッドhttpdの起動
-
-while thread.is_alive and sock:                     # 永久ループ(httpd,udp動作中
+while True:
+    if not thread or not thread.is_alive:
+        print('Starting httpd', http_port, '...')       # ポート番号表示
+        thread = threading.Thread(target=httpd, daemon=True) # スレッドhttpdの実体化
+        thread.start()                                  # httpdの起動
+    if not sock:
+        print('Listening UDP port', port, '...')        # ポート番号表示
+        try:
+            sock=socket.socket(socket.AF_INET,socket.SOCK_DGRAM)# ソケットを作成
+            sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)    # オプション
+            sock.bind(('', port))                       # ソケットに接続
+        except Exception as e:                          # 例外処理発生時
+            print(e)                                    # エラー内容を表示
+            delay(30)                                   # 連続再接続防止用の待ち時間
+            continue                                    # 再接続
     udp, udp_from = sock.recvfrom(buf_n)                # UDPパケットを取得
     try:
         udp = udp.decode()                              # UDPデータを文字列に変換
