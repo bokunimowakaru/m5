@@ -401,7 +401,7 @@ sock = None
 thread = None
 
 while True:
-    if not thread or not thread.is_alive:
+    if not thread or not thread.is_alive():             # HTTPDが動作していないとき
         print('Starting httpd', http_port, '...')       # ポート番号表示
         thread = threading.Thread(target=httpd, daemon=True) # スレッドhttpdの実体化
         thread.start()                                  # httpdの起動
