@@ -207,10 +207,21 @@ def barChartHtml(colmun, range, val, color='lightgreen'):    # 棒グラフHTML�
 
 def wsgi_app(environ, start_response):              # HTTPアクセス受信時の処理
     path  = environ.get('PATH_INFO')                # リクエスト先のパスを代入
+    # print('debug path:',path)                     ##確認用
     if not path.isprintable():
         start_response('404 Not Found',[])          # 404エラー設定
         return ['404 Not Found'.encode()]           # 応答メッセージ(404)を返却
+
+    queries  = environ.get('QUERY_STRING')
+    if not queries.isprintable() or len(queries) > 256:
+        start_response('404 Not Found',[])          # 404エラー設定
+        return ['404 Not Found'.encode()]           # 応答メッセージ(404)を返却
+    if environ.get('REQUEST_METHOD') != 'GET':
+        return ['404 Not Found'.encode()]           # 応答メッセージ(404)を返却
+    print('debug queries:',queries)                 ##確認用
+    queries  = queries.lower().split('&')
     # print('debug queries:',queries)               ## 確認用
+
     if (len(path)==16) and (path[1:5] == 'log_') and (path[5:10] in sensors) and (path[12:16] == '.csv'):
         filename = 'log_' + path[5:12] + '.csv'
         try:
@@ -223,13 +234,6 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
     if path != '/':                                 # パスがルート以外のとき
         start_response('404 Not Found',[])          # 404エラー設定
         return ['404 Not Found'.encode()]           # 応答メッセージ(404)を返却
-
-    queries  = environ.get('QUERY_STRING')
-    if (not queries.isprintable()) or (len(queries) > 256):
-        start_response('404 Not Found',[])          # 404エラー設定
-        return ['404 Not Found'.encode()]           # 応答メッセージ(404)を返却
-    queries  = queries.lower().split('&')
-    # print('debug queries:',queries)               ## 確認用
 
     html = '<html>\n<head>\n'                       # HTMLコンテンツを作成
     html += '<meta http-equiv="refresh" content="10;">\n'   # 自動再読み込み
