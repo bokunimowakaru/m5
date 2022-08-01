@@ -13,7 +13,7 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
     ダウンロード方法(GitHubから)
     - git clone https://bokunimo.net/git/m5/
 
-![実行画面ex00～07](/pictures/ex00_07_thumb.gif)
+![実行画面ex00～07](https://github.com/bokunimowakaru/m5/blob/master/pictures/ex00_07_thumb.gif)
 
 ## 主なフォルダ名、プログラム名
 
@@ -52,7 +52,7 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 |ex13_daruma  |人感センサ・ユニット（PIR Motion Sensor）を使った だるまさんがころんだ ゲーム      |
 |ex14_mogura  |インターネット上でランキング競争 M5Stackのボタンを使った もぐらたたき ゲーム       |
 
-![実行画面ex11～14](/pictures/ex11_14_thumb.gif)
+![実行画面ex11～14](https://github.com/bokunimowakaru/m5/blob/master/pictures/ex11_14_thumb.gif)
 
 ## Arduino IDE 用の ESP32 開発環境のセットアップ
 
