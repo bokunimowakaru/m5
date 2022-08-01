@@ -82,9 +82,9 @@ ESP32開発ボード（ ESP32-WROOM-32 搭載）で使用する場合、下記�
 その他のM5Stack/M5Stickの場合は、M5Stack社のインストール方法を参照してください。
 
 by 国野 亘 Wataru KUNINO 
-- ウェブサイト (https://bokunimo.net/)
-- ブログ (https://bokuniomo.net/blog/)
-- カテゴリESP (https://bokunimo.net/blog/category/esp/)
+- ウェブサイト [https://bokunimo.net/](https://bokunimo.net/)
+- ブログ [https://bokuniomo.net/blog/](https://bokuniomo.net/blog/)
+- カテゴリESP [https://bokunimo.net/blog/category/esp/](https://bokunimo.net/blog/category/esp/)
 
 ----------------------------------------------------------------
 # git.bokunimo.com GitHub Pages site
