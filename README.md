@@ -81,11 +81,12 @@ ESP32開発ボード（ ESP32-WROOM-32 搭載）で使用する場合、下記�
 5. M5Stack Atomの場合は、[ツール]メニュー内の[Upload Speed]で115200を選択する。
 その他のM5Stack/M5Stickの場合は、M5Stack社のインストール方法を参照してください。
 
+by 国野 亘 Wataru KUNINO 
+- ウェブサイト (https://bokunimo.net/)
+- ブログ (https://bokuniomo.net/blog/)
+- カテゴリESP (https://bokunimo.net/blog/category/esp/)
+
 ----------------------------------------------------------------
 # git.bokunimo.com GitHub Pages site
 [http://git.bokunimo.com/](http://git.bokunimo.com/)  
 ----------------------------------------------------------------
-
-by 国野 亘 Wataru KUNINO bokunimo.net(https://bokunimo.net/)
-- ブログ (https://bokuniomo.net/blog/)
-- カテゴリESP (https://bokunimo.net/blog/category/esp/)
