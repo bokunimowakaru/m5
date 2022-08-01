@@ -1,37 +1,86 @@
-## Welcome to GitHub Pages
+# m5
+IoT Code Examples for ESP32, M5Stack, M5Stick C, M5Stick C Plus, ATOM, ATOM  Lite
 
-You can use the [editor on GitHub](https://github.com/bokunimowakaru/m5/edit/master/docs/index.md) to maintain and preview the content for your website in Markdown files.
+## サンプル集
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5Stick C, M5Stick C Plus, ATOM Lite に対応したサンプル・プログラム集です。
 
-### Markdown
+## 本コンテンツの最新版とダウンロード方法
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+    最新版の保存先
+    - https://bokunimo.net/git/m5/
 
-```markdown
-Syntax highlighted code block
+    ダウンロード方法(GitHubから)
+    - git clone https://bokunimo.net/git/m5/
 
-# Header 1
-## Header 2
-### Header 3
+![実行画面ex00～07](../pictures/ex00_07_thumb.gif)
 
-- Bulleted
-- List
+## 主なフォルダ名、プログラム名
 
-1. Numbered
-2. List
+本レポジトリに収録した主なプログラムのフォルダ名、ファイル名の一覧を示します。
 
-**Bold** and _Italic_ and `Code` text
+|フォルダ名 |内容                                                  |
+|-----------|------------------------------------------------------|
+|atom       |M5Stack製 ATOM / ATOM Lite / 通常の ESP32-WROOM-32 用 |
+|core       |M5Stack製 Core 用                                     |
+|stick_cplus|M5Stack製 M5Stick C Plus 用                           |
+|pictures   |関連画像ファイル                                      |
+|tools      |関連ツール                                            |
+|LICENSE    |ライセンス内容(MITライセンス:要権利表示・無保証)      |
 
-[Link](url) and ![Image](src)
-```
+### 基礎編
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+|フォルダ名   |内容                                                                               |
+|-------------|-----------------------------------------------------------------------------------|
+|ex00_hello   |Arduino IDE インストール後の動作確認用プログラム                                   |
+|ex01_led     |LED制御用プログラム。HTTPサーバ機能によりブラウザから制御可能                      |
+|ex02_sw      |押しボタンの送信プログラム。ex01_ledのLEDの制御やLINEへの送信が可能                |
+|ex03_lum     |照度センサの送信プログラム。照度値をクラウド(Ambient)に送信しグラフ化が可能        |
+|ex04_lcd     |小型液晶への表示プログラム。ex02、03、05の送信データの表示が可能                   |
+|ex05_hum     |温度＋湿度センサの送信プログラム。家じゅうの部屋に設置すれば居住環境の監視が可能   |
+|ex06_pir     |人感センサ・ユニット（PIR Motion Sensor）を使ったWi-Fi人感センサ用プログラム       |
+|ex07_gps     |GNSS/GPS位置情報を送信する位置情報送信プログラム                                   |
+|ex08_ir_out  |赤外線リモコン・ユニット（IR Unit）を使ったWi-Fi赤外線・リモコン用プログラム       |
+|ex09_talk    |Wi-Fiコンシェルジェ［音声アナウンス担当］音声合成 AquesTalk Pico LSI ATP3012用     |
 
-### Jekyll Themes
+### 応用編
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/bokunimowakaru/m5/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+|フォルダ名   |内容                                                                               |
+|-------------|-----------------------------------------------------------------------------------|
+|ex11_ble_scan|Bluetooth LE のアドバタイジング送信数を数えるBLEビーコン・センサ                   |
+|ex12_janken  |Webインタフェース HTTP GET でクラウド・サーバとジャンケン対決します                |
+|ex13_daruma  |人感センサ・ユニット（PIR Motion Sensor）を使った だるまさんがころんだ ゲーム      |
+|ex14_mogura  |インターネット上でランキング競争 M5Stackのボタンを使った もぐらたたき ゲーム       |
 
-### Support or Contact
+![実行画面ex11～14](../pictures/ex11_14_thumb.gif)
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+## Arduino IDE 用の ESP32 開発環境のセットアップ
+
+ESP32開発ボード（ ESP32-WROOM-32 搭載）で使用する場合、下記の手順で開発環境をセットアップし、
+「atom」フォルダ内のサンプルを使用してください。
+
+	atom フォルダ : ESP32開発ボード ESP32-WROOM-32 対応サンプル
+
+1. Arduino IDE (https://www.arduino.cc/en/software/) をインストールする。
+2. Arduino IDE を起動し、[ファイル]メニュー内の[環境設定]を開き、「追加のボードマネージャのURL」の欄に下記の「安定板」を追加する。
+
+    安定板
+    - https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+
+    開発途上版
+    - https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json
+
+    参考文献
+    - https://github.com/espressif/arduino-esp32 (最新情報)
+    - https://docs.espressif.com/projects/arduino-esp32/en/latest/installing.html (情報が古い場合があるので注意)
+
+3. [ツール]メニュー内の[ボード]からボードマネージャを開き、検索窓に「esp32」を入力後、esp32 by Espressif Systems をインストールする。
+
+4. [ツール]メニュー内の[ボード]で ESP32 Dev Module を選択する。
+
+5. M5Stack Atomの場合は、[ツール]メニュー内の[Upload Speed]で115200を選択する。
+その他のM5Stack/M5Stickの場合は、M5Stack社のインストール方法を参照してください。
+
+by bokunimo.net(https://bokunimo.net/)
+- ブログ (https://bokuniomo.net/blog/)
+- カテゴリESP (https://bokunimo.net/blog/category/esp/)
