@@ -152,7 +152,7 @@ void loop(){                                    // 繰り返し実行する関�
         http.POST("message=密集度は " + String(count)  + " です。");
         http.end();                             // HTTP通信を終了する
     }
-    if(strcmp(Amb_Id,"00000") != 0){            // Ambient未設定時にsleepを実行
+    if(strcmp(Amb_Id,"00000") != 0){            // Ambient設定時に以下を実行
         S = "{\"writeKey\":\""+String(Amb_Key); // (項目)writeKey,(値)ライトキー
         S += "\",\"d1\":\"" + String(count);    // (項目)d1,(値)count
         S += "\"}";
