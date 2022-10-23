@@ -62,9 +62,9 @@ ESP32開発ボード（ ESP32-WROOM-32 搭載）で使用する場合、下記�
 	atom フォルダ : ESP32開発ボード ESP32-WROOM-32 対応サンプル
 
 1. Arduino IDE (https://www.arduino.cc/en/software/) をインストールする。
-2. Arduino IDE を起動し、[ファイル]メニュー内の[環境設定]を開き、「追加のボードマネージャのURL」の欄に下記の「安定板」を追加する。
+2. Arduino IDE を起動し、[ファイル]メニュー内の[環境設定]を開き、「追加のボードマネージャのURL」の欄に下記の「安定版」を追加する。
 
-    安定板
+    安定版
     - https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
 
     開発途上版
