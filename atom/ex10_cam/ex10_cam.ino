@@ -6,11 +6,16 @@ Webサーバ機能を使って、カメラのシャッターを制御し、撮�
 
     対応カメラ： SeeedStudio Grove Serial Camera Kit 
 
-    カメラ接続用
-    IO26 TX カメラ側はRXD端子(白色)
-    IO32 RX カメラ側はTXD端子(黄色)
+    カメラ接続用： カメラ直付けのGroveケーブルをM5Atomに接続する
+    IO26 TX カメラ側はRXD端子(Grove白色,M5用ケーブル黄色)
+    IO32 RX カメラ側はTXD端子(Grove黄色,M5用ケーブル白色)
 
+    カメラ電源制御時：
     IO10 にPch-FETを接続
+
+    LCD接続用：
+    IO19 AE-AQM0802 SDAポート 
+    IO22 AE-AQM0802 SCLポート 設定方法＝lcdSetup(8桁,2行,SDA,SCL)
 
     使用機材(例)：ESP32 / ATOM / ATOM Lite + SeeedStudio Grove Serial Camera Kit
                   + LCD(AE-AQM0802)
@@ -57,7 +62,7 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex10_cam
 #define PORT 1024                           // UDP送信先ポート番号
 #define DEVICE_CAM  "cam_a_1,"              // デバイス名(カメラ)
 
-HardwareSerial Serial2(2);                  // カメラ接続用シリアルポートESP32C3
+HardwareSerial serial2(2);                  // カメラ接続用シリアルポートESP32C3
 
 WiFiServer server(80);                      // Wi-Fiサーバ(ポート80=HTTP)定義
 IPAddress   IP_LOCAL;                       // 本機のIPアドレス
@@ -79,13 +84,13 @@ void sendUdp_Fd(uint16_t fd_num){
 }
 
 void setup(){ 
-    lcdSetup(8,2,1,0);                      // LCD初期(X=8,Y=2,SDA=1,SCL=0)
+    lcdSetup(8,2,19,22);                    // LCD初期(X=8,Y=2,SDA=19,SCL=22)
     pinMode(PIN_CAM,OPEN_DRAIN);            // FETを接続したポートをオープンに
     Serial.begin(115200);                   // 動作確認用用のシリアル出力開始
     Serial.println("Example 10 cam");       // 「Example 10」をシリアル出力表示
     WiFi.mode(WIFI_STA);                    // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイントへ接続
-    Serial2.begin(115200, SERIAL_8N1, PIN_SS2_RX, PIN_SS2_TX); // シリアル初期化
+    serial2.begin(115200, SERIAL_8N1, PIN_SS2_RX, PIN_SS2_TX); // シリアル初期化
     pinMode(PIN_CAM,OUTPUT);                // FETを接続したポートを出力に
     digitalWrite(PIN_CAM,LOW);              // FETをLOW(ON)にする
     delay(100);                             // 電源の供給待ち
