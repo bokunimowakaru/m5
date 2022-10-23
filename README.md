@@ -42,6 +42,7 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 |ex07_gps     |GNSS/GPS位置情報を送信する位置情報送信プログラム                                   |
 |ex08_ir_out  |赤外線リモコン・ユニット（IR Unit）を使ったWi-Fi赤外線・リモコン用プログラム       |
 |ex09_talk    |Wi-Fiコンシェルジェ［音声アナウンス担当］音声合成 AquesTalk Pico LSI ATP3012用     |
+|ex10_cam     |Wi-Fiコンシェルジェ［カメラ担当］SeeedStudio Grove Serial Camera Kit 用            |
 
 ### 応用編
 
