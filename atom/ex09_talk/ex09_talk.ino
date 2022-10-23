@@ -1,12 +1,16 @@
 /*******************************************************************************
 Example 9 : ESP32C3 Wi-Fi コンシェルジェ アナウンス担当（音声合成出力）
+                                                    for ESP32 / ATOM / ATOM Lite
+
 AquosTalkを使った音声合成でユーザへ気づきを通知することが可能なIoT機器です。
+
+    対応IC： AquosTalk Pico LSI
 
     AquosTalk接続用
     TXD -> AquosTalk Pico LSI側 RXD端子(2番ピン)
 
-ESP32 / ATOM / ATOM Lite + AquosTalk Pico LSI に対応
-
+    使用機材(例)： ESP32 / ATOM / ATOM Lite + AquosTalk Pico LSI
+    
                                           Copyright (c) 2016-2022 Wataru KUNINO
 *******************************************************************************
 【参考文献】
@@ -33,6 +37,7 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex09_talk
 #define PASS "password"                     // パスワード
 #define PORT 1024                           // 受信ポート番号
 
+HardwareSerial Serial2(2);                  // シリアル2を生成
 WebServer server(80);                       // Webサーバ(ポート80=HTTP)定義
 
 void handleRoot(){
@@ -63,8 +68,7 @@ void setup(){                               // 起動時に一度だけ実行す
     led_setup(PIN_LED_RGB);                 // WS2812の初期設定(ポート設定)
     Serial.begin(115200);                   // 動作確認のためのシリアル出力開始
     Serial.println("ESP32 eg.9 talk");      // タイトルをシリアル出力表示
-    HardwareSerial Serial2(2);                   // uart_nr デフォルト RX=16, TX=17
-    Serial2.begin(9600, SERIAL_8N1, PIN_SS2_RX, PIN_SS2_TX);
+    Serial2.begin(9600, SERIAL_8N1, PIN_SS2_RX, PIN_SS2_TX); // シリアル初期化
     Serial2.print("\r$");                    // ブレークコマンドを出力する
     delay(100);                             // 待ち時間処理
     Serial2.print("$?kon'nnichi/wa.\r");     // 音声「こんにちわ」を出力する

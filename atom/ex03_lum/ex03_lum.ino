@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for ATOM / ATOM Lite
+Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for ESP32 / ATOM / ATOM Lite
 ・照度センサ から取得した照度値を送信するIoTセンサです。
 
     使用機材(例)：ATOM/ATOM Lite + ATOM-HAT(ATOM-MATEに付属) + HAT-DLIGHT

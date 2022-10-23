@@ -1,5 +1,7 @@
 /*******************************************************************************
 Example 5: ESP32 (IoTセンサ) Wi-Fi 温湿度計 SENSIRION製 SHT30/SHT31/SHT35 版
+                                                    for ESP32 / ATOM / ATOM Lite
+
 ・デジタルI2Cインタフェース搭載センサから取得した温湿度を送信するIoTセンサです。
 
     使用機材(例)：ATOM/ATOM Lite  + ATOM-HAT(ATOM-MATEに付属) + ENV II/III HAT

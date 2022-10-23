@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 1: Wi-Fi コンシェルジェ 照明担当 for ATOM / ATOM Lite
+Example 1: Wi-Fi コンシェルジェ 照明担当 for ESP32 / ATOM / ATOM Lite
 ・HTTPによるWebサーバ機能搭載 Wi-FiコンシェルジェがLEDを制御します。
 
                                           Copyright (c) 2021-2022 Wataru KUNINO

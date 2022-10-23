@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 2: ESP32 (IoTセンサ) Wi-Fi ボタン for ATOM / ATOM Lite
+Example 2: ESP32 (IoTセンサ) Wi-Fi ボタン for ESP32 / ATOM / ATOM Lite
 ・ボタンを押下するとUDPでLAN内に文字列"Ping"を送信します。
 ・LINE用トークンを設定すれば、LINEアプリに「ボタンが押されました」を通知。
 ・別の子機となる Wi-Fi コンシェルジェ証明担当(ワイヤレスLED子機)のIPアドレスを

@@ -1,5 +1,5 @@
 /******************************************************************************
-Example 0: Hello, world! for ATOM / ATOM Lite
+Example 0: Hello, world! for ESP32 / ATOM / ATOM Lite
 ・起動時にLEDを点滅、モールス信号でタイトルを表示します。
 ・本体のボタンを押すと、メッセージをモールス出力します。
 

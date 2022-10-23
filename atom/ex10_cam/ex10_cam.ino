@@ -1,30 +1,63 @@
 /*******************************************************************************
 Example 10: ESP32C3 Wi-Fi コンシェルジェ カメラ担当
- for SeeedStudio Grove Serial Camera Kit 
+                                                    for ESP32 / ATOM / ATOM Lite
+
 Webサーバ機能を使って、カメラのシャッターを制御し、撮影した写真を表示します。
 
+    対応カメラ： SeeedStudio Grove Serial Camera Kit 
+
     カメラ接続用
-    IO7 TX カメラ側はRXD端子(白色)
-    IO8 RX カメラ側はTXD端子(黄色)
+    IO26 TX カメラ側はRXD端子(白色)
+    IO32 RX カメラ側はTXD端子(黄色)
 
     IO10 にPch-FETを接続
 
+    使用機材(例)：ESP32 / ATOM / ATOM Lite + SeeedStudio Grove Serial Camera Kit
+                  + LCD(AE-AQM0802)
+
+    トラブルシューティング(ピン番号はESP32-WROOM-02用なので読み替えが必要)：
+    https://github.com/bokunimowakaru/esp/blob/master/2_example/example20_camG/
+
                                           Copyright (c) 2016-2022 Wataru KUNINO
+*******************************************************************************
+【参考文献】
+Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/atom/arduino
+
+ATOM Lite Arduino Library API 情報(本サンプルでは使用しない)：
+https://docs.m5stack.com/en/api/atom/system
+
+HardwareSerial.h：
+    void begin(
+        unsigned long baud,
+        uint32_t config=SERIAL_8N1,
+        int8_t rxPin=-1,
+        int8_t txPin=-1,
+        bool invert=false,
+        unsigned long timeout_ms = 20000UL,
+        uint8_t rxfifo_full_thrhd = 112
+    );
+
+【引用コード】
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example20_camG
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example52_camG
+https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex10_cam
 *******************************************************************************/
-// HardwareSerial.h
-// void begin(unsigned long baud, uint32_t config=SERIAL_8N1, int8_t rxPin=-1, int8_t txPin=-1, bool invert=false, unsigned long timeout_ms = 20000UL, uint8_t rxfifo_full_thrhd = 112);
  
 #include <WiFi.h>                           // ESP32用WiFiライブラリ
 #include <WiFiUdp.h>                        // UDP通信を行うライブラリ
 
 #define PIN_CAM 10                          // IO10 にPch-FETを接続
+#define PIN_SS2_RX 32                       // シリアル受信ポート(未使用)
+#define PIN_SS2_TX 26                       // シリアル送信 AquosTalk Pico LSI側
 #define TIMEOUT 20000                       // タイムアウト 20秒
+
 #define SSID "1234ABCD"                     // 無線LANアクセスポイントのSSID
 #define PASS "password"                     // パスワード
 #define PORT 1024                           // UDP送信先ポート番号
 #define DEVICE_CAM  "cam_a_1,"              // デバイス名(カメラ)
 
-HardwareSerial hardwareSerial1(1);          // カメラ接続用シリアルポートESP32C3
+HardwareSerial Serial2(2);                  // カメラ接続用シリアルポートESP32C3
 
 WiFiServer server(80);                      // Wi-Fiサーバ(ポート80=HTTP)定義
 IPAddress   IP_LOCAL;                       // 本機のIPアドレス
@@ -52,7 +85,7 @@ void setup(){
     Serial.println("Example 10 cam");       // 「Example 10」をシリアル出力表示
     WiFi.mode(WIFI_STA);                    // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイントへ接続
-    hardwareSerial1.begin(115200, SERIAL_8N1, 8, 7); 
+    Serial2.begin(115200, SERIAL_8N1, PIN_SS2_RX, PIN_SS2_TX); // シリアル初期化
     pinMode(PIN_CAM,OUTPUT);                // FETを接続したポートを出力に
     digitalWrite(PIN_CAM,LOW);              // FETをLOW(ON)にする
     delay(100);                             // 電源の供給待ち
