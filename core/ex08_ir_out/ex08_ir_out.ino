@@ -18,8 +18,6 @@ Example 8 : Wi-Fi コンシェルジェ リモコン担当(赤外線リモコン
 #define PIN_IR_IN 22                        // IO22 に IR センサを接続(IR Unit)
 #define PIN_IR_OUT 21                       // IO21 に IR LEDを接続(IR Unit)
 
-#define PIN_LED_RGB 27                      // IO27 に WS2812を接続(Atom内蔵)
-
 #define SSID "1234ABCD"                     // 無線LANアクセスポイントのSSID
 #define PASS "password"                     // パスワード
 #define PORT 1024                           // 送信のポート番号
@@ -77,7 +75,7 @@ void setup(){                               // 起動時に一度だけ実行す
     udp.begin(PORT);                        // UDP通信御開始
 }
 
-void loop(){
+void loop(){                                // 繰り返し実行する関数
     byte d[DATA_LEN_MAX];                   // リモコン信号データ
     int d_len;                              // リモコン信号長（bit）
     char s[97];                             // 文字列変数を定義 97バイト96文字
