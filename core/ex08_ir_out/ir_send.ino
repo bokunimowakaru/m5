@@ -5,7 +5,7 @@
 本ソースリストおよびソフトウェアは、ライセンスフリーです。
 個人での利用は自由に行えます。著作権表示の改変は禁止します。
 
-                               Copyright (c) 2012-2019 Wataru KUNINO
+                               Copyright (c) 2012-2022 Wataru KUNINO
                                https://bokunimo.net/bokunimowakaru/
 *********************************************************************/
 /*
@@ -18,7 +18,7 @@
 
 
 #define FLASH_AEHA_TIMES	16	// シンボルの搬送波点滅回数（ＡＥＨＡ）
-#define FLASH_NEC_TIMES		22	// シンボルの搬送波点滅回数（ＮＥＣ）
+#define FLASH_NEC_TIMES		25	// 22 -> 25 2022/10 シンボルの搬送波点滅回数（ＮＥＣ） 
 #define FLASH_SIRC_TIMES	24	// シンボルの搬送波点滅回数（ＳＩＲＣ）
 /*
 #define FLASH_AEHA_TIMES	17	// シンボルの搬送波点滅回数（ＡＥＨＡ）
@@ -219,4 +219,30 @@ void ir_send(byte *data, const byte data_len, const byte ir_type ){
 			break;
 	}
     portEXIT_CRITICAL_ISR(&mutex);              // 割り込み許可
+}
+
+void ir_send(byte *data, const byte data_len, const byte ir_type, const byte repeat){
+	for(byte i=0;i<repeat;i++){
+		unsigned long t = millis();
+		ir_send(data, data_len, ir_type);
+		unsigned long dt = millis() - t;
+		unsigned long weight = 0;
+		if(i < repeat - 1){
+			switch( ir_type ){
+				case NEC:	
+					weight = 108 - dt;
+					break;
+				case SIRC:
+					weight = 45 - dt;
+					break;
+				case AEHA:
+				default:
+					weight = 130 - dt;
+				break;
+			}
+			if(weight > 80 ) weight = 80;
+			if(weight < 8 ) weight = 8;
+			delay(weight);
+		}
+	}
 }

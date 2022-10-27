@@ -283,15 +283,18 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 			}
 			break;
 		case NEC:
-			in=(	data[2]^
-					data[3]^
-					0xFF
-				)&0xFF;
-			if( in ){
-				data_len=-5;	// データのパリティ確認
-				#ifdef DEBUG
-					printf("NEC  ERR= %02X ##############################\n",in);
-				#endif // DEBUG
+			if( data_len < 32 ) data_len=-2;
+			if(  data_len == 32 ){
+				in=(	data[2]^
+						data[3]^
+						0xFF
+					)&0xFF;
+				if( in ){
+					data_len=-5;	// データのパリティ確認
+					#ifdef DEBUG
+						printf("NEC  ERR= %02X ##############################\n",in);
+					#endif // DEBUG
+				}
 			}
 			break;
 		default:

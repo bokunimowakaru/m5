@@ -5,7 +5,7 @@
 本ソースリストおよびソフトウェアは、ライセンスフリーです。
 利用、編集、再配布等が自由に行えますが、著作権表示の改変は禁止します。
 
-                               Copyright (c) 2009-2019 Wataru KUNINO
+                               Copyright (c) 2009-2022 Wataru KUNINO
                                https://bokunimo.net/bokunimowakaru/
 *********************************************************************/
 
@@ -26,7 +26,7 @@
 //	#define DEBUG
 //	#define DEBUG_ARDUINO
 int _PIN_IR_IN = 4;                 // IO 4(10番ピン) にIRセンサを接続
-
+int _ir_read_mode = 0;
 /*
 int micros_prev,micros_sec=0;
 
@@ -54,6 +54,10 @@ byte digitalRead(){
     return 255;
 }
 */
+
+int ir_read_mode(){
+	return _ir_read_mode;
+}
 
 void ir_read_init(void){
 	pinMode(_PIN_IR_IN, INPUT);
@@ -279,19 +283,23 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 			}
 			break;
 		case NEC:
-			in=(	data[2]^
-					data[3]^
-					0xFF
-				)&0xFF;
-			if( in ){
-				data_len=-5;	// データのパリティ確認
-				#ifdef DEBUG
-					printf("NEC  ERR= %02X ##############################\n",in);
-				#endif // DEBUG
+			if( data_len < 32 ) data_len=-2;
+			if(  data_len == 32 ){
+				in=(	data[2]^
+						data[3]^
+						0xFF
+					)&0xFF;
+				if( in ){
+					data_len=-5;	// データのパリティ確認
+					#ifdef DEBUG
+						printf("NEC  ERR= %02X ##############################\n",in);
+					#endif // DEBUG
+				}
 			}
 			break;
 		default:
 			break;
 	}
+	_ir_read_mode = mode;
 	return(data_len);
 }

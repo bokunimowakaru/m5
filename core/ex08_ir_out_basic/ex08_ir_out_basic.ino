@@ -29,6 +29,20 @@ byte DATA[DATA_N][DATA_LEN_MAX] = {         // 保存用・リモコン信号デ
 int DATA_LEN[DATA_N]={48,48,48,48};         // 保存用・リモコン信号長（bit）
 int IR_TYPE[DATA_N]={AEHA,AEHA,AEHA,AEHA};  // 保存用・リモコン方式
 int ir_type = AEHA;                         // リモコン方式 255で自動受信
+int ir_repeat = 3;                          // 送信リピート回数
+
+/*
+byte DATA[DATA_N][DATA_LEN_MAX] = {         // 保存用・リモコン信号データ
+    {0xD2,0x6D,0x04,0xFB},                  // Onkyo POWER
+    {0xD2,0x6D,0x03,0xFC},                  // Onkyo VOL_DOWN
+    {0xD2,0x6D,0x04,0xFB},                  // Onkyo POWER
+    {0xD2,0x6D,0x02,0xFD},                  // Onkyo VOL_UP
+};
+int DATA_LEN[DATA_N]={32,32,32,32};         // 保存用・リモコン信号長（bit）
+int IR_TYPE[DATA_N]={NEC,NEC,NEC,NEC};  // 保存用・リモコン方式
+int ir_type = NEC;                         // リモコン方式 255で自動受信
+int ir_repeat = 3;                          // 送信リピート回数
+*/
 
 void setup(){                               // 起動時に一度だけ実行する関数
     ir_read_init(PIN_IR_IN);                // IRセンサの入力ポートの設定
@@ -37,6 +51,10 @@ void setup(){                               // 起動時に一度だけ実行す
     M5.Lcd.setBrightness(31);               // 輝度を下げる（省エネ化）
     M5.Lcd.setTextColor(WHITE);             // 文字色を白(背景なし)に設定
     M5.Lcd.println("M5 eg.8 ir_rc");        // タイトルをLCDに出力
+    M5.update();                            // ボタン状態の取得
+    delay(1);                               // ボタンの誤作動防止
+    int btn=M5.BtnB.isPressed()+2*M5.BtnC.isPressed();
+    if(btn > 0 && btn < 3) ir_type = btn;   // 起動時にリモコン方式を設定
 }
 
 void loop(){                                // 繰り返し実行する関数
@@ -52,19 +70,18 @@ void loop(){                                // 繰り返し実行する関数
         M5.Lcd.println(s);                  // 受信データをLCDに表示
         memcpy(DATA[0],d,DATA_LEN_MAX);     // データ変数dを変数Dにコピーする
         DATA_LEN[0] = d_len;                // データ長d_lenをD_LENにコピーする
-        IR_TYPE[DATA_N] = ir_read_mode();   // リモコン方式を保持する
+        IR_TYPE[0] = ir_type;        // リモコン方式を保持する
         delay(500);
     }
 
     M5.update();                            // ボタン状態の取得
     delay(1);                               // ボタンの誤作動防止
-    int btn;                                // ボタン値を代入する変数
-    btn = M5.BtnA.wasReleased()+2*M5.BtnB.wasReleased()+3*M5.BtnC.wasReleased();
+    int btn=M5.BtnA.wasReleased()+2*M5.BtnB.wasReleased()+3*M5.BtnC.wasReleased();
     if(btn > 0 && btn < DATA_N){            // ボタン値が1～3のとき
         M5.Lcd.print("TX > ");              // 「TX >」をLCDに表示
         ir_data2txt(s,96,DATA[btn],DATA_LEN[btn]); // 送信データをテキスト文字に
         M5.Lcd.println(s);                  // 送信データをLCDに表示
-        ir_send(DATA[btn],DATA_LEN[btn],IR_TYPE[btn]); // 赤外線リモコン送信
+        ir_send(DATA[btn],DATA_LEN[btn],IR_TYPE[btn],ir_repeat); // リモコン送信
     }
     btn=M5.BtnA.pressedFor(999)+2*M5.BtnB.pressedFor(999)+3*M5.BtnC.pressedFor(999);
     if(btn > 0 && btn < DATA_N){            // 長押しボタン値が1～3のとき
