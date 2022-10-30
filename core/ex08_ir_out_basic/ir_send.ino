@@ -19,7 +19,7 @@
 
 #define FLASH_AEHA_TIMES	16	// シンボルの搬送波点滅回数（ＡＥＨＡ）
 #define FLASH_NEC_TIMES		25	// 22 -> 25 2022/10 シンボルの搬送波点滅回数（ＮＥＣ） 
-#define FLASH_SIRC_TIMES	24	// シンボルの搬送波点滅回数（ＳＩＲＣ）
+#define FLASH_SIRC_TIMES	22	// 24 -> 26 2022/10 シンボルの搬送波点滅回数（ＳＩＲＣ）
 /*
 #define FLASH_AEHA_TIMES	17	// シンボルの搬送波点滅回数（ＡＥＨＡ）
 						//  16 -> 17 2022/1/30 ESP32C3 オーバヘッド!? 信号長10%短かかった
@@ -221,7 +221,9 @@ void ir_send(byte *data, const byte data_len, const byte ir_type ){
     portEXIT_CRITICAL_ISR(&mutex);              // 割り込み許可
 }
 
-void ir_send(byte *data, const byte data_len, const byte ir_type, const byte repeat){
+void ir_send(byte *data, const byte data_len, const byte ir_type, byte repeat){
+	if(ir_type == SIRC) repeat = (repeat+2)/3; // ÷=3 の切り上げ処理
+	if(repeat == 0) repeat = 1;
 	for(byte i=0;i<repeat;i++){
 		unsigned long t = millis();
 		ir_send(data, data_len, ir_type);

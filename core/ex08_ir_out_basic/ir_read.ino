@@ -24,7 +24,7 @@
 #endif
 
 //	#define DEBUG
-//	#define DEBUG_ARDUINO
+#define DEBUG_ARDUINO
 int _PIN_IR_IN = 4;                 // IO 4(10番ピン) にIRセンサを接続
 int _ir_read_mode = 0;
 /*
@@ -104,7 +104,7 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 	int symbol_len, noise;			// 判定用シンボル長
 	byte det = IR_IN_OFF;			// 判定時の入力信号レベル(SIRC対応)
 	byte in=0;
-	#ifdef DEBUG
+	#if defined(DEBUG) || defined(DEBUG_ARDUINO)
 		int t[1024];
 		int t_i=0;
 	#endif
@@ -128,6 +128,11 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 		//	micros_0();
 			for(bit=0;bit<7;bit++){
 				len = ir_sens( IR_IN_ON );
+				#if defined(DEBUG) || defined(DEBUG_ARDUINO)
+					t[t_i]=len;
+					t_i++;
+					if(t_i>1023) goto debug_exit;
+				#endif
 				if( len > 225 && len < 1800){
 					if( len < 900 ){
 						in = in>>1;
@@ -146,6 +151,11 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 					in = 0;
 					for(bit=0;bit<8;bit++){
 						len = ir_sens( IR_IN_ON );
+						#if defined(DEBUG) || defined(DEBUG_ARDUINO)
+							t[t_i]=len;
+							t_i++;
+							if(t_i>1023) goto debug_exit;
+						#endif
 						if( len > 225 && len < 1800){
 							if( len < 900 ){
 								in = in>>1;
@@ -188,6 +198,11 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 			in = 0;
 			for(bit=0;bit<8;bit++){
 				len = ir_sens( IR_IN_OFF );	// ir_sens( det )
+				#if defined(DEBUG) || defined(DEBUG_ARDUINO)
+					t[t_i]=len;
+					t_i++;
+					if(t_i>1023) goto debug_exit;
+				#endif
 				if( len > noise && len < data_wait){
 					if( len < symbol_len ){
 						in = in>>1;
@@ -196,24 +211,12 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 						in = in>>1;
 						in += 128;
 					}
-					#ifdef DEBUG
-						t[t_i]=len;
-						t_i++;			// if(t_i>1023) t_i=1023;
-					#endif
-
 				}else{
 					in = in>>(8 - bit);
 					data[i]=in;
 					data_len = i * 8 + bit;
 					i = data_num -1;	// break for i
 					bit=7;				// break for bit
-					#ifdef DEBUG
-						t[t_i]=len;
-						t_i++; if(t_i>1023){
-							printf("DEBUG:out of memory\n");
-							goto debug_exit;
-						}
-					#endif
 				}
 			}
 			data[i]=in;
@@ -248,6 +251,7 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 		printf("\n");
 	#endif // DEBUG
 	#ifdef DEBUG_ARDUINO
+		debug_exit:
 		Serial.print("Mode    = ");Serial.print(mode);
 		switch(mode){
 			case AEHA: Serial.print(" (AEHA)\n"); break; 
@@ -262,6 +266,16 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 		Serial.print("SYNC OFF= ");Serial.println(len_off);
 		Serial.print("SYMOL   = ");Serial.println(symbol_len);
 		Serial.print("DATA LEN= ");Serial.println(data_len);
+		len=data_len/8;
+		if(data_len%8)len++;
+		Serial.printf("data[%02d]= {%02X",len,data[0]);
+		for(i=1;i<len;i++) Serial.printf(",%02X",data[i]);
+		Serial.printf("}\n");
+		for(i=0;i<t_i;i++){
+			Serial.printf("%4d ",t[i]);
+			if(i%8==7) Serial.printf("\n");
+		}
+		Serial.printf("\n");
 	#endif
 	/* データの有効性のチェック 共通 */
 	if(data_len<16)data_len=-2;					// 2バイトに満たないのは無効
