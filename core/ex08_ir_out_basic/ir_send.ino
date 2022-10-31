@@ -17,9 +17,9 @@
 #define DATA_SIZE	16				// データ長(byte),4の倍数、16以上
 
 
-#define FLASH_AEHA_TIMES	16	// シンボルの搬送波点滅回数（ＡＥＨＡ）
-#define FLASH_NEC_TIMES		25	// 22 -> 25 2022/10 シンボルの搬送波点滅回数（ＮＥＣ） 
-#define FLASH_SIRC_TIMES	22	// 24 -> 26 2022/10 シンボルの搬送波点滅回数（ＳＩＲＣ）
+#define FLASH_AEHA_TIMES	16	// 400us シンボルの搬送波点滅回数（ＡＥＨＡ）
+#define FLASH_NEC_TIMES		25	// 600us 22 -> 25 2022/10 シンボルの搬送波点滅回数（ＮＥＣ） 
+#define FLASH_SIRC_TIMES	26	// 600us 24 -> 26 2022/10 シンボルの搬送波点滅回数（ＳＩＲＣ）
 /*
 #define FLASH_AEHA_TIMES	17	// シンボルの搬送波点滅回数（ＡＥＨＡ）
 						//  16 -> 17 2022/1/30 ESP32C3 オーバヘッド!? 信号長10%短かかった
@@ -28,7 +28,7 @@
 #define FLASH_SIRC_TIMES	25	// シンボルの搬送波点滅回数（ＳＩＲＣ）
 						//  24 -> 25 2022/1/30 未確認だが同じ状況と考え、+1した
 */
-#define FLASH_ON			11	// LED ON 期間 us (規格上 ON+OFFで 23 us)
+#define FLASH_ON			11	// LED ON 期間 us (規格上 ON+OFFで 23 us) -> 24us
 #define FLASH_OFF			11	// LED ON 期間 us (規格上 ON+OFFで 23 us)
 
 // enum IR_TYPE{ AEHA=0, NEC=1, SIRC=2 };		// 家製協AEHA、NEC、SONY SIRC切り換え
@@ -144,7 +144,7 @@ int ir_data2txt(char *txt, int txt_max, byte *data, int data_len){
 
 /* 赤外線ＬＥＤ信号送出 */
 void ir_send(byte *data, const byte data_len, const byte ir_type ){
-	byte i,j,t;
+	byte i,j,k,t;
 	byte b;
 	
 	if(data_len<16) return;
@@ -183,17 +183,18 @@ void ir_send(byte *data, const byte data_len, const byte ir_type ){
 					}
 					ir_wait( FLASH_SIRC_TIMES );
 				}
-				for( i = 8 ; i < (data_len/8+(data_len%8!=0)) ; i++){
-					for( b = 0 ; b < 8 ; b++ ){
-						if( data[i] & (0x01 << b) ){
-							ir_flash( 2 * FLASH_SIRC_TIMES );
-							t +=3 ;
-						}else{
-							ir_flash( FLASH_SIRC_TIMES );
-							t +=2 ;
-						}
-						ir_wait( FLASH_SIRC_TIMES );
+				// for( i = 8 ; i < (data_len/8+(data_len%8!=0)) ; i++){
+				for( k = 8 ; k < data_len ; k++){
+					i = k / 8;
+					b = k % 8;
+					if( data[i] & (0x01 << b) ){
+						ir_flash( 2 * FLASH_SIRC_TIMES );
+						t +=3 ;
+					}else{
+						ir_flash( FLASH_SIRC_TIMES );
+						t +=2 ;
 					}
+					ir_wait( FLASH_SIRC_TIMES );
 				}
 				while( t <= 75 ){
 					t++;
