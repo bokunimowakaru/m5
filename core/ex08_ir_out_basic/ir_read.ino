@@ -24,7 +24,7 @@
 #endif
 
 //	#define DEBUG
-#define DEBUG_ARDUINO
+//	#define DEBUG_ARDUINO
 int _PIN_IR_IN = 4;                 // IO 4(10番ピン) にIRセンサを接続
 int _ir_read_mode = 0;
 /*
