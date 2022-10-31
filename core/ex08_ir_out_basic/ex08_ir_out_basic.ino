@@ -42,7 +42,9 @@ int DATA_LEN[DATA_N]={48,48,48,48};         // 保存用・リモコン信号長
 int IR_TYPE[DATA_N]={AEHA,AEHA,AEHA,AEHA};  // 保存用・リモコン方式
 int ir_type = AEHA;                         // リモコン方式 255で自動受信
 int ir_repeat = 3;                          // 送信リピート回数
+*/
 
+/*
 byte DATA[DATA_N][DATA_LEN_MAX] = {         // 保存用・リモコン信号データ
     {0xD2,0x6D,0x04,0xFB},                  // Onkyo POWER
     {0xD2,0x6D,0x03,0xFC},                  // Onkyo VOL_DOWN
@@ -65,13 +67,19 @@ void disp(int hlight=-1, uint32_t color=0){ // リモコンデータを表示す
     M5.Lcd.println(String(type_s[ir_type])+"]"); // 現在のリモコン形式を表示
     for(int i = 0; i < 4; i++){             // 保持データをLCDに表示する処理部
         M5.Lcd.println("\ndata["+String(i)+"] ");
-        if(i > 0) M5.Lcd.println("Button  = " + String(btn_s[i-1]));
         if(i == hlight) M5.Lcd.setTextColor(WHITE, color);
+        if(i > 0){
+            M5.Lcd.println("Button  = " + String(btn_s[i-1]));
+            int y = 160 + 96 * (i-2);
+            M5.Lcd.drawCentreString(String(type_s[IR_TYPE[i]]), y, 208, 2);
+            M5.Lcd.drawCentreString(String(DATA_LEN[i]), y, 224, 2);
+        }
         M5.Lcd.println("IR Type = " + String(type_s[IR_TYPE[i]]));
         M5.Lcd.println("IR Len. = " + String(DATA_LEN[i]));
         ir_data2txt(s,96,DATA[i],DATA_LEN[i]);
         M5.Lcd.println("IR Data = " + String(s));
         if(i == hlight) M5.Lcd.setTextColor(WHITE, BLACK);
+        
     }
 }
 
