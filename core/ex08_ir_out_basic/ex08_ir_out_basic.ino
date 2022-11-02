@@ -21,41 +21,15 @@ Example 8 : Wi-Fi コンシェルジェ リモコン担当(赤外線リモコン
 #define SIRC        2                       // 赤外線送信方式 SONY SIRC方式
 
 byte DATA[DATA_N][DATA_LEN_MAX] = {         // 保存用・リモコン信号データ
-    {0xAA,0x5A,0x8F,0x12,0x16,0xD1},        // AQUOS TV POWER (AEHA len=48)
-    {0x15,0x9A,0x00},                       // SONY POWER
-    {0xAA,0x5A,0x8F,0x12,0x16,0xD1},        // AQUOS TV POWER (AEHA len=48)
-    {0xD2,0x6D,0x04,0xFB},                  // Onkyo POWER
-};
-int DATA_LEN[DATA_N]={48,21,48,32};         // 保存用・リモコン信号長（bit）
-int IR_TYPE[DATA_N]={AEHA,SIRC,AEHA,NEC};   // 保存用・リモコン方式
-int ir_type = AEHA;                         // リモコン方式 255で自動受信
-int ir_repeat = 3;                          // 送信リピート回数
-
-/*
-byte DATA[DATA_N][DATA_LEN_MAX] = {         // 保存用・リモコン信号データ
-    {0xAA,0x5A,0x8F,0x12,0x16,0xD1},        // AQUOS TV POWER (AEHA len=48)
     {0xAA,0x5A,0x8F,0x12,0x15,0xE1},        // AQUOS TV VOL_DOWN
     {0xAA,0x5A,0x8F,0x12,0x16,0xD1},        // AQUOS TV POWER (AEHA len=48)
-    {0xAA,0x5A,0x8F,0x12,0x14,0xF1}         // AQUOS TV VOL_UP
+    {0xD2,0x6D,0x04,0xFB},                  // Onkyo POWER
+    {0x15,0x9A,0x00}                        // SONY POWER
 };
-int DATA_LEN[DATA_N]={48,48,48,48};         // 保存用・リモコン信号長（bit）
-int IR_TYPE[DATA_N]={AEHA,AEHA,AEHA,AEHA};  // 保存用・リモコン方式
+int DATA_LEN[DATA_N]={48,48,32,21};         // 保存用・リモコン信号長（bit）
+int IR_TYPE[DATA_N]={AEHA,AEHA,NEC,SIRC};   // 保存用・リモコン方式
 int ir_type = AEHA;                         // リモコン方式 255で自動受信
 int ir_repeat = 3;                          // 送信リピート回数
-*/
-
-/*
-byte DATA[DATA_N][DATA_LEN_MAX] = {         // 保存用・リモコン信号データ
-    {0xD2,0x6D,0x04,0xFB},                  // Onkyo POWER
-    {0xD2,0x6D,0x03,0xFC},                  // Onkyo VOL_DOWN
-    {0xD2,0x6D,0x04,0xFB},                  // Onkyo POWER
-    {0xD2,0x6D,0x02,0xFD},                  // Onkyo VOL_UP
-};
-int DATA_LEN[DATA_N]={32,32,32,32};         // 保存用・リモコン信号長（bit）
-int IR_TYPE[DATA_N]={NEC,NEC,NEC,NEC};      // 保存用・リモコン方式
-int ir_type = NEC;                          // リモコン方式 255で自動受信
-int ir_repeat = 3;                          // 送信リピート回数
-*/
 
 void disp(int hlight=-1, uint32_t color=0){ // リモコンデータを表示する関数
     char s[97];                             // 文字列変数を定義 97バイト96文字
@@ -70,17 +44,16 @@ void disp(int hlight=-1, uint32_t color=0){ // リモコンデータを表示す
         if(i == hlight) M5.Lcd.setTextColor(WHITE, color);
         if(i > 0){
             M5.Lcd.println("Button  = " + String(btn_s[i-1]));
-            int y = 160 + 96 * (i-2);
-            M5.Lcd.drawCentreString(String(type_s[IR_TYPE[i]]), y, 208, 2);
-            M5.Lcd.drawCentreString(String(DATA_LEN[i]), y, 224, 2);
         }
         M5.Lcd.println("IR Type = " + String(type_s[IR_TYPE[i]]));
         M5.Lcd.println("IR Len. = " + String(DATA_LEN[i]));
         ir_data2txt(s,96,DATA[i],DATA_LEN[i]);
         M5.Lcd.println("IR Data = " + String(s));
         if(i == hlight) M5.Lcd.setTextColor(WHITE, BLACK);
-        
-    }
+    } // ボタン表示
+    M5.Lcd.drawCentreString("TX[0] "+String(type_s[IR_TYPE[0]]), 70, 224, 2);
+    M5.Lcd.drawCentreString("Mode="+String(type_s[ir_type]), 160, 224, 2);
+    M5.Lcd.drawCentreString("TX["+String(ir_type+1)+"]", 250, 224, 2);
 }
 
 void setup(){                               // 起動時に一度だけ実行する関数
@@ -89,7 +62,7 @@ void setup(){                               // 起動時に一度だけ実行す
     M5.begin();                             // M5Stack用ライブラリの起動
     M5.Lcd.setBrightness(31);               // 輝度を下げる（省エネ化）
     M5.Lcd.setTextColor(WHITE,BLACK);       // 文字色を白(背景黒)に設定
-    disp();                                 // タイトルとデータをLCDに出力
+    disp(1, ORANGE);                        // タイトルとデータをLCDに出力
 }
 
 void loop(){                                // 繰り返し実行する関数
@@ -108,19 +81,21 @@ void loop(){                                // 繰り返し実行する関数
 
     M5.update();                            // ボタン状態の取得
     delay(1);                               // ボタンの誤作動防止
-    int btn=M5.BtnA.wasReleased()+2*M5.BtnB.wasReleased()+3*M5.BtnC.wasReleased();
-    if(btn > 0 && btn < DATA_N){            // ボタン値が1～3のとき
-        ir_type = IR_TYPE[btn];             // リモコン形式を設定
-        disp(btn, ORANGE);                  // リモコンデータをLCDに表示
-        ir_send(DATA[btn],DATA_LEN[btn],ir_type,ir_repeat); // リモコン送信
+    if(M5.BtnA.wasPressed()){               // ボタンA(左)が押されていた時
+        disp(0, ORANGE);                    // リモコンデータをLCDに表示
+        ir_send(DATA[0],DATA_LEN[0],IR_TYPE[0],ir_repeat); // リモコン送信
     }
-    btn=M5.BtnA.pressedFor(999)+2*M5.BtnB.pressedFor(999)+3*M5.BtnC.pressedFor(999);
-    if(btn > 0 && btn < DATA_N){            // 長押しボタン値が1～3のとき
-        memcpy(DATA[btn],DATA[0],DATA_LEN_MAX); // 受信したリモコン信号をコピー
-        DATA_LEN[btn] = DATA_LEN[0];        // 受信したリモコン信号タイプを保存
-        IR_TYPE[btn] = IR_TYPE[0];          // 受信したリモコン方式を保存
-        disp(btn, RED);                     // リモコンデータをLCDに表示
-        delay(1000);                        // 重複動作防止のために1秒間の待機
+    if(M5.BtnB.wasPressed()){               // ボタンB(中央)が押されていた時
+        ir_type++;                          // リモコン方式を変更
+        if(ir_type > 2) ir_type = 0;        // リモコン方式が範囲外のとき0に
+        int i = ir_type + 1;                // 変数iにコードのインデックス値を
+        disp(i, ORANGE);                    // リモコンデータをLCDに表示
+        ir_send(DATA[i],DATA_LEN[i],IR_TYPE[i],ir_repeat); // リモコン送信
+    }
+    if(M5.BtnC.wasPressed()){               // ボタンC(右)が押されていた時
+        int i = ir_type + 1;                // 変数iにコードのインデックス値を
+        disp(i, ORANGE);                    // リモコンデータをLCDに表示
+        ir_send(DATA[i],DATA_LEN[i],IR_TYPE[i],ir_repeat); // リモコン送信
     }
 }
 
