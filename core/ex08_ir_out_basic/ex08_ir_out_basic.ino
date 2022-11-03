@@ -1,10 +1,16 @@
 /*******************************************************************************
-Example 8 : Wi-Fi コンシェルジェ リモコン担当(赤外線リモコン制御)
-                                                                for M5Stack Core
+Example 8 :赤外線リモコン制御 for M5Stack Core
 
 赤外線リモコンに対応した家電機器を制御します。
 
     使用機材(例)：M5Stack Core + IR Unit
+
+起動後、M5Stackの右ボタンで、シャープ製テレビの電源をON/OFFするリモコン信号を
+送信できるようになります。
+左ボタンで、音量を下げます。
+通常のリモコンでAEHA形式のリモコン信号を送信し、M5Stackで受信すると、左ボタンに
+信号を記憶します。受信するたびに、左ボタンに記憶した信号は更新されます。
+中央ボタンでリモコン方式を変更します。AEHA→NEC→SIRCの順序で巡回します。
 
                                           Copyright (c) 2016-2022 Wataru KUNINO
 *******************************************************************************/
@@ -40,11 +46,8 @@ void disp(int hlight=-1, uint32_t color=0){ // リモコンデータを表示す
     M5.Lcd.print("M5 eg.8 ir_rc [");        // タイトルをLCDに出力
     M5.Lcd.println(String(type_s[ir_type])+"]"); // 現在のリモコン形式を表示
     for(int i = 0; i < 4; i++){             // 保持データをLCDに表示する処理部
-        M5.Lcd.println("\ndata["+String(i)+"] ");
+        M5.Lcd.println("\n["+String(i)+"] ");
         if(i == hlight) M5.Lcd.setTextColor(WHITE, color);
-        if(i > 0){
-            M5.Lcd.println("Button  = " + String(btn_s[i-1]));
-        }
         M5.Lcd.println("IR Type = " + String(type_s[IR_TYPE[i]]));
         M5.Lcd.println("IR Len. = " + String(DATA_LEN[i]));
         ir_data2txt(s,96,DATA[i],DATA_LEN[i]);
@@ -52,7 +55,7 @@ void disp(int hlight=-1, uint32_t color=0){ // リモコンデータを表示す
         if(i == hlight) M5.Lcd.setTextColor(WHITE, BLACK);
     } // ボタン表示
     M5.Lcd.drawCentreString("TX[0] "+String(type_s[IR_TYPE[0]]), 70, 224, 2);
-    M5.Lcd.drawCentreString("Mode="+String(type_s[ir_type]), 160, 224, 2);
+    M5.Lcd.drawCentreString("TYPE="+String(type_s[ir_type]), 160, 224, 2);
     M5.Lcd.drawCentreString("TX["+String(ir_type+1)+"]", 250, 224, 2);
 }
 
@@ -62,39 +65,38 @@ void setup(){                               // 起動時に一度だけ実行す
     M5.begin();                             // M5Stack用ライブラリの起動
     M5.Lcd.setBrightness(31);               // 輝度を下げる（省エネ化）
     M5.Lcd.setTextColor(WHITE,BLACK);       // 文字色を白(背景黒)に設定
-    disp(1, ORANGE);                        // タイトルとデータをLCDに出力
+    disp(1, MAROON);                        // タイトルとデータをLCDに出力
 }
 
 void loop(){                                // 繰り返し実行する関数
-    byte d[DATA_LEN_MAX];                   // リモコン信号データ
-    int d_len;                              // リモコン信号長（bit）
 
     /* 赤外線受信 */
-    d_len=ir_read(d,DATA_LEN_MAX,ir_type);  // 赤外線信号を読み取る
-    if(d_len>=16){                          // 16ビット以上の時に以下を実行
-        DATA_LEN[0] = d_len;                // データ長d_lenをD_LENにコピーする
+    byte d[DATA_LEN_MAX];                   // リモコン信号データ
+    int len=ir_read(d,DATA_LEN_MAX,ir_type); // 赤外線信号を読み取る
+    if(len >= 16){                          // 16ビット以上の時に以下を実行
+        DATA_LEN[0] = len;                  // データ長lenをD_LENにコピーする
         IR_TYPE[0] = ir_type;               // リモコン方式を保持する
         memcpy(DATA[0],d,DATA_LEN_MAX);     // 受信したリモコン信号をコピー
-        disp(0,BLUE);                       // リモコンデータをLCDに表示
-        delay(500);
+        disp(0, BLUE);                      // リモコンデータをLCDに表示
+        delay(500);                         // 0.5秒の待ち時間処理
     }
 
+    /* 赤外線送信 */
     M5.update();                            // ボタン状態の取得
     delay(1);                               // ボタンの誤作動防止
     if(M5.BtnA.wasPressed()){               // ボタンA(左)が押されていた時
-        disp(0, ORANGE);                    // リモコンデータをLCDに表示
+        disp(0, MAROON);                    // リモコンデータをLCDに表示
         ir_send(DATA[0],DATA_LEN[0],IR_TYPE[0],ir_repeat); // リモコン送信
     }
     if(M5.BtnB.wasPressed()){               // ボタンB(中央)が押されていた時
         ir_type++;                          // リモコン方式を変更
         if(ir_type > 2) ir_type = 0;        // リモコン方式が範囲外のとき0に
         int i = ir_type + 1;                // 変数iにコードのインデックス値を
-        disp(i, ORANGE);                    // リモコンデータをLCDに表示
-        ir_send(DATA[i],DATA_LEN[i],IR_TYPE[i],ir_repeat); // リモコン送信
+        disp(i, MAROON);                    // リモコンデータをLCDに表示
     }
     if(M5.BtnC.wasPressed()){               // ボタンC(右)が押されていた時
         int i = ir_type + 1;                // 変数iにコードのインデックス値を
-        disp(i, ORANGE);                    // リモコンデータをLCDに表示
+        disp(i, MAROON);                    // リモコンデータをLCDに表示
         ir_send(DATA[i],DATA_LEN[i],IR_TYPE[i],ir_repeat); // リモコン送信
     }
 }
