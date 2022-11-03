@@ -8,7 +8,7 @@ Example 7: GPS(GNSS)の位置情報を取得し、Wi-Fiで送信する
 ・右ボタンで、ログ表示モードになります。
   （データの一部をLCD表示すすとともに全データをシリアルとUDPで出力します。）
 
-    使用機材(例)：M5Stack Core + Mini GPS/BDS Unit (AT6558)
+    使用機材(例)：M5Stack Core2 + Mini GPS/BDS Unit (AT6558)
 
                                                Copyright (c) 2022 Wataru KUNINO
 ********************************************************************************
