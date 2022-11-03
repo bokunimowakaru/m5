@@ -48,6 +48,9 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 
 ![実行画面ex08](/pictures/ex08_thumb.gif)
 
+詳細説明（M5Stackでリモコン送信&受信）
+[https://bokunimo.net/blog/esp/2685/](https://bokunimo.net/blog/esp/2685/)  
+
 ### 応用編
 
 |フォルダ名   |内容                                                                               |
