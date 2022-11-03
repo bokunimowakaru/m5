@@ -44,6 +44,8 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 |ex09_talk    |Wi-Fiコンシェルジェ［音声アナウンス担当］音声合成 AquesTalk Pico LSI ATP3012用     |
 |ex10_cam     |Wi-Fiコンシェルジェ［カメラ担当］SeeedStudio Grove Serial Camera Kit 用            |
 
+![実行画面ex08](/pictures/ex08_thumb.gif)
+
 ### 応用編
 
 |フォルダ名   |内容                                                                               |

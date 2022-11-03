@@ -103,6 +103,7 @@ WebServer server(80);                       // Webサーバ(ポート80=HTTP)定
 
 void handleRoot(){
     char s[97];                             // 文字列変数を定義 97バイト96文字
+    M5.Lcd.setCursor(43*6, 0);              // LCD上のカーソル位置を画面上部へ
     M5.Lcd.println("Connected");            // 接続されたことをシリアル出力表示
     if(server.hasArg("TYPE")){              // 引数TYPEが含まれていた時
         IR_TYPE[0] = server.arg("TYPE").toInt(); // 引数TYPEの値をIR_TYPEへ
@@ -118,6 +119,8 @@ void handleRoot(){
     ir_data2txt(s, 97, DATA[0], DATA_LEN[0]);           // 信号データDを表示文字sに変換
     String tx = getHtml(s,DATA_LEN[0],IR_TYPE[0]);   // HTMLコンテンツを取得
     server.send(200, "text/html", tx);      // HTMLコンテンツを送信
+    M5.Lcd.setCursor(43*6, 0);              // LCD上のカーソル位置を画面上部へ
+    M5.Lcd.println("         ");            // Connectedを消去
 }
 
 void setup(){                               // 起動時に一度だけ実行する関数
