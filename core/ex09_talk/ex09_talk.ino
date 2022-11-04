@@ -4,7 +4,7 @@ Example 9 : Wi-Fi コンシェルジェ アナウンス担当（音声合成出�
 
 AquosTalkを使った音声合成でユーザへ気づきを通知することが可能なIoT機器です。
 
-    対応IC： AquosTalk Pico LSI
+    対応IC： AquosTalk Pico LSI ATP3012
 
     AquosTalk接続用
     TXD -> AquosTalk Pico LSI側 RXD端子(2番ピン)
