@@ -59,6 +59,9 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 
 ![実行画面ex09](/pictures/ex09_thumb.gif)
 
+詳細説明（M5Stackで音声出力）
+[https://bokunimo.net/blog/esp/2708/](https://bokunimo.net/blog/esp/2708/)  
+
 ### 応用編
 
 |フォルダ名   |内容                                                                               |

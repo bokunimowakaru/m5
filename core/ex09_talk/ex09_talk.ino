@@ -135,6 +135,9 @@ https://docs.m5stack.com/en/quick_start/m5core/arduino
 M5Stack Arduino Library API 情報：
 https://docs.m5stack.com/en/api/core/system
 
+AquesTalk pico：
+https://www.a-quest.com/products/aquestalk_pico.html
+
 【引用コード】
 https://github.com/bokunimowakaru/esp/tree/master/2_example/example21_talk
 https://github.com/bokunimowakaru/esp/tree/master/2_example/example53_talk
