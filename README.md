@@ -51,6 +51,10 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 詳細説明（M5Stackでリモコン送信&受信）
 [https://bokunimo.net/blog/esp/2685/](https://bokunimo.net/blog/esp/2685/)  
 
+下図は、音声合成 AquesTalk Pico LSI ATP3012 で音声を発話する ex09_talk の動作例です。LAN内の端末のブラウザからローマ字ベースの音声コードを入力して、しゃべらせることも可能です。
+
+![実行画面ex09](/pictures/ex09_thumb.gif)
+
 ### 応用編
 
 |フォルダ名   |内容                                                                               |
