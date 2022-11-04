@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 9 : ESP32C3 Wi-Fi コンシェルジェ アナウンス担当（音声合成出力）
+Example 9 : Wi-Fi コンシェルジェ アナウンス担当（音声合成出力）
                                                                 for M5Stack Core
 
 AquosTalkを使った音声合成でユーザへ気づきを通知することが可能なIoT機器です。
@@ -117,7 +117,7 @@ void loop(){                                // 繰り返し実行する関数
     }
     if(M5.BtnB.wasPressed()){               // ボタンB(中央)が押されていた時
         serial2.print("$ku'nino/wataru.\r"); // 音声「国野亘」
-        lcd_log("> ku'nino/wataru.");        // LCDに表示
+        lcd_log("> ku'nino/wataru.");       // LCDに表示
     }
     if(M5.BtnC.wasPressed()){               // ボタンC(右)が押されていた時
         serial2.print("<NUM VAL=");         // 数字読み上げ用タグ出力

@@ -38,6 +38,7 @@ LAN内の他の機器に、赤外線リモコンの受信信号をブロード�
 #define AEHA        0                       // 赤外線送信方式(Panasonic、Sharp)
 #define NEC         1                       // 赤外線送信方式 NEC方式
 #define SIRC        2                       // 赤外線送信方式 SONY SIRC方式
+#define IR_TYPE_AUTO 1                      // 受信方式の自動設定(0:無効,1:有効)
 
 byte DATA[DATA_N][DATA_LEN_MAX] = {         // 保存用・リモコン信号データ
     {0xAA,0x5A,0x8F,0x12,0x15,0xE1},        // AQUOS TV VOL_DOWN
@@ -47,7 +48,8 @@ byte DATA[DATA_N][DATA_LEN_MAX] = {         // 保存用・リモコン信号デ
 };
 int DATA_LEN[DATA_N]={48,48,32,21};         // 保存用・リモコン信号長（bit）
 int IR_TYPE[DATA_N]={AEHA,AEHA,NEC,SIRC};   // 保存用・リモコン方式
-int ir_type = AEHA;                         // リモコン方式 255で自動受信
+int ir_type = 255;                          // リモコン方式 255で自動受信
+int ir_i = 1;                               // リモコン信号の選択番号1～3
 int ir_repeat = 3;                          // 送信リピート回数
 
 /*
@@ -78,24 +80,25 @@ int ir_repeat = 3;                          // 送信リピート回数
 
 void disp(int hlight=-1, uint32_t color=0){ // リモコンデータを表示する関数
     char s[97];                             // 文字列変数を定義 97バイト96文字
-    const char type_s[][5]={"AEHA","NEC ","SIRC"};  // 各リモコン形式名
+    const char type_s[][5]={"AUTO","AEHA","NEC ","SIRC"};  // 各リモコン形式名
     const char btn_s[][7]={"Left","Center","Right"};// 各ボタン名
-    M5.Lcd.setCursor(15*6, 0);                // 文字の表示座標を画面上部へ
-    M5.Lcd.println(String(type_s[ir_type])+"]"); // 現在のリモコン形式を表示
-    M5.Lcd.setCursor(0, 15*8);                // 文字の表示座標を画面下部へ
+    M5.Lcd.setCursor(15*6, 0);                      // 文字表示座標を画面上部へ
+    if(ir_type == 255) M5.Lcd.println("AUTO]");     // ir_type=255(自動)の表示
+    else M5.Lcd.println(String(type_s[ir_i])+"]");  // 現在のリモコン形式を表示
+    M5.Lcd.setCursor(0, 15*8);                      // 文字表示座標を画面下部へ
     M5.Lcd.fillRect(0, 16*8-4, 320, 12*8, DARKGREY);
     for(int i = 0; i < 4; i++){             // 保持データをLCDに表示する処理部
         M5.Lcd.setTextColor(WHITE, (i == hlight)? color : DARKGREY);
         M5.Lcd.print("\n["+String(i)+"] ");
-        M5.Lcd.print("IR Type = " + String(type_s[IR_TYPE[i]]));
-        M5.Lcd.println(", IR Len. = " + String(DATA_LEN[i]));
+        M5.Lcd.print("IR Type = " + String(type_s[IR_TYPE[i]+1]));
+        M5.Lcd.println(", Len. = " + String(DATA_LEN[i]));
         ir_data2txt(s,96,DATA[i],DATA_LEN[i]);
         M5.Lcd.println("    IR Data = " + String(s));
     } // ボタン表示
     M5.Lcd.setTextColor(WHITE, BLUE);
-    M5.Lcd.drawCentreString("TX[0] "+String(type_s[IR_TYPE[0]]), 70, 28*8, 2);
-    M5.Lcd.drawCentreString("TYPE="+String(type_s[ir_type]), 160, 28*8, 2);
-    M5.Lcd.drawCentreString("TX["+String(ir_type+1)+"]", 250, 28*8, 2);
+    M5.Lcd.drawCentreString("TX[0] "+String(type_s[IR_TYPE[0]+1]), 70, 28*8, 2);
+    M5.Lcd.drawCentreString("TYPE="+String(type_s[ir_i]), 160, 28*8, 2);
+    M5.Lcd.drawCentreString("TX["+String(ir_i)+"]", 250, 28*8, 2);
     M5.Lcd.setTextColor(WHITE, BLACK);
 }
 
@@ -109,7 +112,8 @@ void handleRoot(){
     M5.Lcd.setCursor(43*6, 0);              // LCD上のカーソル位置を画面上部へ
     M5.Lcd.println("Connected");            // 接続されたことをシリアル出力表示
     if(server.hasArg("TYPE")){              // 引数TYPEが含まれていた時
-        IR_TYPE[0] = server.arg("TYPE").toInt(); // 引数TYPEの値をIR_TYPEへ
+        ir_type = server.arg("TYPE").toInt(); // 引数TYPEの値をIR_TYPEへ
+        if(ir_type >= 0 && ir_type <= 2) IR_TYPE[0] = ir_type;
     }
     if(server.hasArg("IR")){                // 引数IRが含まれていた時
         String rx = server.arg("IR");       // 引数IRの値を取得し変数rxへ代入
@@ -155,8 +159,9 @@ void loop(){                                // 繰り返し実行する関数
     /* 赤外線受信・UDP送信処理 */
     byte d[DATA_LEN_MAX];                   // リモコン信号データ
     char s[97];                             // 文字列変数を定義 97バイト96文字
+    if(IR_TYPE_AUTO) ir_type = 255;         // 方式の自動設定有効時に方式を255に
     int len=ir_read(d,DATA_LEN_MAX,ir_type); // 赤外線信号を読み取る
-    if(len >= 16){                          // 16ビット以上の時に以下を実行
+    if(len >= 13){                          // 13ビット以上の時に以下を実行
         udp.beginPacket(IP_BROAD, PORT);    // UDP送信先を設定
         udp.print(DEVICE);                  // デバイス名を送信
         udp.print(len);                     // 信号長を送信
@@ -165,7 +170,7 @@ void loop(){                                // 繰り返し実行する関数
         udp.println(s);                     // それを文字をUDP送信
         udp.endPacket();                    // UDP送信の終了(実際に送信する)
         DATA_LEN[0] = len;                  // データ長lenをD_LENにコピーする
-        IR_TYPE[0] = ir_type;               // リモコン方式を保持する
+        IR_TYPE[0] = ir_read_mode();        // リモコン方式を保持する
         memcpy(DATA[0],d,DATA_LEN_MAX);     // 受信したリモコン信号をコピー
         disp(0,BLUE);                       // リモコンデータをLCDに表示
         delay(500);                         // 0.5秒の待ち時間処理
@@ -175,17 +180,18 @@ void loop(){                                // 繰り返し実行する関数
     if(M5.BtnA.wasPressed()){               // ボタンA(左)が押されていた時
         disp(0, MAROON);                    // リモコンデータをLCDに表示
         ir_send(DATA[0],DATA_LEN[0],IR_TYPE[0],ir_repeat); // リモコン送信
+        delay(500);                         // 0.5秒の待ち時間処理
     }
     if(M5.BtnB.wasPressed()){               // ボタンB(中央)が押されていた時
-        ir_type++;                          // リモコン方式を変更
-        if(ir_type > 2) ir_type = 0;        // リモコン方式が範囲外のとき0に
-        int i = ir_type + 1;                // 変数iにコードのインデックス値を
-        disp(i, MAROON);                    // リモコンデータをLCDに表示
+        ir_i++;                             // リモコン信号選択番号を繰り上げ
+        if(ir_i > 3) ir_i = 1;              // 信号選択番号が3を超過時に1へ戻す
+        else if(!IR_TYPE_AUTO) ir_type = IR_TYPE[ir_i]; // リモコン方式を変更
+        disp(ir_i, BLUE);                   // リモコンデータをLCDに表示
     }
     if(M5.BtnC.wasPressed()){               // ボタンC(右)が押されていた時
-        int i = ir_type + 1;                // 変数iにコードのインデックス値を
-        disp(i, MAROON);                    // リモコンデータをLCDに表示
-        ir_send(DATA[i],DATA_LEN[i],IR_TYPE[i],ir_repeat); // リモコン送信
+        disp(ir_i, MAROON);                 // リモコンデータをLCDに表示
+        ir_send(DATA[ir_i],DATA_LEN[ir_i],IR_TYPE[ir_i],ir_repeat); // 送信
+        delay(500);                         // 0.5秒の待ち時間処理
     }
 }
 

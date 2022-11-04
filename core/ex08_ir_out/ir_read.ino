@@ -1,6 +1,6 @@
 /*********************************************************************
 
-赤外線リモコン受信部 for Arduino Version 2.0
+赤外線リモコン受信部 for Arduino Version 2.3
 
 本ソースリストおよびソフトウェアは、ライセンスフリーです。
 利用、編集、再配布等が自由に行えますが、著作権表示の改変は禁止します。
@@ -26,7 +26,7 @@
 //	#define DEBUG
 //	#define DEBUG_ARDUINO
 #define DEBUG_M5Stack
-#define DEBUG_BUF_N 128
+#define DEBUG_BUF_N 129
 
 int _PIN_IR_IN = 4;                 // IO 4(10番ピン) にIRセンサを接続
 int _ir_read_mode = 0;
@@ -142,7 +142,7 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 				#if defined(DEBUG) || defined(DEBUG_ARDUINO) || defined(DEBUG_M5Stack)
 					t[t_i]=len;
 					t_i++;
-					if(t_i >= DEBUG_BUF_N) goto debug_exit;
+					if(t_i >= DEBUG_BUF_N) t_i = DEBUG_BUF_N - 1;
 				#endif
 				if( len > 225 && len < 1800){
 					if( len < 900 ){
@@ -165,7 +165,7 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 						#if defined(DEBUG) || defined(DEBUG_ARDUINO) || defined(DEBUG_M5Stack)
 							t[t_i]=len;
 							t_i++;
-							if(t_i >= DEBUG_BUF_N) goto debug_exit;
+							if(t_i >= DEBUG_BUF_N) t_i = DEBUG_BUF_N - 1;
 						#endif
 						if( len > 225 && len < 1800){
 							if( len < 900 ){
@@ -212,7 +212,7 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 				#if defined(DEBUG) || defined(DEBUG_ARDUINO) || defined(DEBUG_M5Stack)
 					t[t_i]=len;
 					t_i++;
-					if(t_i >= DEBUG_BUF_N) goto debug_exit;
+					if(t_i >= DEBUG_BUF_N) t_i = DEBUG_BUF_N - 1;
 				#endif
 				if( len > noise && len < data_wait){
 					if( len < symbol_len ){
@@ -292,73 +292,85 @@ int ir_read(byte *data, const byte data_num, byte mode){	// mode の constを解
 	#endif // DEBUG_ARDUINO
 	#ifdef DEBUG_M5Stack
 		debug_exit:
-		if(t_i >= DEBUG_BUF_N) t_i = DEBUG_BUF_N - 1;
-		M5.Lcd.fillRect(0, 2*8-4, 320, 13*8+4, DARKGREY);
-		M5.Lcd.setTextColor(WHITE, DARKGREY);
-		M5.Lcd.setCursor(0, 2*8); // 文字の表示座標を画面上部へ
-		M5.Lcd.print("Mode    = ");M5.Lcd.print(mode);
-		int symbol_len_idet = 225;
-		switch(mode){
-			case AEHA: M5.Lcd.println(" (AEHA)"); symbol_len_idet=len_off/4; break; 
-			case NEC : M5.Lcd.println(" (NEC )"); symbol_len_idet=len_off/8; break; 
-			case SIRC: M5.Lcd.println(" (SIRC)"); symbol_len_idet=len_off; break; 
-			default  : M5.Lcd.println(" (UNKNOWN)"); break; 
-		}
-		M5.Lcd.print("Detector= ");M5.Lcd.print(det);
-		if(det==IR_IN_OFF) M5.Lcd.println(" (IR_IN_OFF)"); else M5.Lcd.println(" (IR_IN_ON)");
-		M5.Lcd.print("SYNC LEN= ");M5.Lcd.println(len_on+len_off);
-		M5.Lcd.print("SYNC ON = ");M5.Lcd.println(len_on);
-		M5.Lcd.print("SYNC OFF= ");M5.Lcd.println(len_off);
-		M5.Lcd.print("SYMOL   = ");M5.Lcd.print(symbol_len);
-		M5.Lcd.println(" ("+String(symbol_len_idet)+")");
-		M5.Lcd.print("DATA LEN= ");M5.Lcd.println(data_len);
-		len=data_len/8;
-		if(data_len%8)len++;
-		M5.Lcd.printf("data[%02d]= {%02X",len,data[0]);
-		for(i=1;i<len;i++) M5.Lcd.printf(",%02X",data[i]);
-		M5.Lcd.println("}");
-		
-		// 波形描画
-		#define SPAN 160
-		#define AMPL 15
-		#define ORGN_Y 15*8-4
-		// SYNC部の描画
-		M5.Lcd.drawLine(0, ORGN_Y-AMPL-4, 0, ORGN_Y-2*AMPL-4, WHITE);
-		M5.Lcd.drawLine(0, ORGN_Y-2*AMPL-4, len_on/SPAN, ORGN_Y-2*AMPL-4, WHITE);
-		M5.Lcd.drawLine(len_on/SPAN, ORGN_Y-AMPL-4, len_on/SPAN, ORGN_Y-2*AMPL-4, WHITE);
-		M5.Lcd.drawLine(len_on/SPAN, ORGN_Y-AMPL-4, (len_on+len_off)/SPAN, ORGN_Y-AMPL-4, WHITE);
-		M5.Lcd.drawLine((len_on+len_off)/SPAN, ORGN_Y-AMPL-4, (len_on+len_off)/SPAN, ORGN_Y-2*AMPL-4, WHITE);
-		// BODY部の描画
-		int x=0, dx=0, dy=0;
-		for(i=0;i<t_i;i++){
-			if(det==IR_IN_OFF){
-				dx = symbol_len_idet / SPAN;
-			}else{	// det==IR_IN_ON
-				dx = t[i] / SPAN;
+		if(data_len >= 16 || (mode == SIRC && data_len >= 8+5) ){
+			if(t_i >= DEBUG_BUF_N) t_i = DEBUG_BUF_N - 1;
+			M5.Lcd.fillRect(0, 2*8-4, 320, 13*8+4, DARKGREY);
+			M5.Lcd.setTextColor(WHITE, DARKGREY);
+			M5.Lcd.setCursor(0, 2*8); // 文字の表示座標を画面上部へ
+			M5.Lcd.print("Mode    = ");M5.Lcd.print(mode);
+			int symbol_len_idet = 225;
+			switch(mode){
+				case AEHA: M5.Lcd.println(" (AEHA)"); symbol_len_idet=len_off/4; break; 
+				case NEC : M5.Lcd.println(" (NEC )"); symbol_len_idet=len_off/8; break; 
+				case SIRC: M5.Lcd.println(" (SIRC)"); symbol_len_idet=len_off; break; 
+				default  : M5.Lcd.println(" (UNKNOWN)"); break; 
 			}
-			dy = !dy * AMPL;
-			M5.Lcd.drawLine(x, ORGN_Y, x, ORGN_Y-AMPL, WHITE);
-			M5.Lcd.drawLine(x, ORGN_Y-dy, x+dx, ORGN_Y-dy, WHITE);
-			x += dx;
-			if(x > 319) x = 319;
-			if(det==IR_IN_OFF){
-				dx = t[i] / SPAN;
-			}else{	// det==IR_IN_ON
-				dx = symbol_len_idet / SPAN;
+			M5.Lcd.print("Detector= ");M5.Lcd.print(det);
+			if(det==IR_IN_OFF) M5.Lcd.println(" (IR_IN_OFF)"); else M5.Lcd.println(" (IR_IN_ON)");
+			M5.Lcd.printf("SYNC LEN= %d us\n", len_on+len_off);
+			M5.Lcd.printf("SYNC ON = %d us\n", len_on);
+			M5.Lcd.printf("SYNC OFF= %d us\n", len_off);
+			M5.Lcd.printf("SYMOL   = %d us (1T = %d us)\n", symbol_len, symbol_len_idet);
+			M5.Lcd.printf("DATA LEN= %d bits", data_len);
+			if(mode == SIRC) M5.Lcd.printf(" (Raw %d bits)", data_len - 1);
+
+			len=data_len/8;
+			if(data_len%8)len++;
+			M5.Lcd.printf("\ndata[%02d]= {%02X",len,data[0]);
+			for(i=1;i<len;i++) M5.Lcd.printf(",%02X",data[i]);
+			M5.Lcd.print("} ");
+			if(mode == SIRC){
+				uint16_t address = data[1];
+				if(data_len > 16) address += (data[2] << 8);
+				M5.Lcd.printf("Command = %02X, Address = %04X", data[0], address);
 			}
-			dy = !dy * AMPL;
-			M5.Lcd.drawLine(x, ORGN_Y, x, ORGN_Y-AMPL, WHITE);
-			M5.Lcd.drawLine(x, ORGN_Y-dy, x+dx, ORGN_Y-dy, WHITE);
-			x += dx;
-			if(x > 319) x = 319;
+			
+			// 波形描画
+			#define SPAN 160
+			#define AMPL 15
+			#define ORGN_Y 15*8-4
+			// SYNC部の描画
+			M5.Lcd.drawLine(0, ORGN_Y-AMPL-4, 0, ORGN_Y-2*AMPL-4, WHITE);
+			M5.Lcd.drawLine(0, ORGN_Y-2*AMPL-4, len_on/SPAN, ORGN_Y-2*AMPL-4, WHITE);
+			M5.Lcd.drawLine(len_on/SPAN, ORGN_Y-AMPL-4, len_on/SPAN, ORGN_Y-2*AMPL-4, WHITE);
+			M5.Lcd.drawLine(len_on/SPAN, ORGN_Y-AMPL-4, (len_on+len_off)/SPAN, ORGN_Y-AMPL-4, WHITE);
+			M5.Lcd.drawLine((len_on+len_off)/SPAN, ORGN_Y-AMPL-4, (len_on+len_off)/SPAN, ORGN_Y-2*AMPL-4, WHITE);
+			// BODY部の描画
+			int x=0, dx=0, dy=0;
+			for(i=0;i<t_i;i++){
+				if(det==IR_IN_OFF){
+					dx = symbol_len_idet / SPAN;
+				}else{	// det==IR_IN_ON
+					dx = t[i] / SPAN;
+				}
+				dy = !dy * AMPL;
+				M5.Lcd.drawLine(x, ORGN_Y, x, ORGN_Y-AMPL, WHITE);
+				M5.Lcd.drawLine(x, ORGN_Y-dy, x+dx, ORGN_Y-dy, WHITE);
+				x += dx;
+				if(x > 319) x = 319;
+				if(det==IR_IN_OFF){
+					dx = t[i] / SPAN;
+				}else{	// det==IR_IN_ON
+					dx = symbol_len_idet / SPAN;
+				}
+				dy = !dy * AMPL;
+				M5.Lcd.drawLine(x, ORGN_Y, x, ORGN_Y-AMPL, WHITE);
+				M5.Lcd.drawLine(x, ORGN_Y-dy, x+dx, ORGN_Y-dy, WHITE);
+				x += dx;
+				if(x > 319) x = 319;
+			}
+			M5.Lcd.drawLine(x, ORGN_Y-dy, 319, ORGN_Y-dy, WHITE);
+			M5.Lcd.setTextColor(WHITE, BLACK);
 		}
-		M5.Lcd.drawLine(x, ORGN_Y-dy, 319, ORGN_Y-dy, WHITE);
-		M5.Lcd.setTextColor(WHITE, BLACK);
 	#endif // DEBUG_M5Stack
 	
 	/* データの有効性のチェック 共通 */
-	if(data_len<16)data_len=-2;					// 2バイトに満たないのは無効
-	if(data[0]==0 && data[1]==0) data_len=-3;	// メーカーコード00
+	if(mode == SIRC){
+		if(data_len<13) data_len=-2;
+	}else{
+		if(data_len<16) data_len=-2;					// 2バイトに満たないのは無効
+		if(data[0]==0 && data[1]==0) data_len=-3;	// メーカーコード00
+	}
 	/*  有効性のチェック AEHA */
 	switch( mode ){
 		case AEHA:
