@@ -2,14 +2,14 @@
 Example 9 : ESP32C3 Wi-Fi コンシェルジェ アナウンス担当（音声合成出力）
                                                     for ESP32 / ATOM / ATOM Lite
 
-AquosTalkを使った音声合成でユーザへ気づきを通知することが可能なIoT機器です。
+AquesTalkを使った音声合成でユーザへ気づきを通知することが可能なIoT機器です。
 
-    対応IC： AquosTalk Pico LSI
+    対応IC： AquesTalk Pico LSI
 
-    AquosTalk接続用
-    TXD -> AquosTalk Pico LSI側 RXD端子(2番ピン)
+    AquesTalk接続用
+    TXD -> AquesTalk Pico LSI側 RXD端子(2番ピン)
 
-    使用機材(例)： ESP32 / ATOM / ATOM Lite + AquosTalk Pico LSI
+    使用機材(例)： ESP32 / ATOM / ATOM Lite + AquesTalk Pico LSI
     
                                           Copyright (c) 2016-2022 Wataru KUNINO
 *******************************************************************************
@@ -31,7 +31,7 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex09_talk
 
 #define PIN_LED_RGB 27                      // IO27 に WS2812を接続(Atom内蔵)
 #define PIN_SS2_RX 32                       // シリアル受信ポート(未使用)
-#define PIN_SS2_TX 26                       // シリアル送信 AquosTalk Pico LSI側
+#define PIN_SS2_TX 26                       // シリアル送信 AquesTalk Pico LSI側
 
 #define SSID "1234ABCD"                     // 無線LANアクセスポイントのSSID
 #define PASS "password"                     // パスワード

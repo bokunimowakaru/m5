@@ -9,7 +9,7 @@ AquesTalkを使った音声合成でユーザへ気づきを通知すること�
     AquesTalk接続用
     TXD -> AquesTalk Pico LSI側 RXD端子(2番ピン)
 
-    使用機材(例)： M5Stack Core2 + AquosTalk Pico LSI
+    使用機材(例)： M5Stack Core2 + AquesTalk Pico LSI
 
                                           Copyright (c) 2016-2022 Wataru KUNINO
 *******************************************************************************/

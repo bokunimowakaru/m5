@@ -27,7 +27,7 @@ Webサーバ機能を使って、カメラのシャッターを制御し、撮�
 
 #define PIN_CAM 10                          // IO10 にPch-FETを接続
 #define PIN_SS2_RX 22                       // シリアル受信ポート(未使用)
-#define PIN_SS2_TX 21                       // シリアル送信 AquosTalk Pico LSI側
+#define PIN_SS2_TX 21                       // シリアル送信 AquesTalk Pico LSI側
 #define TIMEOUT 20000                       // タイムアウト 20秒
 
 #define SSID "1234ABCD"                     // 無線LANアクセスポイントのSSID

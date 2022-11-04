@@ -2,14 +2,14 @@
 Example 9 : Wi-Fi コンシェルジェ アナウンス担当（音声合成出力）
                                                                 for M5Stack Core
 
-AquosTalkを使った音声合成でユーザへ気づきを通知することが可能なIoT機器です。
+AquesTalkを使った音声合成でユーザへ気づきを通知することが可能なIoT機器です。
 
-    対応IC： AquosTalk Pico LSI ATP3012
+    対応IC： AquesTalk Pico LSI ATP3012
 
-    AquosTalk接続用
-    TXD -> AquosTalk Pico LSI側 RXD端子(2番ピン)
+    AquesTalk接続用
+    TXD -> AquesTalk Pico LSI側 RXD端子(2番ピン)
 
-    使用機材(例)： M5Stack Core + AquosTalk Pico LSI
+    使用機材(例)： M5Stack Core + AquesTalk Pico LSI
     
                                           Copyright (c) 2016-2022 Wataru KUNINO
 *******************************************************************************/
@@ -19,7 +19,7 @@ AquosTalkを使った音声合成でユーザへ気づきを通知すること�
 #include <WebServer.h>                      // HTTPサーバ用ライブラリ
 
 #define PIN_SS2_RX 22                       // シリアル受信ポート(未使用)
-#define PIN_SS2_TX 21                       // シリアル送信 AquosTalk Pico LSI側
+#define PIN_SS2_TX 21                       // シリアル送信 AquesTalk Pico LSI側
 
 #define SSID "1234ABCD"                     // 無線LANアクセスポイントのSSID
 #define PASS "password"                     // パスワード

@@ -54,7 +54,7 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex10_cam
 
 #define PIN_CAM 10                          // IO10 にPch-FETを接続
 #define PIN_SS2_RX 32                       // シリアル受信ポート(未使用)
-#define PIN_SS2_TX 26                       // シリアル送信 AquosTalk Pico LSI側
+#define PIN_SS2_TX 26                       // シリアル送信 AquesTalk Pico LSI側
 #define TIMEOUT 20000                       // タイムアウト 20秒
 
 #define SSID "1234ABCD"                     // 無線LANアクセスポイントのSSID
