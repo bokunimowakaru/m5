@@ -88,7 +88,7 @@ void setup(){                               // 起動時に一度だけ実行す
     WiFi.mode(WIFI_STA);                    // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイントへ接続
     while(WiFi.status() != WL_CONNECTED){   // 接続に成功するまで待つ
-        M5.Lcd.print('.');                  // (WS2812)LEDの点滅
+        M5.Lcd.print('.');                  // 接続待ち時間表示
         delay(500);                         // 待ち時間処理
     }
     M5.Lcd.println(WiFi.localIP());         // IPアドレスを表示
