@@ -1,12 +1,12 @@
 /*******************************************************************************
-Example 10: ESP32C3 Wi-Fi コンシェルジェ カメラ担当
+Example 10: Wi-Fi コンシェルジェ カメラ担当
                                                                 for M5Stack Core
 
 Webサーバ機能を使って、カメラのシャッターを制御し、撮影した写真を表示します。
 
     対応カメラ： SeeedStudio Grove Serial Camera Kit 
 
-    カメラ接続用： カメラ直付けのGroveケーブルをM5Atomに接続する
+    カメラ接続用： カメラ直付けのGroveケーブルをM5Stackに接続する
     IO21 TX カメラ側はRXD端子(Grove白色,M5用ケーブル黄色)
     IO22 RX カメラ側はTXD端子(Grove黄色,M5用ケーブル白色)
 
@@ -25,15 +25,14 @@ Webサーバ機能を使って、カメラのシャッターを制御し、撮�
 #include <WiFi.h>                           // ESP32用WiFiライブラリ
 #include <WiFiUdp.h>                        // UDP通信を行うライブラリ
 
-#define PIN_CAM 10                          // IO10 にPch-FETを接続
-#define PIN_SS2_RX 22                       // シリアル受信ポート(未使用)
-#define PIN_SS2_TX 21                       // シリアル送信 AquesTalk Pico LSI側
+#define PIN_SS2_RX 22                       // シリアル受信RX Grove白色
+#define PIN_SS2_TX 21                       // シリアル送信TX Grove黄色
 #define TIMEOUT 20000                       // タイムアウト 20秒
 
 #define SSID "1234ABCD"                     // 無線LANアクセスポイントのSSID
 #define PASS "password"                     // パスワード
 #define PORT 1024                           // UDP送信先ポート番号
-#define DEVICE_CAM  "cam_a_1,"              // デバイス名(カメラ)
+#define DEVICE "cam_a_1,"                   // デバイス名(カメラ)
 
 HardwareSerial serial2(2);                  // カメラ接続用シリアルポートESP32C3
 
@@ -48,38 +47,37 @@ void sendUdp(String dev, String S){
     udp.beginPacket(IP_BROAD, PORT);        // UDP送信先を設定
     udp.println(dev + S);
     udp.endPacket();                        // UDP送信の終了(実際に送信する)
-    Serial.println("udp://" + IP_BROAD.toString() + ":" + PORT + " " + dev + S);
+    M5.Lcd.println("udp://" + IP_BROAD.toString() + ":" + PORT + " " + dev + S);
     delay(200);                             // 送信待ち時間
 }
 
 void sendUdp_Fd(uint16_t fd_num){
-    sendUdp(DEVICE_CAM, String(fd_num) + ", http://" + IP_LOCAL.toString() + "/cam.jpg");
+    sendUdp(DEVICE,String(fd_num)+", http://"+IP_LOCAL.toString()+"/cam.jpg");
 }
 
 void setup(){ 
-    pinMode(PIN_CAM,OPEN_DRAIN);            // FETを接続したポートをオープンに
-    Serial.begin(115200);                   // 動作確認用用のシリアル出力開始
-    Serial.println("Example 10 cam");       // 「Example 10」をシリアル出力表示
+    M5.begin();                             // M5Stack用ライブラリの起動
+    M5.Lcd.setBrightness(31);               // 輝度を下げる（省エネ化）
+    M5.Lcd.print("M5Stack eg.10 cam ");     // タイトルを表示
     WiFi.mode(WIFI_STA);                    // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイントへ接続
     serial2.begin(115200, SERIAL_8N1, PIN_SS2_RX, PIN_SS2_TX); // シリアル初期化
-    pinMode(PIN_CAM,OUTPUT);                // FETを接続したポートを出力に
-    digitalWrite(PIN_CAM,LOW);              // FETをLOW(ON)にする
     delay(100);                             // 電源の供給待ち
-    Serial.println("Initializing");
+    M5.Lcd.println("Initializing");
     CamInitialize();                        // カメラの初期化コマンド
-    Serial.println("Setting QVGA");
+    M5.Lcd.println("Setting QVGA");
     CamSizeCmd(1);                          // 撮影サイズをQVGAに設定
-    Serial.println("Done    settings");
+    M5.Lcd.println("Done    settings");
     delay(4000);                            // 完了待ち(開始直後の撮影防止対策)
     while(WiFi.status() != WL_CONNECTED){   // 接続に成功するまで待つ
+        M5.Lcd.print('.');                  // 接続待ち時間表示
         delay(500);                         // 待ち時間処理
     }
     IP_LOCAL = WiFi.localIP();
     IP_BROAD = IP_LOCAL;
     IP_BROAD[3] = 255;
     server.begin();                         // サーバを起動する
-    Serial.println(IP_LOCAL);               // 本機のIPアドレスをシリアル表示
+    M5.Lcd.println(IP_LOCAL);               // 本機のIPアドレスをシリアル表示
     sendUdp_Fd(0);                          // 起動したことを知らせるUDP送信
 }
 
@@ -93,7 +91,7 @@ void loop(){
     
     client = server.available();            // 接続されたクライアントを生成
     if(!client)return;                      // loop()の先頭に戻る
-    Serial.println("Connected");            // シリアル出力表示
+    M5.Lcd.println("Connected");            // シリアル出力表示
     while(client.connected()){              // 当該クライアントの接続状態を確認
         if(client.available()){             // クライアントからのデータを確認
             t=0;                            // 待ち時間変数をリセット
@@ -113,14 +111,14 @@ void loop(){
     }
     delay(1);                               // クライアント側の応答待ち時間
     if(!client.connected()||len<6) return;  // 切断された場合はloop()の先頭へ
-    Serial.println(s);                      // 受信した命令をシリアル出力表示
-    Serial.println(&s[5]);                  // 受信した命令を液晶に表示
+    M5.Lcd.println(s);                      // 受信した命令をシリアル出力表示
+    M5.Lcd.println(&s[5]);                  // 受信した命令を液晶に表示
     if(strncmp(s,"GET / ",6)==0){           // コンテンツ取得命令時
         html(client,size,update,WiFi.localIP()); // コンテンツ表示
         client.flush();                     // ESP32用 ERR_CONNECTION_RESET対策
         client.stop();                      // クライアントの切断
-        Serial.print(size);                 // ファイルサイズをシリアル出力表示
-        Serial.println(" Bytes");           // シリアル出力表示
+        M5.Lcd.print(size);                 // ファイルサイズをシリアル出力表示
+        M5.Lcd.println(" Bytes");           // シリアル出力表示
         return;                             // 処理の終了・loop()の先頭へ
     }
     if(strncmp(s,"GET /cam.jpg",12)==0){    // 画像取得指示の場合
@@ -134,7 +132,8 @@ void loop(){
         client.println();                   // コンテンツの終了
         client.flush();                     // ESP32用 ERR_CONNECTION_RESET対策
         client.stop();                      // クライアントの切断
-        Serial.println("TX Bytes",size);    // ファイルサイズを液晶へ表示
+        M5.Lcd.print(size);                 // ファイルサイズをシリアル出力表示
+        M5.Lcd.println(" Bytes");           // シリアル出力表示
         return;                             // 処理の終了・loop()の先頭へ
     }
     if(strncmp(s,"GET /?INT=",10)==0){      // 更新時間の設定命令を受けた時
@@ -156,7 +155,7 @@ void loop(){
     htmlMesg(client,&s[6],WiFi.localIP());  // メッセージ表示
     client.flush();                         // ESP32用 ERR_CONNECTION_RESET対策
     client.stop();                          // クライアント切断
-    Serial.println("Sent HTML");            // シリアル出力表示
+    M5.Lcd.println("Sent HTML");            // シリアル出力表示
 }
 
 /******************************************************************************
