@@ -33,3 +33,7 @@
 
 # Hidemaru
 *.BAK
+
+#photo
+photo/
+photo/*.jpg

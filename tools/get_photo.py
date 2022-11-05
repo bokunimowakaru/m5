@@ -15,7 +15,8 @@ SAVETO  = 'photo'                                       # 保存先フォルダ�
 IP_CAM  = None                                          # カメラのIPアドレス
 PORT    = 1024                                          # UDPポート番号を1024に
 
-import pathlib                                          # ファイル・パス用
+# import pathlib                                        # ファイル・パス用
+from os import makedirs                                 # フォルダ作成用
 import socket                                           # ソケット通信用
 import urllib.request                                   # HTTP通信ライブラリ
 import datetime                                         # 年月日・時刻管理
@@ -45,7 +46,8 @@ def cam(ip, filename = 'cam.jpg'):                      # IoTカメラ
     return filename                                     # ファイル名を応答する
 
 print('Get Photo for Python')                           # タイトル表示
-pathlib.Path(SAVETO).mkdir(exist_ok=True)               # フォルダ作成
+# pathlib.Path(SAVETO).mkdir(exist_ok=True)             # フォルダ作成
+makedirs(SAVETO, exist_ok=True)                         # フォルダ作成
 time_start = time.time()                                # 開始時刻シリアル値保持
 
 print('Listening UDP port', PORT, '...')                # ポート番号表示

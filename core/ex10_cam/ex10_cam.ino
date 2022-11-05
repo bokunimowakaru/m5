@@ -32,7 +32,7 @@ Webサーバ機能を使って、カメラのシャッターを制御し、撮�
 #define SSID "1234ABCD"                     // 無線LANアクセスポイントのSSID
 #define PASS "password"                     // パスワード
 #define PORT 1024                           // UDP送信先ポート番号
-#define DEVICE "cam_a_1,"                   // デバイス名(カメラ)
+#define DEVICE "cam_a_5,"                   // デバイス名(カメラ)
 
 HardwareSerial serial2(2);                  // カメラ接続用シリアルポートESP32C3
 
@@ -117,23 +117,21 @@ void loop(){
         html(client,size,update,WiFi.localIP()); // コンテンツ表示
         client.flush();                     // ESP32用 ERR_CONNECTION_RESET対策
         client.stop();                      // クライアントの切断
-        M5.Lcd.print(size);                 // ファイルサイズをシリアル出力表示
-        M5.Lcd.println(" Bytes");           // シリアル出力表示
         return;                             // 処理の終了・loop()の先頭へ
     }
     if(strncmp(s,"GET /cam.jpg",12)==0){    // 画像取得指示の場合
-        CamCapture();                       // カメラで写真を撮影する
-        size=CamGetData(client);
+        size=CamCapture();                  // カメラで写真を撮影する
+        M5.Lcd.print(size);                 // ファイルサイズを表示
+        M5.Lcd.println(" Bytes");           // 単位表示
         client.println("HTTP/1.0 200 OK");                  // HTTP OKを応答
         client.println("Content-Type: image/jpeg");         // JPEGコンテンツ
         client.println("Content-Length: " + String(size));  // ファイルサイズ
         client.println("Connection: close");                // 応答後に閉じる
         client.println();                                   // ヘッダの終了
+        CamGetData(client);                 // JPEGデータ送信
         client.println();                   // コンテンツの終了
         client.flush();                     // ESP32用 ERR_CONNECTION_RESET対策
         client.stop();                      // クライアントの切断
-        M5.Lcd.print(size);                 // ファイルサイズをシリアル出力表示
-        M5.Lcd.println(" Bytes");           // シリアル出力表示
         return;                             // 処理の終了・loop()の先頭へ
     }
     if(strncmp(s,"GET /?INT=",10)==0){      // 更新時間の設定命令を受けた時
