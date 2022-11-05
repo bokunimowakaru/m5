@@ -60,7 +60,7 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex10_cam
 #define SSID "1234ABCD"                     // 無線LANアクセスポイントのSSID
 #define PASS "password"                     // パスワード
 #define PORT 1024                           // UDP送信先ポート番号
-#define DEVICE_CAM  "cam_a_1,"              // デバイス名(カメラ)
+#define DEVICE_CAM  "cam_a_5,"              // デバイス名(カメラ)
 
 HardwareSerial serial2(2);                  // カメラ接続用シリアルポートESP32C3
 
@@ -148,18 +148,16 @@ void loop(){
         html(client,size,update,WiFi.localIP()); // コンテンツ表示
         client.flush();                     // ESP32用 ERR_CONNECTION_RESET対策
         client.stop();                      // クライアントの切断
-        Serial.print(size);                 // ファイルサイズをシリアル出力表示
-        Serial.println(" Bytes");           // シリアル出力表示
         return;                             // 処理の終了・loop()の先頭へ
     }
     if(strncmp(s,"GET /cam.jpg",12)==0){    // 画像取得指示の場合
-        CamCapture();                       // カメラで写真を撮影する
-        size=CamGetData(client);
+        size=CamCapture();                  // カメラで写真を撮影する
         client.println("HTTP/1.0 200 OK");                  // HTTP OKを応答
         client.println("Content-Type: image/jpeg");         // JPEGコンテンツ
         client.println("Content-Length: " + String(size));  // ファイルサイズ
         client.println("Connection: close");                // 応答後に閉じる
         client.println();                                   // ヘッダの終了
+        CamGetData(client);                 // JPEGデータ送信
         client.println();                   // コンテンツの終了
         client.flush();                     // ESP32用 ERR_CONNECTION_RESET対策
         client.stop();                      // クライアントの切断
