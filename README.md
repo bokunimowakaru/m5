@@ -52,6 +52,7 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 
 詳細説明（M5Stackでリモコン送信&受信）
 [https://bokunimo.net/blog/esp/2685/](https://bokunimo.net/blog/esp/2685/)  
+M5Stack with IR Remote Unit receive infrared signal or transmit infrared signal from your PCs in the LAN.
 
 #### 音声合成
 
@@ -66,9 +67,12 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 
 下図は、M5Stackに接続したカメラ (SeeedStudio Grove Serial Camera Kit)を、LAN内の端末のブラウザから撮影し、液晶画面とブラウザに表示するプログラム ex10_cam の実行例です。  
 
-た写真を、からローマ字ベースの音声コードを入力して、しゃべらせることも可能です。
-
 ![実行画面ex10](/pictures/ex10_thumb.gif)
+
+詳細説明（防犯カメラ）
+[https://bokunimo.net/blog/esp/2722/](https://bokunimo.net/blog/esp/2722/)  
+Connect a Grove Camera with UART serial output to M5Stack, and try to develop security camera system that can be monitored by PCs in the LAN.
+
 
 ### 応用編
 
