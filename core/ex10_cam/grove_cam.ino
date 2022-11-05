@@ -111,6 +111,46 @@ int CamGetData(WiFiClient &client){
     return (int)picTotalLen;
 }
 
+int CamGetData(uint8_t *buf, int size){
+    byte pkt[PIC_PKT_LEN];
+    pktCnt = (picTotalLen) / (PIC_PKT_LEN - 6); 
+    if ((picTotalLen % (PIC_PKT_LEN-6)) != 0) pktCnt += 1;
+    char cmd[] = { 0xaa, 0x0e | cameraAddr, 0x00, 0x00, 0x00, 0x00 };  
+    for (unsigned int i = 0; i < pktCnt; i++){
+        cmd[4] = i & 0xff;
+        cmd[5] = (i >> 8) & 0xff;
+
+        int retry_cnt = 0;
+        
+        retry:
+        
+        delay(10);
+        _Cam_clearRxBuf(); 
+        _Cam_sendCmd(cmd, 6); 
+        uint16_t cnt = _Cam_readBytes((char *)pkt, PIC_PKT_LEN, 200);
+
+        unsigned char sum = 0; 
+        for (int y = 0; y < cnt - 2; y++){
+            sum += pkt[y];
+        }
+        if (sum != pkt[cnt-2]){
+            if (++retry_cnt < 100) goto retry;
+            else break;
+        }
+        if(size >= cnt-6){
+            memcpy(buf, &pkt[4], cnt - 6);
+            buf += cnt - 6;
+            size -= cnt - 6;
+        }else break;
+        //client.write((const uint8_t *)&pkt[4], cnt-6); 
+        //if (cnt != PIC_PKT_LEN) break;
+    }
+    cmd[4] = 0xf0;
+    cmd[5] = 0xf0; 
+    _Cam_sendCmd(cmd, 6); 
+    return (int)picTotalLen;
+}
+
 //Send Reset command
 void CamInitialize(){
     char cmd[] = {0xaa,0x0d|cameraAddr,0x00,0x00,0x00,0x00} ;

@@ -2,16 +2,13 @@
 Example 10: Wi-Fi コンシェルジェ カメラ担当
                                                                 for M5Stack Core
 
-Webサーバ機能を使って、カメラのシャッターを制御し、撮影した写真を表示します。
+Webサーバ機能を使って、カメラのシャッターを制御し、撮影した写真を転送します。
 
-    対応カメラ： SeeedStudio Grove Serial Camera Kit 
+    対応カメラ： SeeedStudio Grove Serial Camera Kit
 
     カメラ接続用： カメラ直付けのGroveケーブルをM5Stackに接続する
     IO21 TX カメラ側はRXD端子(Grove白色,M5用ケーブル黄色)
     IO22 RX カメラ側はTXD端子(Grove黄色,M5用ケーブル白色)
-
-    カメラ電源制御時：
-    IO10 にPch-FETを接続
 
     使用機材(例)：M5Stack Core + SeeedStudio Grove Serial Camera Kit
 
@@ -20,7 +17,7 @@ Webサーバ機能を使って、カメラのシャッターを制御し、撮�
 
                                           Copyright (c) 2016-2022 Wataru KUNINO
 *******************************************************************************/
- 
+
 #include <M5Stack.h>                        // M5Stack用ライブラリの組み込み
 #include <WiFi.h>                           // ESP32用WiFiライブラリ
 #include <WiFiUdp.h>                        // UDP通信を行うライブラリ
@@ -33,6 +30,7 @@ Webサーバ機能を使って、カメラのシャッターを制御し、撮�
 #define PASS "password"                     // パスワード
 #define PORT 1024                           // UDP送信先ポート番号
 #define DEVICE "cam_a_5,"                   // デバイス名(カメラ)
+#define JPEG_MAX 32768                      // 対応するJPEG最大サイズ(Bytes)
 
 HardwareSerial serial2(2);                  // カメラ接続用シリアルポートESP32C3
 
@@ -41,6 +39,7 @@ IPAddress   IP_LOCAL;                       // 本機のIPアドレス
 IPAddress   IP_BROAD;                       // ブロードキャストIPアドレス
 int size=0;                                 // 画像データの大きさ(バイト)
 int update=60;                              // ブラウザのページ更新間隔(秒)
+int cam_size=1;                             // 撮影サイズ 0:VGA 1:QVGA 2:QQVGA
 
 void sendUdp(String dev, String S){
     WiFiUDP udp;                            // UDP通信用のインスタンスを定義
@@ -55,19 +54,19 @@ void sendUdp_Fd(uint16_t fd_num){
     sendUdp(DEVICE,String(fd_num)+", http://"+IP_LOCAL.toString()+"/cam.jpg");
 }
 
-void setup(){ 
+void setup(){
     M5.begin();                             // M5Stack用ライブラリの起動
     M5.Lcd.setBrightness(31);               // 輝度を下げる（省エネ化）
-    M5.Lcd.print("M5Stack eg.10 cam ");     // タイトルを表示
+    M5.Lcd.println("M5Stack eg.10 cam ");   // タイトルを表示
     WiFi.mode(WIFI_STA);                    // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイントへ接続
     serial2.begin(115200, SERIAL_8N1, PIN_SS2_RX, PIN_SS2_TX); // シリアル初期化
     delay(100);                             // 電源の供給待ち
-    M5.Lcd.println("Initializing");
+    M5.Lcd.println("Initializing Camera");  // 初期化中の表示
     CamInitialize();                        // カメラの初期化コマンド
-    M5.Lcd.println("Setting QVGA");
-    CamSizeCmd(1);                          // 撮影サイズをQVGAに設定
-    M5.Lcd.println("Done    settings");
+    M5.Lcd.println("Setting QVGA");         // 撮影サイズ設定中の表示
+    CamSizeCmd(cam_size);                   // 撮影サイズをQVGAに設定
+    M5.Lcd.println("Done settings");        // 設定完了表示
     delay(4000);                            // 完了待ち(開始直後の撮影防止対策)
     while(WiFi.status() != WL_CONNECTED){   // 接続に成功するまで待つ
         M5.Lcd.print('.');                  // 接続待ち時間表示
@@ -88,9 +87,22 @@ void loop(){
     int len=0;                              // 文字列等の長さカウント用の変数
     int t=0;                                // 待ち受け時間のカウント用の変数
     int i,j;
-    
-    client = server.available();            // 接続されたクライアントを生成
-    if(!client)return;                      // loop()の先頭に戻る
+    uint8_t *buf;                           // JPEGデータ用
+
+    buf = (uint8_t *)malloc(JPEG_MAX);      // メモリ確保
+    do{ if(buf){                            // 待機中のカメラ画像表示
+            size=CamCapture();              // カメラで写真を撮影する
+            if(size <= JPEG_MAX){           // メモリ容量の確認
+                jpeg_div_t div = JPEG_DIV_NONE;
+                if(cam_size == 0) div = JPEG_DIV_2;
+                CamGetData(buf, size);      // JPEGデータをカメラから受信
+                M5.Lcd.drawJpg(buf,size,0,0,0,0,0,0,div); // JPEGデータ表示
+            }
+        }
+        client = server.available();        // 接続されたクライアントを生成
+    }while(!client);                        // 未接続時は、doループを繰り返す
+    free(buf);                              // JPEGデータ用メモリの開放
+    M5.Lcd.setCursor(0, 0);                 // 文字表示位置を原点(左上)に
     M5.Lcd.println("Connected");            // シリアル出力表示
     while(client.connected()){              // 当該クライアントの接続状態を確認
         if(client.available()){             // クライアントからのデータを確認
@@ -128,7 +140,17 @@ void loop(){
         client.println("Content-Length: " + String(size));  // ファイルサイズ
         client.println("Connection: close");                // 応答後に閉じる
         client.println();                                   // ヘッダの終了
-        CamGetData(client);                 // JPEGデータ送信
+        if(size <= JPEG_MAX){               // メモリ容量の確認
+            buf = (uint8_t *)malloc(size);  // メモリ確保
+            if(buf != NULL){                // 確保できたかどうかを確認
+                jpeg_div_t div = JPEG_DIV_NONE;
+                if(cam_size == 0) div = JPEG_DIV_2;
+                CamGetData(buf, size);      // JPEGデータをカメラから受信
+                M5.Lcd.drawJpg(buf,size,0,0,0,0,0,0,div); // JPEGデータ表示
+                client.write((const uint8_t *)buf, size); // JPEGデータ送信
+            }else CamGetData(client);       // 描画せずにJPEGデータを送信
+            free(buf);                      // JPEGデータ用メモリの開放
+        }else CamGetData(client);
         client.println();                   // コンテンツの終了
         client.flush();                     // ESP32用 ERR_CONNECTION_RESET対策
         client.stop();                      // クライアントの切断
@@ -138,8 +160,8 @@ void loop(){
         update = atoi(&s[10]);              // 受信値を変数updateに代入
     }
     if(strncmp(s,"GET /?SIZE=",11)==0){     // JPEGサイズ設定命令時
-        i = atoi(&s[11]);                   // 受信値を変数iに代入
-        CamSizeCmd(i);                      // JPEGサイズ設定
+        cam_size = atoi(&s[11]);            // 受信値を変数cam_sizeに代入
+        CamSizeCmd(cam_size);               // JPEGサイズ設定
     }
     if(!strncmp(s,"GET /favicon.ico",16)){  // Google Chrome対応(追加)
         client.println("HTTP/1.0 404 Not Found");
@@ -148,7 +170,7 @@ void loop(){
         client.stop();                      // クライアントの切断
         return;                             // 処理の終了・loop()の先頭へ
     }
-    
+
     for(i=6;i<strlen(s);i++) if(s[i]==' '||s[i]=='+') s[i]='\0';
     htmlMesg(client,&s[6],WiFi.localIP());  // メッセージ表示
     client.flush();                         // ESP32用 ERR_CONNECTION_RESET対策
