@@ -55,12 +55,20 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 
 #### 音声合成
 
-下図は、音声合成 AquesTalk Pico LSI ATP3012 で音声を発話する ex09_talk の動作例です。LAN内の端末のブラウザからローマ字ベースの音声コードを入力して、しゃべらせることも可能です。
+下図は、音声合成 AquesTalk Pico LSI ATP3012 で音声を発話する ex09_talk の動作例です。LAN内の端末のブラウザからローマ字ベースの音声コードを入力して、しゃべらせることも可能です。  
 
 ![実行画面ex09](/pictures/ex09_thumb.gif)
 
 詳細説明（M5Stackで音声出力）
 [https://bokunimo.net/blog/esp/2708/](https://bokunimo.net/blog/esp/2708/)  
+
+#### カメラ
+
+下図は、M5Stackに接続したカメラ (SeeedStudio Grove Serial Camera Kit)を、LAN内の端末のブラウザから撮影し、液晶画面とブラウザに表示するプログラム ex10_cam の実行例です。  
+
+た写真を、からローマ字ベースの音声コードを入力して、しゃべらせることも可能です。
+
+![実行画面ex10](/pictures/ex10_thumb.gif)
 
 ### 応用編
 
