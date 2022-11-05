@@ -6,8 +6,8 @@ Webサーバ機能を使って、カメラのシャッターを制御し、撮�
     対応カメラ： SeeedStudio Grove Serial Camera Kit
 
     カメラ接続用： カメラ直付けのGroveケーブルをM5Stackに接続する
-    IO21 TX カメラ側はRXD端子(Grove白色,M5用ケーブル黄色)
-    IO22 RX カメラ側はTXD端子(Grove黄色,M5用ケーブル白色)
+    IO32 TX カメラ側はRXD端子(Grove白色,M5用ケーブル黄色)
+    IO33 RX カメラ側はTXD端子(Grove黄色,M5用ケーブル白色)
 
     使用機材(例)：M5Stack Core2 + SeeedStudio Grove Serial Camera Kit
 
@@ -21,8 +21,8 @@ Webサーバ機能を使って、カメラのシャッターを制御し、撮�
 #include <WiFi.h>                           // ESP32用WiFiライブラリ
 #include <WiFiUdp.h>                        // UDP通信を行うライブラリ
 
-#define PIN_SS2_RX 22                       // シリアル受信RX Grove白色
-#define PIN_SS2_TX 21                       // シリアル送信TX Grove黄色
+#define PIN_SS2_RX 33                       // シリアル受信RX Grove白色
+#define PIN_SS2_TX 32                       // シリアル送信TX Grove黄色
 #define TIMEOUT 20000                       // タイムアウト 20秒
 
 #define SSID "1234ABCD"                     // 無線LANアクセスポイントのSSID
