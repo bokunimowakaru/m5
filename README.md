@@ -52,7 +52,7 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 
 詳細説明（M5Stackでリモコン送信&受信）
 [https://bokunimo.net/blog/esp/2685/](https://bokunimo.net/blog/esp/2685/)  
-M5Stack with IR Remote Unit receive infrared signal or transmit infrared signal from your PCs in the LAN.
+M5Stack with IR Remote Unit receives infrared signal or transmits infrared signal from your PCs in the LAN.
 
 #### 音声合成
 
