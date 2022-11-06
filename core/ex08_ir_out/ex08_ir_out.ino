@@ -121,7 +121,7 @@ void handleRoot(){
         trUri2txt(s);
         DATA_LEN[0]=ir_txt2data(DATA[0],DATA_LEN_MAX,s); // 受信データsをリモコン信号に変換
         disp(0, MAROON);                    // リモコンデータをLCDに表示
-        ir_send(DATA[0],DATA_LEN[0],IR_TYPE[0]);
+        ir_send(DATA[0],DATA_LEN[0],IR_TYPE[0],ir_repeat);
     }
     ir_data2txt(s, 97, DATA[0], DATA_LEN[0]);           // 信号データDを表示文字sに変換
     String tx = getHtml(s,DATA_LEN[0],IR_TYPE[0]);   // HTMLコンテンツを取得
