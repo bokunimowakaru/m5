@@ -6,6 +6,9 @@ Example 8 : Wi-Fi コンシェルジェ リモコン担当(赤外線リモコン
 
     使用機材(例)：ESP32 / ATOM / ATOM Lite + IR Unit
 
+テレビや照明機器の電源をONできるのにOFFできないときは、機器に近づいてください。
+（内蔵の赤外線LEDの輝度が低いため、テレビ画面の点灯によって到達距離が短くなる）
+
                                           Copyright (c) 2016-2022 Wataru KUNINO
 *******************************************************************************
 【参考文献】
@@ -47,8 +50,8 @@ IPAddress IP_BROAD;                         // ブロードキャストIPアド�
 
 WiFiUDP udp;                                // UDP通信用のインスタンスを定義
 WebServer server(80);                       // Webサーバ(ポート80=HTTP)定義
-byte D[DATA_LEN_MAX];                       // 保存用・リモコン信号データ
-int D_LEN;                                  // 保存用・リモコン信号長（bit）
+byte D[DATA_LEN_MAX]={0xAA,0x5A,0x8F,0x12,0x16,0xD1}; // リモコン信号データ
+int D_LEN=48;                               // 保存用・リモコン信号長（bit）
 int IR_TYPE=AEHA;                           // リモコン方式
 int ir_repeat = 3;                          // 送信リピート回数
 
@@ -122,9 +125,11 @@ void loop(){
         delay(500);
         led(0,20,0);                        // (WS2812)LEDを緑色で点灯
     }
-    if(digitalRead(PIN_BTN)){
+    if(!digitalRead(PIN_BTN)){
+        led(63,0,0);                        // (WS2812)LEDを明るい赤色で点灯
         ir_send(D,D_LEN,IR_TYPE,ir_repeat); // 送信
         delay(500);                         // 0.5秒の待ち時間処理
+        led(0,20,0);                        // (WS2812)LEDを緑色で点灯
     }
     /* 部屋間の赤外線リモコン送信用
     d_len=udp.parsePacket();                // UDP受信長を変数d_lenに代入
