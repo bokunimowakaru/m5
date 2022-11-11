@@ -23,7 +23,7 @@
 /*
 #define FLASH_AEHA_TIMES	17	// シンボルの搬送波点滅回数(AEHA) 16 -> 17 2022/1/30 ESP32C3
 #define FLASH_NEC_TIMES		23	// シンボルの搬送波点滅回数(NEC)  22 -> 23 2022/1/30 ESP32C3
-#define FLASH_SIRC_TIMES	25	// シンボルの搬送波点滅回数(SIRC) 24 -> 25 2022/1/30 未確認+1
+#define FLASH_SIRC_TIMES	25	// シンボルの搬送波点滅回数(SIRC) 24 -> 25 2022/1/30 ESP32C3
 */
 #define FLASH_ON			11	// LED ON 期間 us (規格上 ON+OFFで 23 us) -> 実測24us
 #define FLASH_OFF			11	// LED ON 期間 us (規格上 ON+OFFで 23 us)
