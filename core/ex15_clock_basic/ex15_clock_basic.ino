@@ -9,5 +9,6 @@ void setup(void) {
 }
 
 void loop() {
-	clock_Needle(millis());
+	clock_Needle();
+	delay(100);
 }
