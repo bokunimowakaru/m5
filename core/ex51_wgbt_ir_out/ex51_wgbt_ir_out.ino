@@ -102,10 +102,10 @@ void handleRoot(){
         DATA_LEN[0]=ir_txt2data(DATA[0],DATA_LEN_MAX,s); // 受信データsをリモコン信号に変換
         ir_send(DATA[0],DATA_LEN[0],IR_TYPE[0],ir_repeat[0]);
     }
-    ir_data2txt(s, 97, DATA[0], DATA_LEN[0]);           // 信号データDを表示文字sに変換
-    String tx = getHtml(s,DATA_LEN[0],IR_TYPE[0]);   // HTMLコンテンツを取得
+    ir_data2txt(s, 97, DATA[0], DATA_LEN[0]);       // 信号データDを表示文字sに変換
+    String tx = getHtml(s,DATA_LEN[0],IR_TYPE[0]);  // HTMLコンテンツを取得
     server.send(200, "text/html", tx);      // HTMLコンテンツを送信
-    M5.Lcd.setCursor(43*6, 110 + 92);              // LCD上のカーソル位置を画面上部へ
+    M5.Lcd.setCursor(43*6, 110 + 92);       // LCD上のカーソル位置を画面上部へ
     M5.Lcd.println("         ");            // Connectedを消去
 }
 
@@ -121,20 +121,18 @@ void wifistart(){
     M5.Lcd.fillRect(0, 202, 320, 8, BLACK);
     M5.Lcd.setCursor(0, 110 + 92);
     M5.Lcd.setTextColor(TFT_WHITE);
-    for(int i = 0; i < 40; i++){
-        if(WiFi.status() == WL_CONNECTED){  // 接続に成功
-            IP = WiFi.localIP();            // IPアドレスを取得
-            M5.Lcd.println(IP);             // UDP送信先IPアドレスを表示
-            Serial.println(IP);
-            Serial.print("Connected");
-            IP[3] = 255;                    // ブロードキャストアドレスに
-            break;                          // forを抜ける
-        }
+    int i=0;
+    while(WiFi.status() != WL_CONNECTED){   // 接続に成功
         delay(500);                         // 待ち時間処理
         M5.Lcd.print('.');                  // 進捗表示
         Serial.print('.');
+        if(i >= 40) return; else i++;
     }
-    Serial.println();
+    IP = WiFi.localIP();                    // IPアドレスを取得
+    M5.Lcd.println(IP);                     // UDP送信先IPアドレスを表示
+    Serial.println(IP);
+    Serial.println("Connected");
+    IP[3] = 255;                            // ブロードキャストアドレスに
 
     TIME = getNtpTime(NTP_SERVER,NTP_PORT); // NTPを用いて時刻を取得
     if(TIME) TIME -= millis()/1000;         // 起動後の経過時間を減算
@@ -217,7 +215,7 @@ void loop(){                                // 繰り返し実行する関数
     lineGraphPlot(temp,1);                  // tempをグラフ表示
     Serial.print("...done 1");
     Serial.println("...OK!");
-    
+
     if(WiFi.status() != WL_CONNECTED){
         wifistart();
     }
@@ -257,7 +255,7 @@ void loop(){                                // 繰り返し実行する関数
         M5.Lcd.fillRect(307, 194, 13, 8, BLACK);
         M5.Lcd.setCursor(307, 194);
         M5.Lcd.print(60 - (t % 60));
-        
+
         byte d[DATA_LEN_MAX];               // リモコン信号データ
         while(t == millis()/1000){
             server.handleClient();          // クライアントからWebサーバ呼出
@@ -282,7 +280,7 @@ void loop(){                                // 繰り返し実行する関数
         t = millis()/1000;
     }while(t % 60);
 
-    if(t % (3 * 60 * 60)){                  // 3時間に1回
+    if(t % (3 * 60 * 60) || t == 0){        // 3時間に1回 or オーバフロー時
         unsigned long time = getNtpTime(NTP_SERVER, NTP_PORT); // 時刻を取得
         if(time) TIME = time - millis()/1000;
     }
@@ -307,7 +305,7 @@ https://github.com/bokunimowakaru/m5/tree/master/core/ex08_ir_out
 LAN内の他の機器から、Webブラウザを使って、遠隔制御することが出来ます。
 LAN内の他の機器に、赤外線リモコンの受信信号をブロードキャスト送信します。
     使用機材(例)：M5Stack Core + IR Unit
-    
+
 ・温湿度センサSHT30から取得した温度値と湿度値を送信するIoTセンサです。
 ・センサ値は液晶ディスプレイにアナログメータで表示します。
 ・WGBT(疑似)を計算しグラフに表示します。【追加機能】
