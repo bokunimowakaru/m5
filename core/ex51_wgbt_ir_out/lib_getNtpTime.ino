@@ -68,6 +68,12 @@ void time2txt(char *date,unsigned long local){	// char date[20];
                //  4+1+ 2+1+ 2+1+ 2+1+ 2+1+ 2 +1 = 20 Bytes
 }
 
+String time2str(unsigned long local){
+    char date[20];
+    time2txt(date, local);
+    return String(date); 
+}
+
 unsigned long getNtpTime(const char* address, const int port){
     byte packetBuffer[NTP_PACKET_SIZE];     // 送受信用バッファ
     WiFiUDP udp;                            // NTP通信用のインスタンスを定義

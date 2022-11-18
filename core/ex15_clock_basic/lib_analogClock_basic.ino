@@ -1,7 +1,7 @@
 /***********************************************************************
 analogClock
 
-本ソースコードは下記からダウンロードしたものです。
+本ソースコードは下記からダウンロードしたものを元に改変しました。
 https://github.com/m5stack/M5Stack/blob/master/examples/Advanced/Display/TFT_Clock/TFT_Clock.ino
 
 ライセンスについては下記を参照してください。
@@ -35,7 +35,6 @@ uint8_t hh = conv2d(__TIME__), mm = conv2d(__TIME__ + 3),
         ss = conv2d(__TIME__ + 6);  // Get H, M, S from compile time
 
 float degree_prev[3];
-uint16_t buf_bg[3][120];
 
 void drawNeedleLine(int i, float degree, int len, uint16_t color){
     int r;
@@ -43,12 +42,7 @@ void drawNeedleLine(int i, float degree, int len, uint16_t color){
     for(r = 3; r < len; r++){
         x  = r * cos((degree_prev[i] - 90) * 0.0174532925) + 160;
         y  = r * sin((degree_prev[i] - 90) * 0.0174532925) + 120;
-        M5.Lcd.drawPixel(x, y, buf_bg[i][r]);
-    }
-    for(r = 3; r < len; r++){
-        x  = r * cos((degree - 90) * 0.0174532925) + 160;
-        y  = r * sin((degree - 90) * 0.0174532925) + 120;
-        buf_bg[i][r] = M5.Lcd.readPixel(x, y);
+        M5.Lcd.drawPixel(x, y, TFT_DARK);
     }
     for(r = 3; r < len; r++){
         x  = r * cos((degree - 90) * 0.0174532925) + 160;
@@ -60,7 +54,7 @@ void drawNeedleLine(int i, float degree, int len, uint16_t color){
 
 void clock_init(void) {
     float sx, sy;
-    uint16_t x0, yy0, xn, yn;
+    uint16_t x0, yy0;
     M5.Lcd.fillScreen(TFT_BLACK);
     M5.Lcd.setTextColor(TFT_WHITE, TFT_DARK);
     M5.Lcd.fillCircle(160, 120, 119, TFT_DARK);     // Draw clock face
@@ -73,22 +67,16 @@ void clock_init(void) {
         sy  = sin((i - 90) * 0.0174532925);
         x0  = sx * 109 + 160;
         yy0 = sy * 109 + 120;
-        xn = sx * 86 + 160;
-        yn = sy * 86 + 120;
         if(i % 90 == 0){                            // 12時,3時,6時,9時
             M5.Lcd.fillCircle(x0, yy0, 5, DARKGREY);
             M5.Lcd.fillCircle(x0, yy0, 4, TFT_WHITE);
-            M5.Lcd.drawCentreString(String(i ? i/30 : 12),xn,yn-10,4);
         }else if(i % 5 == 0){                       // 1,2,4,5,7,8,10,11時
             M5.Lcd.fillCircle(x0, yy0, 3, DARKGREY);
             M5.Lcd.fillCircle(x0, yy0, 2, LIGHTGREY);
-            M5.Lcd.drawCentreString(String(i/30),xn,yn-8,2);
         }else {
             M5.Lcd.fillCircle(x0, yy0, 1, TFT_DARK);
         }
     }
-    for(int i=0; i < 3*120;i++) buf_bg[i/120][i%120] = TFT_DARK;
-    for(int i=0; i < 9;i++) buf_bg[i/3][i%3] = TFT_RED;
     M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
 }
 
@@ -101,19 +89,12 @@ void clock_Needle(unsigned long ms){
     float sdeg = ((float)sec + (float)centi / 100.) * 6.;
     float mdeg = ((float)min + (float)sec / 60.) * 6.;
     float hdeg = (float)hour * 30. + mdeg * 0.0833333;
-    if(
-        (hdeg < mdeg - 4 || mdeg + 4 < hdeg)
-      &&(hdeg < sdeg - 4 || sdeg + 4 < hdeg)
-      &&(int(hdeg - degree_prev[0] + 0.5))
-    ) drawNeedleLine(0, hdeg, 66, TFT_WHITE);
-    if(
-        (mdeg < sdeg - 4 || sdeg + 4 < mdeg)
-      &&(int(mdeg - degree_prev[1] + 0.5))
-    ) drawNeedleLine(1, mdeg, 98, TFT_WHITE);
-    if(
-         int(sdeg - degree_prev[2] + 0.5)
-    ) drawNeedleLine(2, sdeg, 96, TFT_RED);
-    M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
+    if(int(sdeg - degree_prev[2] + 0.5)){
+        drawNeedleLine(0, hdeg, 66, TFT_WHITE);
+        drawNeedleLine(1, mdeg, 98, TFT_WHITE);
+        drawNeedleLine(2, sdeg, 96, TFT_RED);
+        M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
+    }
 }
 
 void clock_Needle(){

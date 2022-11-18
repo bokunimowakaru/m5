@@ -16,7 +16,7 @@ https://github.com/bokunimowakaru/esp/blob/master/2_example/example57_fs/getNTP.
 #define NTP_PACKET_SIZE 48                  // NTP時刻長48バイト
 #define LEAP_YEAR(Y)     ( ((1970+Y)>0) && !((1970+Y)%4) && ( ((1970+Y)%100) || !((1970+Y)%400) ) )
 
-void time2txt(char *date,unsigned long local){	// char date[20];
+void time2txt(char *date,unsigned long local){  // char date[20];
 // functions to convert to and from system time
     int Year,year;
     int Month,month, monthLength;
@@ -66,6 +66,12 @@ void time2txt(char *date,unsigned long local){	// char date[20];
     
     sprintf(date,"%4d/%02d/%02d,%02d:%02d:%02d",Year,Month,Day,Hour,Minute,Second);
                //  4+1+ 2+1+ 2+1+ 2+1+ 2+1+ 2 +1 = 20 Bytes
+}
+
+String time2str(unsigned long local){
+    char date[20];
+    time2txt(date, local);
+    return String(date); 
 }
 
 unsigned long getNtpTime(const char* address, const int port){
