@@ -4,7 +4,11 @@ analogClock
 本ソースコードは下記からダウンロードしたものを元に改変しました。
 https://github.com/m5stack/M5Stack/blob/master/examples/Advanced/Display/TFT_Clock/TFT_Clock.ino
 
-ライセンスについては下記を参照してください。
+改変部の著作権は当方が保有します。無保証です。
+
+                                          Copyright (c) 2022 Wataru KUNINO
+
+元のソースコードのライセンスについては下記を参照してください。
 https://github.com/m5stack/M5Stack/blob/master/LICENSE
 
 m5stack/M5Stack is licensed under the MIT License
