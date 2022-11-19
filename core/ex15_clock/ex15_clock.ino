@@ -21,10 +21,11 @@ unsigned long TIME = 0;                         // NTPで取得した時刻
 unsigned long TIME_ms = 0;                      // NTPに接続したマイコン時間(ms)
 unsigned long time_ms = - NTP_INTERVAL;         // Wi-FiをONしたマイコン時間(ms)
 String date_S = "1970/01/01";                   // 日付を保持する文字列変数
+byte face_mode;                                 // 時計盤の種類を選択
 
 void setup(){                                   // 一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    clock_init();                               // 時計用ライブラリの起動
+    face_mode = clock_init();                   // 時計用ライブラリの起動
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
 }
 
@@ -34,10 +35,19 @@ void loop() {                                   // 繰り返し実行する関�
     // 時刻を文字列で表示する
     String S = time2str(TIME + (millis() - TIME_ms)/1000); // 日時を取得
     if(S.substring(0,10) != date_S){            // 日付が変化した時
-        date_S = S.substring(0,10);             // 日付を更新
+        if(date_S.substring(0,4) != "1970"){    // 過去に受信していた時
+            clock_init();                       // 時計画面の書き直し
+        }                                       // (すでに日付が書かれている為)
+        date_S = S.substring(0,10);             // date_Sを取得した日付に更新
+        clock_showText(date_S);                 // date_Sの日付を表示
+    }
+    // ボタン操作
+    M5.update();                                // ボタン情報の取得
+    delay(1);                                   // ボタン誤作動防止
+    if(M5.BtnA.wasPressed()){                   // ボタンが押されたときに
+        face_mode = clock_init(face_mode + 1);  // 時計盤の種類を変更
         clock_showText(date_S);                 // 日付を表示
     }
-
     // NTPサーバから時刻情報を取得する
     if(millis() - time_ms > NTP_INTERVAL){      // NTP実行時刻になったとき
         time_ms = millis();                     // 現在のマイコン時刻を保持

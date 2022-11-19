@@ -1,4 +1,4 @@
-/***********************************************************************
+/*******************************************************************************
 analogClock
 
 本ソースコードは下記からダウンロードしたものを元に改変しました。
@@ -28,10 +28,34 @@ m5stack/M5Stack is licensed under the MIT License
  */
 
 #include <M5Stack.h>
-#define TFT_GREY 0x5AEB                 //  0101 1010 1110 1011
-                                        //  01011 010111 01011
-#define TFT_DARK 0x18E3                 //  0001 1000 1110 0011
-                                        //  00011 000111 00011
+#include "jpgs/clock_jpg.h"             // JPEG画像ファイル(木枠)を読み込む
+#include "jpgs/clock2_jpg.h"            // JPEG画像ファイル(白木)を読み込む
+#include "jpgs/wallpaper_jpg.h"         // JPEG画像ファイル(壁紙)を読み込む
+#define TFT_GREY 0x5AEB                 //  01011 010111 01011
+#define TFT_DARK 0x18E3                 //  00011 000111 00011
+
+#define Faces_num 5                     // 時計盤の種類数
+byte Face = 2;                          // 時計盤の種類の選択(0～2)
+uint16_t NeedleColor[Faces_num][3] = {  // 針の色設定 短針,長針,秒針
+    {TFT_WHITE,TFT_WHITE,TFT_RED},
+    {TFT_BLACK,TFT_BLACK,TFT_RED},
+    {TFT_WHITE,TFT_WHITE,TFT_RED},
+    {TFT_BLACK,TFT_BLACK,TFT_RED},
+    {TFT_BLACK,TFT_BLACK,TFT_RED}
+};
+byte NeedleLen[Faces_num][3] = {        // 短針(時針)の長さ設定
+    {66,98,96},
+    {66,98,96},
+    {60,89,86},
+    {60,89,86},
+    {66,98,96}
+};
+uint16_t TextColor[Faces_num] = {       // 時計盤の文字色
+    TFT_WHITE, TFT_BLACK, TFT_WHITE, TFT_BLACK, TFT_BLACK
+};
+uint16_t BgColor[Faces_num] = {         // 時計盤の背景色
+    TFT_DARK, LIGHTGREY, TFT_BLACK, TFT_BLACK, TFT_BLACK
+};
 
 // uint32_t targetTime = 0;             // for next 1 second timeout
 static uint8_t conv2d(const char* p);   // Forward declaration needed for IDE 1.6.x
@@ -74,50 +98,86 @@ void drawNeedleLine(int i, float degree, int len, uint16_t color){
     degree_prev[i] = degree;
 }
 
-void clock_init(void) {
+int clock_init(int clockface) {
+    if(0 <= clockface && clockface < Faces_num) Face = clockface; else Face = 0;
     float sx, sy;
     uint16_t x0, yy0, xn, yn;
     M5.Lcd.fillScreen(TFT_BLACK);
-    M5.Lcd.setTextColor(TFT_WHITE, TFT_DARK);
-    M5.Lcd.fillCircle(160, 120, 119, TFT_DARK);     // Draw clock face
-    M5.Lcd.fillCircle(160, 120, 118, DARKGREY);
-    M5.Lcd.fillCircle(160, 120, 117, TFT_GREY);
-    M5.Lcd.fillCircle(160, 120, 102, DARKGREY);
-    M5.Lcd.fillCircle(160, 120, 101, TFT_DARK);
-    for (int i = 0; i < 360; i += 6) {              // Draw 60 dots
-        sx  = cos((i - 90) * 0.0174532925);
-        sy  = sin((i - 90) * 0.0174532925);
-        x0  = sx * 109 + 160;
-        yy0 = sy * 109 + 120;
-        xn = sx * 86 + 160;
-        yn = sy * 86 + 120;
-        if(i % 90 == 0){                            // 12時,3時,6時,9時
-            M5.Lcd.fillCircle(x0, yy0, 5, DARKGREY);
-            M5.Lcd.fillCircle(x0, yy0, 4, TFT_WHITE);
-            M5.Lcd.drawCentreString(String(i ? i/30 : 12),xn,yn-10,4);
-        }else if(i % 5 == 0){                       // 1,2,4,5,7,8,10,11時
-            M5.Lcd.fillCircle(x0, yy0, 3, DARKGREY);
-            M5.Lcd.fillCircle(x0, yy0, 2, LIGHTGREY);
-            M5.Lcd.drawCentreString(String(i/30),xn,yn-8,2);
-        }else {
-            M5.Lcd.fillCircle(x0, yy0, 1, TFT_DARK);
-        }
+    
+    switch(Face){
+        case 4:
+            M5.Lcd.drawJpg(wallpaper_jpg, wallpaper_jpg_len);
+            M5.Lcd.setTextColor(TextColor[Face]);
+            for(int i = 0; i < 360; i += 30){
+                sx  = cos((i - 90) * 0.0174532925);
+                sy  = sin((i - 90) * 0.0174532925);
+                x0  = sx * 90 + 160;
+                yy0 = sy * 90 + 120;
+                xn  = sx * 109 + 160;
+                yn  = sy * 109 + 120;
+                M5.Lcd.fillCircle(x0, yy0, 3, DARKGREY);
+                M5.Lcd.drawCentreString(String(i ? i/30 : 12),xn,yn-10,4);
+            }
+            break;
+        case 3:
+            M5.Lcd.drawJpg(clock2_jpg, clock_jpg_len);
+            M5.Lcd.setTextColor(TextColor[Face]);
+            break;
+        case 2:
+            M5.Lcd.drawJpg(clock_jpg, clock_jpg_len);
+            M5.Lcd.setTextColor(TextColor[Face]);
+            for(int i = 0; i < 360; i += 30){
+                xn = cos((i - 90) * 0.0174532925) * 70 + 160;
+                yn = sin((i - 90) * 0.0174532925) * 70 + 120;
+                if(i % 90 == 0){
+                      M5.Lcd.drawCentreString(String(i ? i/30 : 12),xn,yn-10,4);
+                }else M5.Lcd.drawCentreString(String(i/30),xn,yn-8,2);
+            }
+            break;
+        default:
+            M5.Lcd.fillCircle(160, 120, 119, TFT_DARK);     // Draw clock face
+            M5.Lcd.fillCircle(160, 120, 118, DARKGREY);
+            M5.Lcd.fillCircle(160, 120, 117, TFT_GREY);
+            M5.Lcd.fillCircle(160, 120, 102, DARKGREY);
+            M5.Lcd.fillCircle(160, 120, 101, BgColor[Face]);
+            M5.Lcd.setTextColor(TextColor[Face], BgColor[Face]);
+            for (int i = 0; i < 360; i += 6) {              // Draw 60 dots
+                sx  = cos((i - 90) * 0.0174532925);
+                sy  = sin((i - 90) * 0.0174532925);
+                x0  = sx * 109 + 160;
+                yy0 = sy * 109 + 120;
+                xn = sx * 86 + 160;
+                yn = sy * 86 + 120;
+                if(i % 90 == 0){                            // 12時,3時,6時,9時
+                    M5.Lcd.fillCircle(x0, yy0, 5, DARKGREY);
+                    M5.Lcd.fillCircle(x0, yy0, 4, TFT_WHITE);
+                    M5.Lcd.drawCentreString(String(i ? i/30 : 12),xn,yn-10,4);
+                }else if(i % 5 == 0){                       // 1,2,4,5,7,8,10,11時
+                    M5.Lcd.fillCircle(x0, yy0, 3, DARKGREY);
+                    M5.Lcd.fillCircle(x0, yy0, 2, LIGHTGREY);
+                    M5.Lcd.drawCentreString(String(i/30),xn,yn-8,2);
+                }else {
+                    M5.Lcd.fillCircle(x0, yy0, 1, TFT_DARK);
+                }
+            }
+            break;
     }
     
     M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
     //M5.Lcd.readRect(60, 20, 200, 200, (uint16_t *)buf_bg);
     for(int i=0;i<40000;i++) buf_bg[i] = M5.Lcd.readPixel(i%200+60,i/200+20);
+    return Face;
+}
+
+int clock_init(){
+    return clock_init(Face);
 }
 
 void clock_showText(String S){
-    clearNeedleLine(0, 66);
-    clearNeedleLine(1, 98);
-    clearNeedleLine(2, 96);
+    for(int i=0; i<3; i++) clearNeedleLine(i, NeedleLen[Face][i]);
     M5.Lcd.drawCentreString(S,160,150,2);
-    for(int i=0;i<40000;i++) buf_bg[i] = M5.Lcd.readPixel(i%200+60,i/200+20);
-    redrawNeedleLine(0, 66, TFT_WHITE);
-    redrawNeedleLine(1, 98, TFT_WHITE);
-    redrawNeedleLine(2, 96, TFT_RED);
+    for(int i=0; i<40000;i++) buf_bg[i] = M5.Lcd.readPixel(i%200+60,i/200+20);
+    for(int i=0; i<3; i++) redrawNeedleLine(i, NeedleLen[Face][i],NeedleColor[Face][i]);
 }
 
 void clock_Needle(unsigned long ms){
@@ -133,14 +193,14 @@ void clock_Needle(unsigned long ms){
         (mdeg - 18 < hdeg && hdeg < mdeg + 18)
       ||(sdeg - 18 < hdeg && hdeg < sdeg + 18)
       ||(int(hdeg - degree_prev[0] + 0.5))
-    ) drawNeedleLine(0, hdeg, 66, TFT_WHITE);
+    ) drawNeedleLine(0, hdeg, NeedleLen[Face][0],NeedleColor[Face][0]);
     if(
         (sdeg - 18 < mdeg && mdeg < sdeg + 18)
       ||(int(mdeg - degree_prev[1] + 0.5))
-    ) drawNeedleLine(1, mdeg, 98, TFT_WHITE);
+    ) drawNeedleLine(1, mdeg, NeedleLen[Face][1],NeedleColor[Face][1]);
     if(
          int(sdeg - degree_prev[2] + 0.5)
-    ) drawNeedleLine(2, sdeg, 96, TFT_RED);
+    ) drawNeedleLine(2, sdeg, NeedleLen[Face][2],NeedleColor[Face][2]);
     M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
 }
 
