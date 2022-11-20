@@ -36,25 +36,26 @@ m5stack/M5Stack is licensed under the MIT License
 
 #define Faces_num 5                     // 時計盤の種類数
 byte Face = 2;                          // 時計盤の種類の選択(0～2)
-const uint16_t NeedleColor[Faces_num][3] = {  // 針の色設定 短針,長針,秒針
-    {TFT_WHITE,TFT_WHITE,TFT_RED},
-    {TFT_BLACK,TFT_BLACK,TFT_RED},
-    {TFT_WHITE,TFT_WHITE,TFT_RED},
-    {TFT_BLACK,TFT_BLACK,TFT_RED},
-    {TFT_BLACK,TFT_BLACK,TFT_RED}
+
+const uint16_t NeedleColor[Faces_num][4] = {  // 針の色設定 短針,長針,秒針
+    {TFT_GREEN,TFT_WHITE,TFT_WHITE,TFT_RED},
+    {TFT_GREEN,TFT_BLACK,TFT_BLACK,TFT_RED},
+    {TFT_GREEN,TFT_WHITE,TFT_WHITE,TFT_RED},
+    {TFT_GREEN,TFT_BLACK,TFT_BLACK,TFT_RED},
+    {TFT_GREEN,TFT_BLACK,TFT_BLACK,TFT_RED}
 };
-const byte NeedleLen[Faces_num][3] = {        // 短針(時針)の長さ設定
-    {66,98,96},
-    {66,98,96},
-    {60,89,86},
-    {60,89,86},
-    {66,98,96}
+const byte NeedleLen[Faces_num][4] = {        // 短針(時針)の長さ設定
+    {33,66,98,96},
+    {33,66,98,96},
+    {30,60,89,86},
+    {30,60,89,86},
+    {33,66,98,96}
 };
 const uint16_t TextColor[Faces_num] = {       // 時計盤の文字色
     TFT_WHITE, TFT_BLACK, TFT_WHITE, TFT_BLACK, TFT_BLACK
 };
 const uint16_t BgColor[Faces_num] = {         // 時計盤の背景色
-    TFT_DARK, LIGHTGREY, TFT_BLACK, TFT_BLACK, LIGHTGREY
+    TFT_DARK, LIGHTGREY, TFT_BLACK, TFT_WHITE, TFT_WHITE
 };
 
 // uint32_t targetTime = 0;             // for next 1 second timeout
@@ -62,13 +63,16 @@ static uint8_t conv2d(const char* p);   // Forward declaration needed for IDE 1.
 uint8_t hh = conv2d(__TIME__), mm = conv2d(__TIME__ + 3),
         ss = conv2d(__TIME__ + 6);  // Get H, M, S from compile time
 
-float degree_prev[3];
+float degree_prev[4];
+float degree_alrm = 0;
+boolean AlarmEn = false;
+
 uint16_t buf_bg[40000];  // 200 x 200
-String TEXT = "";
+String TEXT[2] = {"",""};
 
 void redrawNeedleLine(int i, int len, uint16_t color){
     uint16_t x, y;
-    for(int r = 3; r < len; r++){
+    for(int r = 3 ; r < len; r++){
         x  = r * cos((degree_prev[i] - 90) * 0.0174532925) + 160;
         y  = r * sin((degree_prev[i] - 90) * 0.0174532925) + 120;
         M5.Lcd.drawPixel(x, y, color);
@@ -99,12 +103,17 @@ void drawNeedleLine(int i, float degree, int len, uint16_t color){
     degree_prev[i] = degree;
 }
 
+void clock_redrawNeedle(){
+    for(int i=AlarmEn?0:1; i<4; i++) redrawNeedleLine(i, NeedleLen[Face][i],NeedleColor[Face][i]);
+    M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
+}
+
 int clock_init(int clockface) {
     if(0 <= clockface && clockface < Faces_num) Face = clockface; else Face = 0;
     float sx, sy;
     uint16_t x0, yy0, xn, yn;
     M5.Lcd.fillScreen(TFT_BLACK);
-    
+
     switch(Face){
         case 4:
             M5.Lcd.drawJpg(wallpaper_jpg, wallpaper_jpg_len);
@@ -141,7 +150,7 @@ int clock_init(int clockface) {
             M5.Lcd.fillCircle(160, 120, 117, TFT_GREY);
             M5.Lcd.fillCircle(160, 120, 102, DARKGREY);
             M5.Lcd.fillCircle(160, 120, 101, BgColor[Face]);
-            M5.Lcd.setTextColor(TextColor[Face], BgColor[Face]);
+            M5.Lcd.setTextColor(TextColor[Face]);
             for (int i = 0; i < 360; i += 6) {              // Draw 60 dots
                 sx  = cos((i - 90) * 0.0174532925);
                 sy  = sin((i - 90) * 0.0174532925);
@@ -163,10 +172,11 @@ int clock_init(int clockface) {
             }
             break;
     }
-    
+
     M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
     //M5.Lcd.readRect(60, 20, 200, 200, (uint16_t *)buf_bg);
     for(int i=0;i<40000;i++) buf_bg[i] = M5.Lcd.readPixel(i%200+60,i/200+20);
+    clock_redrawNeedle();
     return Face;
 }
 
@@ -174,17 +184,28 @@ int clock_init(){
     return clock_init(Face);
 }
 
-void clock_showText(String S){
-    for(int i=0; i<3; i++) clearNeedleLine(i, NeedleLen[Face][i]);
-    if(TEXT != "" && TEXT != S) M5.Lcd.fillRect(120,150,80,15,BgColor[Face]);
-    M5.Lcd.drawCentreString(S,160,150,2);
+void clock_showText(String S, int pos){
+    if(pos > 100) pos = 100;    // 上部表示 +46あたり にする
+    if(pos < -84) pos = -84;    // 下部表示 -30あたり にする
+    if(S.length() > 10) S = S.substring(0,10); // 10文字以内
+
+    int pos2 = pos < 0 ? 0 : 1;
+    for(int i=0; i<4; i++) clearNeedleLine(i, NeedleLen[Face][i]);
+    if(TEXT[pos2] != "" && TEXT[pos2] != S){
+        M5.Lcd.fillRect(120,120-pos,80,15,BgColor[Face]);
+    }
+    M5.Lcd.drawCentreString(S,160,120-pos,2);
     for(int x=0; x<120; x++){
         for(int y=0; y<16; y++){
-            buf_bg[x+40+(y+130)*200] = M5.Lcd.readPixel(x+100,y+150);
+            buf_bg[x+40+(y+100-pos)*200] = M5.Lcd.readPixel(x+100,y+120-pos);
         }
     }
-    for(int i=0; i<3; i++) redrawNeedleLine(i, NeedleLen[Face][i],NeedleColor[Face][i]);
-    TEXT = S;
+    clock_redrawNeedle();
+    TEXT[pos2] = S;
+}
+
+void clock_showText(String S){
+    clock_showText(S, -30);  // Possison = Bottom
 }
 
 void clock_Needle(unsigned long ms){
@@ -196,24 +217,46 @@ void clock_Needle(unsigned long ms){
     float sdeg = ((float)sec + (float)centi / 100.) * 6.;
     float mdeg = ((float)min + (float)sec / 60.) * 6.;
     float hdeg = (float)hour * 30. + mdeg * 0.0833333;
+
     if(
-        (fmod(fabs(mdeg - hdeg),360) < 18)
-      ||(fmod(fabs(sdeg - hdeg),360) < 18)
-      ||(int(hdeg - degree_prev[0] + 0.5))
-    ) drawNeedleLine(0, hdeg, NeedleLen[Face][0],NeedleColor[Face][0]);
+        (fmod(fabs(mdeg - hdeg),360) < 16)
+      ||(fmod(fabs(sdeg - hdeg),360) < 16)
+      ||(int(hdeg - degree_prev[1] + 0.5))
+    ) drawNeedleLine(1, hdeg, NeedleLen[Face][1],NeedleColor[Face][1]);
     if(
-        (fmod(fabs(sdeg - mdeg),360) < 18)
-      ||(int(mdeg - degree_prev[1] + 0.5))
-    ) drawNeedleLine(1, mdeg, NeedleLen[Face][1],NeedleColor[Face][1]);
+        (fmod(fabs(sdeg - mdeg),360) < 16)
+      ||(int(mdeg - degree_prev[2] + 0.5))
+    ) drawNeedleLine(2, mdeg, NeedleLen[Face][2],NeedleColor[Face][2]);
+    if(AlarmEn && (
+        (fmod(fabs(sdeg - degree_alrm),360) < 16)
+    )) drawNeedleLine(0, degree_alrm, NeedleLen[Face][0],NeedleColor[Face][0]);
     if(
-         int(sdeg - degree_prev[2] + 0.5)
-    ) drawNeedleLine(2, sdeg, NeedleLen[Face][2],NeedleColor[Face][2]);
+         int(sdeg - degree_prev[3] + 0.5)
+    ) drawNeedleLine(3, sdeg, NeedleLen[Face][3],NeedleColor[Face][3]);
     M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
 }
 
 void clock_Needle(){
     clock_Needle(0);
 }
+
+void clock_AlarmOff(){
+    if(AlarmEn) clearNeedleLine(0, NeedleLen[Face][0]);
+    AlarmEn = false;
+    clock_redrawNeedle();
+}
+
+void clock_Alarm(unsigned long ms){
+    if(ms != 43200000ul){
+        ms %= 43200000ul;
+        AlarmEn = true;
+        degree_alrm = (float)ms / 3600000. * 30.;
+        drawNeedleLine(0, degree_alrm, NeedleLen[Face][0],NeedleColor[Face][0]);
+    }else{
+        clock_AlarmOff();
+    }
+}
+
 
 static uint8_t conv2d(const char* p) {
     uint8_t v = 0;
