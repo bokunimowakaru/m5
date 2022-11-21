@@ -177,6 +177,7 @@ int clock_init(int clockface) {
     //M5.Lcd.readRect(60, 20, 200, 200, (uint16_t *)buf_bg);
     for(int i=0;i<40000;i++) buf_bg[i] = M5.Lcd.readPixel(i%200+60,i/200+20);
     clock_redrawNeedle();
+    for(int i=0;i<2;i++) TEXT[i] = ""; 
     return Face;
 }
 

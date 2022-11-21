@@ -37,8 +37,7 @@ Example 15 : Wi-Fi NTP時計 for M5Stack Core
 #define NTP_SERVER "ntp.nict.jp"                // NTPサーバのURL
 #define NTP_PORT 8888                           // NTP待ち受けポート
 #define NTP_INTERVAL 3 * 3600 * 1000            // 3時間
-#define HOUR_SYS12 12                       // 0にすると12:00を00:00で表示
-#define ALARM_OFF 43200                         // 12*60*60 (設定範囲外)
+#define HOUR_SYS12 12                           // 0にすると12:00を00:00で表示
 
 /******************************************************************************
  LINE Notify 設定
@@ -54,28 +53,24 @@ Example 15 : Wi-Fi NTP時計 for M5Stack Core
  *****************************************************************************/
 #define LINE_TOKEN  "your_token"                // LINE Notify トークン★要設定
 
-unsigned long TIME = 0;                         // 時計表示用の基準時刻(NTP)
-unsigned long TIME_ntp = 0;                     // NTPで取得したときの時刻
-unsigned long TIME_alrm = ALARM_OFF;            // アラーム時刻
+unsigned long TIME = 0;                         // 時計表示用の基準時刻(秒)
+unsigned long TIME_ntp = 0;                     // NTPで取得したときの時刻(秒)
+unsigned long TIME_alrm = 7 * 60 * 60;          // アラーム時刻(秒)
 unsigned long TIME_ms = 0;                      // NTPに接続したマイコン時間(ms)
 unsigned long time_ms = - NTP_INTERVAL;         // Wi-FiをONしたマイコン時間(ms)
 String date_S = "1970/01/01";                   // 日付を保持する文字列変数
-String alrm_S = "";
-byte face_mode;                                 // 時計盤の種類を選択
-byte setting = 0;                               // 設定モード
+String alrm_S = "7:00";                         // アラーム時刻(文字列)
+byte face_mode = 2;                             // 時計盤の種類を選択
+boolean Alarm = false;                          // アラーム設定状態
+byte setting = 0;                               // アラーム時刻設定モード
+byte runApp = 0;                                // ネット機能 1:NTP, 2:LINE
+    #define RUN_NTP   1     // NTP実行中
+    #define RUN_LINE  2     // LINE実行中
+    #define DONE_LINE 3     // LINE通知完了
 
-String notify_S = "";
-int notify(String S){                          // アラーム駆動後に通知する
-    if(notify_S == "" && S.length() > 0) notify_S = S;
-    /*
-    if(notify_S == "") return 0;
-    if(strlen(LINE_TOKEN) <= 42) return 0;
-    */
-    WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイント接続
-    M5.Lcd.drawString("Wi-Fi ON",271,0,1);  // 無線LAN起動表示
-    while(WiFi.status()!=WL_CONNECTED) delay(100); // return 1;
-    M5.Lcd.fillRect(265,0,56,8,TFT_BLACK);      // 接続表示の消去
-    M5.Lcd.drawString("Connected",265,0,1);     // 接続表示
+String notify_S = "";                           // LINE通知用の文字列変数
+
+void notify(){                                  // アラーム時刻にLINEへ通知する
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
     http.begin("https://notify-api.line.me/api/notify");  // HTTPリクエスト先を設定する
@@ -84,11 +79,13 @@ int notify(String S){                          // アラーム駆動後に通知
     http.POST("message=アラーム(" + notify_S  + ")が鳴りました。");
     http.end();                                 // HTTP通信を終了する
     notify_S = "";
-    WiFi.disconnect();                          // Wi-Fiの切断
-    M5.Lcd.fillRect(265,0,56,8,TFT_BLACK);      // 接続表示の消去
-    return 0;
 }
-int notify(){return notify("");}
+
+void ntp(){                                     // NTPで時刻を取得する
+    TIME = getNtpTime(NTP_SERVER,NTP_PORT);     // NTPを用いて時刻を取得
+    TIME_ntp = TIME;                            // NTP取得時刻を保持
+    TIME_ms = millis();                         // NTPサーバ接続時刻を保持
+}
 
 void setup(){                                   // 一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
@@ -104,14 +101,21 @@ void loop() {                                   // 繰り返し実行する関�
     t_ms %= 43200000;
     clock_Needle(t_ms);                         // 12時間制で時計の針を表示する
 
-    if(TIME_alrm/60 == t_ms/60000){             // アラーム時刻(12h制)に一致時
+    if(Alarm && (TIME_alrm/60 == t_ms/60000)){  // アラーム時刻(12h制)に一致時
+        if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
+        if(runApp == 0 || runApp == RUN_NTP){   // ネット機能が未設定orNTP設定時
+            runApp = RUN_LINE;                  // 接続後に Line Notify を実行
+            clock_showText("to LINE", 46);      // LINE接続試行中を表示
+        }                                       // (NTPよりもアラームを優先実行)
         if((t_ms/1000)%60 > 5){                 // アラーム駆動が5秒を超えた時
-            TIME_alrm = ALARM_OFF;              // アラームを解除
-            clock_showText("", 46);
-            notify(alrm_S);                     // 関数notifyを実行(外部通知)
+            if(runApp == DONE_LINE){
+                Alarm = false;                  // アラームを解除
+                clock_showText("", 46);
+                runApp = 0;
+            }
         }
         M5.Lcd.setBrightness(0);                // LCD輝度を0に
-        // M5.Speaker.tone(880, 20);            // 20ms、音を鳴らす
+        // M5.Speaker.tone(880, 20);               // 20ms、音を鳴らす
         delay(50);
         M5.Lcd.setBrightness(100); delay(50);   // LCD輝度を0に
     }
@@ -122,18 +126,24 @@ void loop() {                                   // 繰り返し実行する関�
         }                                       // (すでに日付が書かれている為)
         date_S = time_S.substring(0,10);        // date_Sを取得した日付に更新
         clock_showText(date_S);                 // date_Sの日付を表示
-        if(TIME_alrm != ALARM_OFF) clock_showText(alrm_S, 46); // アラーム表示
+        if(Alarm) clock_showText(alrm_S, 46);   // アラーム表示
     }
     if(setting && (t_ms/1000)%60 > 30){         // 設定モードで30秒以上が経過
         setting = 0;                            // 設定モードを解除
         clock_init();                           // 時計盤の再描画
         clock_showText(date_S);                 // date_Sの日付を再表示
-        if(TIME_alrm != ALARM_OFF) clock_showText(alrm_S, 46); // アラーム表示
+        if(Alarm) clock_showText(alrm_S, 46);   // アラーム表示
     }
     // ボタン操作
     M5.update();                                // ボタン情報の取得
     delay(1);                                   // ボタン誤作動防止
     int adj = - M5.BtnA.isPressed() + M5.BtnC.isPressed(); // ボタン状態取得
+    if(adj < 0 && setting == 0){                // 左ボタン(設定モードでない)
+        adj = 0;                                // 針の操作をしない
+        face_mode = clock_init(face_mode + 1);  // 時計盤の種類を変更
+        clock_showText(date_S);                 // 日付を表示
+        if(Alarm) clock_showText(alrm_S, 46);   // アラーム表示
+    }
     if(adj){                                    // ボタンAかCの押下中
         TIME -= (t_ms/1000)%60;                 // 1分単位に切り捨てる
         TIME += adj * 60;                       // 60秒戻すまたは進める
@@ -147,40 +157,48 @@ void loop() {                                   // 繰り返し実行する関�
     }else if(setting) setting = 1;              // 長押し状態の解除
     if(setting < 5) delay(100);                 // 待ち時間0.1秒
     if(M5.BtnB.wasPressed()){                   // ボタンBが押されたときに
-        if(setting){                            // 設定状態の時
+        if(setting == 0){                       // 設定モードではない時
+            Alarm = !Alarm;                     // アラーム設定を反転
+        }else{                                  // 設定モードの時
             setting = 0;                        // 設定状態を解除
-            if(TIME_alrm != t_ms/1000){         // 現在の設定値と異なる時
-                clock_Alarm(t_ms);              // アラーム針の表示
-                TIME_alrm = t_ms/1000;          // 12時間制でアラームを設定
-                String h = String(TIME_alrm / 3600);
-                if(HOUR_SYS12 && h == "0") h = "12";
-                String m = String((TIME_alrm/600)%6)+String((TIME_alrm/60)%10);
-                alrm_S = h + ":" + m;
-                clock_showText(alrm_S, 46);     // アラーム表示
-            }else{
-                TIME_alrm = ALARM_OFF;          // アラーム解除
-                clock_AlarmOff();               // アラーム針の消去
-            }
+            TIME_alrm = t_ms/1000;              // 12時間制でアラームを設定
+            Alarm = true;                       // アラーム設定
+            String h = String(TIME_alrm / 3600);
+            if(HOUR_SYS12 && h == "0") h = "12";
+            String m = String((TIME_alrm/600)%6)+String((TIME_alrm/60)%10);
+            alrm_S = h + ":" + m;
             TIME = TIME_ntp;                    // 時刻基準を取得済NTP時刻に戻す
             clock_init();                       // 時計画面の書き直し
-        }else{                                  // 設定状態ではなかったとき
-            face_mode = clock_init(face_mode + 1); // 時計盤の種類を変更
+            t_ms = (TIME % 43200)*1000 + (millis() - TIME_ms);
+            clock_Needle(t_ms);                 // 12時間制で時計の針を表示する
+            clock_showText(date_S);             // 日付を表示
         }
-        clock_showText(date_S);                 // 日付を表示
-        if(TIME_alrm != ALARM_OFF) clock_showText(alrm_S, 46); // アラーム表示
+        if(Alarm){
+            clock_Alarm(TIME_alrm * 1000);      // アラーム針の表示
+            clock_showText(alrm_S, 46);         // アラーム表示
+        }else{
+            clock_AlarmOff();                   // アラーム針の消去
+            clock_showText("", 46);             // アラーム表示の消去
+        }
     }
     // NTPサーバから時刻情報を取得する
     if(millis() - time_ms > NTP_INTERVAL){      // NTP実行時刻になったとき
         time_ms = millis();                     // 現在のマイコン時刻を保持
-        WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイント接続
-        M5.Lcd.drawString("Wi-Fi ON",271,0,1);  // 無線LAN起動表示
+        if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
+        runApp = RUN_NTP;
+        clock_showText("to NTP", 46);           // NTP接続試行中を表示
     }
+
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
-    M5.Lcd.fillRect(265,0,56,8,TFT_BLACK);      // 接続表示の消去
-    M5.Lcd.drawString("Connected",265,0,1);     // 接続表示
-    TIME = getNtpTime(NTP_SERVER,NTP_PORT);     // NTPを用いて時刻を取得
-    TIME_ntp = TIME;                            // NTP取得時刻を保持
-    TIME_ms = millis();                         // NTPサーバ接続時刻を保持
+    clock_showText("Connected", 46);            // 接続完了表示
+    if(runApp == RUN_LINE){
+        notify();
+        runApp = DONE_LINE;
+    }
+    if(runApp == RUN_NTP){
+        ntp();
+        runApp = 0;
+    }
     WiFi.disconnect();                          // Wi-Fiの切断
-    M5.Lcd.fillRect(265,0,56,8,TFT_BLACK);      // 接続表示の消去
+    clock_showText(Alarm ? alrm_S : "", 46);    // アラーム表示
 }
