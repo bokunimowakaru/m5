@@ -68,17 +68,14 @@ byte runApp = 0;                                // ネット機能 1:NTP, 2:LINE
     #define RUN_LINE  2     // LINE実行中
     #define DONE_LINE 3     // LINE通知完了
 
-String notify_S = "";                           // LINE通知用の文字列変数
-
 void notify(){                                  // アラーム時刻にLINEへ通知する
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
     http.begin("https://notify-api.line.me/api/notify");  // HTTPリクエスト先を設定する
     http.addHeader("Content-Type","application/x-www-form-urlencoded");
     http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
-    http.POST("message=アラーム(" + notify_S  + ")が鳴りました。");
+    http.POST("message=アラーム(" + alrm_S  + ")が鳴りました。");
     http.end();                                 // HTTP通信を終了する
-    notify_S = "";
 }
 
 void ntp(){                                     // NTPで時刻を取得する
