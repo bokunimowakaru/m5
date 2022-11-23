@@ -69,11 +69,6 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 ![実行画面ex10](/pictures/ex10_thumb.gif)
 
-詳細説明（防犯カメラ）
-[https://bokunimo.net/blog/esp/2722/](https://bokunimo.net/blog/esp/2722/)  
-Connect a Grove Camera with UART serial output to M5Stack, and try to develop security camera system that can be monitored by PCs in the LAN.
-
-
 ### 応用編
 
 |フォルダ名   |内容                                                                               |
@@ -82,8 +77,20 @@ Connect a Grove Camera with UART serial output to M5Stack, and try to develop se
 |ex12_janken  |Webインタフェース HTTP GET でクラウド・サーバとジャンケン対決します                |
 |ex13_daruma  |人感センサ・ユニット（PIR Motion Sensor）を使った だるまさんがころんだ ゲーム      |
 |ex14_mogura  |インターネット上でランキング競争 M5Stackのボタンを使った もぐらたたき ゲーム       |
+|ex15_clock   |インターネット時刻を取得してアナログ時計風に表示＆アラーム時刻にLINEに通知         |
 
 ![実行画面ex11～14](/pictures/ex11_14_thumb.gif)
+
+#### 時計
+
+アナログ時計風の画面を表示するインターネット対応の時計です。アラーム時刻になるとLINEに通知し、スマホなどでアラームが鳴ったことを確認することが出来ます。  
+下図は、左から順に、(1)起動時、(2)インターネット時刻取得後、(3)アラーム設定画面、(4)アラーム待機画面です。  
+
+![実行画面ex15](/pictures/ex15_clock_thumb_2.png)
+
+時計画面は、上記を含めて5パターンを準備しました。  
+
+![実行画面ex15](/pictures/ex15_clock_thumb_2.png)
 
 ## Arduino IDE 用の ESP32 開発環境のセットアップ
 
