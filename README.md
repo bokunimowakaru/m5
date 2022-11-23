@@ -44,7 +44,7 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 |ex09_talk    |Wi-Fiコンシェルジェ［音声アナウンス担当］音声合成 AquesTalk Pico LSI ATP3012用     |
 |ex10_cam     |Wi-Fiコンシェルジェ［カメラ担当］SeeedStudio Grove Serial Camera Kit 用            |
 
-#### 赤外線リモコン
+#### 赤外線リモコン ex08_ir_out
 
 下図は、赤外線リモコン信号を受信したり、LAN内の別の端末のブラウザからの遠隔制御でリモコン信号を送信することが出来る、ex08_ir_outの画面の一例です。  
 
@@ -54,7 +54,7 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 [https://bokunimo.net/blog/esp/2685/](https://bokunimo.net/blog/esp/2685/)  
 M5Stack with IR Remote Unit receives infrared signal or transmits infrared signal from your PCs in the LAN.
 
-#### 音声合成
+#### 音声合成 ex09_talk
 
 下図は、音声合成 AquesTalk Pico LSI ATP3012 で音声を発話する ex09_talk の動作例です。LAN内の端末のブラウザからローマ字ベースの音声コードを入力して、しゃべらせることも可能です。  
 
@@ -63,7 +63,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 詳細説明（M5Stackで音声出力）
 [https://bokunimo.net/blog/esp/2708/](https://bokunimo.net/blog/esp/2708/)  
 
-#### カメラ
+#### カメラ ex10_cam
 
 下図は、M5Stackに接続したカメラ (SeeedStudio Grove Serial Camera Kit)を、LAN内の端末のブラウザから撮影し、液晶画面とブラウザに表示するプログラム ex10_cam の実行例です。  
 
@@ -81,12 +81,12 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 ![実行画面ex11～14](/pictures/ex11_14_thumb.gif)
 
-#### 時計
+#### 時計 ex15_clock
 
 アナログ時計風の画面を表示するインターネット対応の時計です。アラーム時刻になるとLINEに通知し、スマホなどでアラームが鳴ったことを確認することが出来ます。  
 下図は、左から順に、(1)起動時、(2)インターネット時刻取得後、(3)アラーム設定画面、(4)アラーム待機画面です。  
 
-![実行画面ex15](/pictures/ex15_clock_thumb_2.png)
+![実行画面ex15](/pictures/ex15_clock_thumb_1.png)
 
 時計画面は、上記を含めて5パターンを準備しました。  
 
