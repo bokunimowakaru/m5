@@ -19,11 +19,19 @@ Example 15 : Wi-Fi NTP時計 for M5Stack Core
 　設定モードでは、左右のボタンで長針と短針を早送りし、中央ボタンで確定します。
 　（操作せずに30秒が経過すると元に戻ります。）
 
-【ご注意】：12時間制の表記方法について
+【ご注意１】12時間制の表記方法について
 ・本ソフトウェアでは、正午と深夜0時から１時間を12:00～12:59 と表示します。
 　（一般的なデジタル時計と同じ表示方式です。）
 ・NHKなどで使用する様式に合わせたい場合は HOUR_SYS12 を0にしてください。
 　(参考文献：NHKことばのハンドブック：「午後0:XX」は「12:XX」とは言わない)
+
+【ご注意２】時計の画像について
+時計画面の一部に illustimage.com からダウンロードしたコンテンツを改変したものが
+含まれているので、有料商品に利用にする場合は、権利者に確認してください。
+ダウンロード時の権利情報は同フォルダの jpegsREADME.txt に記載の通りです。
+
+【参考文献】
+本ファイルの末尾に記載します。
 
                                           Copyright (c) 2022 Wataru KUNINO
 *******************************************************************************/
@@ -200,3 +208,44 @@ void loop() {                                   // 繰り返し実行する関�
     WiFi.disconnect();                          // Wi-Fiの切断
     clock_showText(Alarm ? alrm_S : "", 46);    // アラーム表示
 }
+
+/******************************************************************************
+【参考文献】Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/m5core/arduino
+*******************************************************************************/
+
+/******************************************************************************
+【参考文献】M5Stack Arduino Library API 情報：
+https://docs.m5stack.com/en/api/core/system
+*******************************************************************************/
+
+/******************************************************************************
+【参考文献】Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/m5core/arduino
+*******************************************************************************/
+
+/******************************************************************************
+【参考文献】M5Stack Arduino Library API 情報：
+https://docs.m5stack.com/en/api/core/system
+*******************************************************************************/
+
+/*******************************************************************************
+【参考文献】TFT_Clock
+********************************************************************************
+ An example analogue clock using a TFT LCD screen to show the time
+ use of some of the drawing commands with the library.
+
+ For a more accurate clock, it would be better to use the RTClib library.
+ But this is just a demo. 
+ 
+ This sketch uses font 4 only.
+
+ Make sure all the display driver and pin comnenctions are correct by
+ editting the User_Setup.h file in the TFT_eSPI library folder.
+
+ #########################################################################
+ ###### DON'T FORGET TO UPDATE THE User_Setup.h FILE IN THE LIBRARY ######
+ #########################################################################
+ 
+ Based on a sketch by Gilchrist 6/2/2014 1.0
+ */

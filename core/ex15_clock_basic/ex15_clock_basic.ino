@@ -4,6 +4,9 @@ Example 15 : Wi-Fi NTP時計 for M5Stack Core
 定期的にNTPサーバから時刻情報を取得し、現在時刻を表示するアナログ風の時計です
 
     使用機材(例)：M5Stack Core
+    
+【参考文献】
+本ファイルの末尾に記載します。
 
                                           Copyright (c) 2022 Wataru KUNINO
 *******************************************************************************/
@@ -46,3 +49,34 @@ void loop() {                                   // 繰り返し実行する関�
     WiFi.disconnect();                          // Wi-Fiの切断
     M5.Lcd.fillRect(265,0,56,8,TFT_BLACK);      // 接続表示の消去
 }
+
+/******************************************************************************
+【参考文献】Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/m5core/arduino
+*******************************************************************************/
+
+/******************************************************************************
+【参考文献】M5Stack Arduino Library API 情報：
+https://docs.m5stack.com/en/api/core/system
+*******************************************************************************/
+
+/*******************************************************************************
+【参考文献】TFT_Clock
+********************************************************************************
+ An example analogue clock using a TFT LCD screen to show the time
+ use of some of the drawing commands with the library.
+
+ For a more accurate clock, it would be better to use the RTClib library.
+ But this is just a demo. 
+ 
+ This sketch uses font 4 only.
+
+ Make sure all the display driver and pin comnenctions are correct by
+ editting the User_Setup.h file in the TFT_eSPI library folder.
+
+ #########################################################################
+ ###### DON'T FORGET TO UPDATE THE User_Setup.h FILE IN THE LIBRARY ######
+ #########################################################################
+ 
+ Based on a sketch by Gilchrist 6/2/2014 1.0
+ */
