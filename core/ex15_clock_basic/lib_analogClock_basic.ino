@@ -28,10 +28,8 @@ m5stack/M5Stack is licensed under the MIT License
  */
 
 #include <M5Stack.h>
-#define TFT_GREY 0x5AEB                 //  0101 1010 1110 1011
-                                        //  01011 010111 01011
-#define TFT_DARK 0x18E3                 //  0001 1000 1110 0011
-                                        //  00011 000111 00011
+#define TFT_GREY 0x5AEB                 //  01011 010111 01011
+#define TFT_DARK 0x18E3                 //  00011 000111 00011
 
 // uint32_t targetTime = 0;             // for next 1 second timeout
 static uint8_t conv2d(const char* p);   // Forward declaration needed for IDE 1.6.x

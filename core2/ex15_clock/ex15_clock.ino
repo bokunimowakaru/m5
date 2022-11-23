@@ -25,10 +25,13 @@ Example 15 : Wi-Fi NTP時計 for M5Stack Core
 ・NHKなどで使用する様式に合わせたい場合は HOUR_SYS12 を0にしてください。
 　(参考文献：NHKことばのハンドブック：「午後0:XX」は「12:XX」とは言わない)
 
+【参考文献】
+本ファイルの末尾に記載します。
+
                                           Copyright (c) 2022 Wataru KUNINO
 *******************************************************************************/
 
-#include <M5Stack.h>                            // M5Stack用ライブラリの組み込み
+#include <M5Core2.h>                            // M5Stack用ライブラリの組み込み
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
 
@@ -86,9 +89,10 @@ void ntp(){                                     // NTPで時刻を取得する
 
 void setup(){                                   // 一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    M5.Speaker.setVolume(1);                    // アラーム音量を1に設定(0～10)
     M5.Lcd.setBrightness(100);                  // LCD輝度を100に
     face_mode = clock_init();                   // 時計用ライブラリの起動
+    M5.Spk.begin();                             // Initialize the speaker.
+    M5.Spk.DingDong();                          // Play the DingDong sound.
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
 }
 
@@ -112,7 +116,7 @@ void loop() {                                   // 繰り返し実行する関�
             }
         }
         M5.Lcd.setBrightness(0);                // LCD輝度を0に
-        // M5.Speaker.tone(880, 20);               // 20ms、音を鳴らす
+        M5.Spk.DingDong();                      // Play the DingDong sound.
         delay(50);
         M5.Lcd.setBrightness(100); delay(50);   // LCD輝度を0に
     }
@@ -200,3 +204,50 @@ void loop() {                                   // 繰り返し実行する関�
     WiFi.disconnect();                          // Wi-Fiの切断
     clock_showText(Alarm ? alrm_S : "", 46);    // アラーム表示
 }
+
+/******************************************************************************
+【参考文献】Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/core2/arduino
+*******************************************************************************/
+
+/******************************************************************************
+【参考文献】M5Stack Arduino Library API 情報：
+https://docs.m5stack.com/en/api/core2/system
+*******************************************************************************/
+
+/*******************************************************************************
+【参考文献】TFT_Clock
+********************************************************************************
+ An example analogue clock using a TFT LCD screen to show the time
+ use of some of the drawing commands with the library.
+
+ For a more accurate clock, it would be better to use the RTClib library.
+ But this is just a demo. 
+ 
+ This sketch uses font 4 only.
+
+ Make sure all the display driver and pin comnenctions are correct by
+ editting the User_Setup.h file in the TFT_eSPI library folder.
+
+ #########################################################################
+ ###### DON'T FORGET TO UPDATE THE User_Setup.h FILE IN THE LIBRARY ######
+ #########################################################################
+ 
+ Based on a sketch by Gilchrist 6/2/2014 1.0
+ */
+
+/*******************************************************************************
+【参考文献】speak
+********************************************************************************
+*******************************************************************************
+* Copyright (c) 2021 by M5Stack
+*                  Equipped with M5Core2 sample source code
+*                          配套  M5Core2 示例源代码
+* Visit for more information: https://docs.m5stack.com/en/core/core2
+* 获取更多资料请访问: https://docs.m5stack.com/zh_CN/core/core2
+*
+* Describe: Speaker example.  喇叭示例
+* Date: 2022/7/26
+*******************************************************************************
+*/
+ 
