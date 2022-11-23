@@ -23,7 +23,9 @@ Example 15 : Wi-Fi NTP時計 for M5Stack Core
 ・本ソフトウェアでは、正午と深夜0時から１時間を12:00～12:59 と表示します。
 　（一般的なデジタル時計と同じ表示方式です。）
 ・NHKなどで使用する様式に合わせたい場合は HOUR_SYS12 を0にしてください。
-　(参考文献：NHKことばのハンドブック：「午後0:XX」は「12:XX」とは言わない)
+　参考文献：
+　Wikipedia 12-hour clock, https://en.wikipedia.org/wiki/12-hour_clock
+　NHKことばのハンドブック, 「午後0:XX」は「12:XX」とは言わない
 
 【ご注意２】時計の画像について
 時計画面の一部に illustimage.com からダウンロードしたコンテンツを改変したものが
