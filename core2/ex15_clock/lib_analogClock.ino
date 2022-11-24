@@ -67,6 +67,7 @@ float degree_alrm = 0;
 boolean AlarmEn = false;
 
 uint16_t *buf_bg = NULL;
+uint16_t *buf_txt = NULL;
 String TEXT[2] = {"",""};
 
 void redrawNeedleLine(int i, int len, uint16_t color){
@@ -113,7 +114,8 @@ int clock_init(int clockface) {
     if(!buf_bg){
         if(psramInit()){
             Serial.println("installed PSRAM = " + String(ESP.getPsramSize()/1024) + "K Bytes");
-            buf_bg = (uint16_t *) ps_malloc(80000);     // 200 * 200 * 2 Bytes (80 K Bytes)
+            buf_bg = (uint16_t *) ps_malloc(80000+7680);  // 200 * 200 * 2 Bytes (80 k Bytes)
+            buf_txt = buf_bg + 80000;                     // 80 * 16 * 2 * 2 Bytes (5120 Bytes)
         }else{
             Serial.println("NO PSRAM, so buffer buf_bg placed in nomal malloc.");
             buf_bg = (uint16_t *) malloc(80000);        // 200 * 200 * 2 Bytes
@@ -185,6 +187,15 @@ int clock_init(int clockface) {
     M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
     //M5.Lcd.readRect(60, 20, 200, 200, (uint16_t *)buf_bg);
     for(int i=0;i<40000;i++) buf_bg[i] = M5.Lcd.readPixel(i%200+60,i/200+20);
+    if(buf_txt){
+        for(int p=0; p<2; p++){
+            for(int x=0; x<80; x++){
+                for(int y=0; y<16; y++){
+                    buf_txt[x+y*80+p*2560] = M5.Lcd.readPixel(x+120,y+120-(p==0?-30:46));
+                }
+            }
+        }
+    }
     clock_redrawNeedle();
     for(int i=0;i<2;i++) TEXT[i] = ""; 
     return Face;
@@ -195,14 +206,22 @@ int clock_init(){
 }
 
 void clock_showText(String S, int pos){
-    if(pos > 100) pos = 100;    // 上部表示 +46あたり にする
-    if(pos < -84) pos = -84;    // 下部表示 -30あたり にする
+    if(pos > 0) pos = 46;    // 上部表示 +46あたり にする
+    if(pos <= 0) pos = -30;    // 下部表示 -30あたり にする
     if(S.length() > 10) S = S.substring(0,10); // 10文字以内
 
     int pos2 = pos < 0 ? 0 : 1;
     for(int i=0; i<4; i++) clearNeedleLine(i, NeedleLen[Face][i]);
     if(TEXT[pos2] != "" && TEXT[pos2] != S){
-        M5.Lcd.fillRect(120,120-pos,80,15,BgColor[Face]);
+        if(buf_txt){
+            for(int x=0; x<80; x++){
+                for(int y=0; y<16; y++){
+                    M5.Lcd.drawPixel(x+120, y+120-pos, buf_txt[x+y*80+pos2*2560 ]);
+                }
+            }
+        }else{
+            M5.Lcd.fillRect(120,120-pos,80,15,BgColor[Face]);
+        }
     }
     M5.Lcd.drawCentreString(S,160,120-pos,2);
     for(int x=0; x<120; x++){
