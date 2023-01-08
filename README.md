@@ -121,8 +121,8 @@ ESP32開発ボード（ ESP32-WROOM-32 搭載）で使用する場合、下記�
 
 by 国野 亘 Wataru KUNINO 
 - ウェブサイト [https://bokunimo.net/](https://bokunimo.net/)
-- ブログ [https://bokuniomo.net/blog/](https://bokuniomo.net/blog/)
-- カテゴリESP [https://bokunimo.net/blog/category/esp/](https://bokunimo.net/blog/category/esp/)
+- ブログ [https://bokunimo.net/blog/](https://bokunimo.net/blog/)
+- M5Stackメニュー [https://bokunimo.net/blog/menu/m5/](https://bokunimo.net/blog/menu/m5/)
 
 ----------------------------------------------------------------
 
