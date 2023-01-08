@@ -86,7 +86,7 @@ void sendUdp_Fd(uint16_t fd_num){
 void setup(){ 
     lcdSetup(8,2,19,22);                    // LCD初期(X=8,Y=2,SDA=19,SCL=22)
     pinMode(PIN_CAM,OPEN_DRAIN);            // FETを接続したポートをオープンに
-    Serial.begin(115200);                   // 動作確認用用のシリアル出力開始
+    Serial.begin(115200);                   // 動作確認用のシリアル出力開始
     Serial.println("Example 10 cam");       // 「Example 10」をシリアル出力表示
     WiFi.mode(WIFI_STA);                    // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイントへ接続
