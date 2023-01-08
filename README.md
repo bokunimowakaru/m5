@@ -125,6 +125,9 @@ by 国野 亘 Wataru KUNINO
 - カテゴリESP [https://bokunimo.net/blog/category/esp/](https://bokunimo.net/blog/category/esp/)
 
 ----------------------------------------------------------------
+## GitHub Pages (This Document)
+* [https://git.bokunimo.com/m5/](https://git.bokunimo.com/m5/)  
+----------------------------------------------------------------
 # git.bokunimo.com GitHub Pages site
 [http://git.bokunimo.com/](http://git.bokunimo.com/)  
 ----------------------------------------------------------------
