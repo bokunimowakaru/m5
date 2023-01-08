@@ -122,7 +122,7 @@ ESP32開発ボード（ ESP32-WROOM-32 搭載）で使用する場合、下記�
 by 国野 亘 Wataru KUNINO 
 - ウェブサイト [https://bokunimo.net/](https://bokunimo.net/)
 - ブログ [https://bokunimo.net/blog/](https://bokunimo.net/blog/)
-- M5Stackメニュー [https://bokunimo.net/blog/menu/m5/](https://bokunimo.net/blog/menu/m5/)
+- M5Stackメニュー [https://bokunimo.net/blog/menu/m5stack/](https://bokunimo.net/blog/menu/m5stack/)
 
 ----------------------------------------------------------------
 
