@@ -7,11 +7,14 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 
 ## 本コンテンツの最新版とダウンロード方法
 
+    ZIPファイルでのダウンロード
+    - https://github.com/bokunimowakaru/m5/zipball/master
+
+    Gitコマンドでのダウンロード方法
+    - git clone https://bokunimo.net/git/m5/
+
     最新版の保存先
     - https://bokunimo.net/git/m5/
-
-    ダウンロード方法(GitHubから)
-    - git clone https://bokunimo.net/git/m5/
 
 ![実行画面ex00～07](/pictures/ex00_07_thumb.gif)
 
