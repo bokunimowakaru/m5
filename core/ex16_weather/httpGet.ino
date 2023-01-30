@@ -24,14 +24,19 @@ HTMLコンテンツ取得
 参考文献
 天気予報 API（livedoor 天気互換サービス）, https://weather.tsukumijima.net/
 天気予報 API サービスのソースコード, https://github.com/tsukumijima/weather-api
+同上, https://github.com/tsukumijima/weather-api/blob/master/app/Models/Weather.php
 Yahoo!天気・災害, https://weather.yahoo.co.jp/weather/rss/
 Yahoo!サービスの利用規約, https://about.yahoo.co.jp/docs/info/terms/
+HTTPコンテンツの連続受信方法, https://github.com/espressif/arduino-esp32/blob\
+/master/libraries/HTTPClient/examples/StreamHttpClient/StreamHttpClient.ino
 *******************************************************************************/
 
 #define TIMEOUT 6000                        // タイムアウト 6秒
 #include <WiFi.h>                           // ESP32用WiFiライブラリ
 #include <WiFiClientSecure.h>               // TLS(SSL)通信用ライブラリ
 #include <HTTPClient.h>                     // HTTP通信用ライブラリ
+
+#define BUF_N 128                           // バッファサイズ 2の倍数 128以上
 
 int _httpg_day=0;                           // 天気予報日
 char _httpg_weather[17]="";                 // 天気予報
@@ -96,16 +101,17 @@ int httpGetBufferedTempL(){
 }
 
 int httpGetWeather(int city, char *out, int out_len, int data_number){
-    int i,dist,len,ret=0,size;
-    char c,s[2049];                         // 文字変数、s=汎用
+    int i,dist,len,ret=0,size,done;
+    char c,s[BUF_N+1];                        // 文字変数、s=汎用
     char *cp,*cp2;
     unsigned long time=millis();            // 時間測定用
 
     memset(out,0,out_len);
     memset(_httpg_weather,0,17);
     memset(_httpg_weather_disp,0,9);
+    s[BUF_N]=0;
     if(city<0 || city>=1000000) return 0;
-    snprintf(s,129,"https://www.jma.go.jp/bosai/forecast/data/forecast/%d.json",city);
+    snprintf(s,BUF_N,"https://www.jma.go.jp/bosai/forecast/data/forecast/%d.json",city);
     
     WiFiClientSecure client;                // TLS/TCP/IP接続部の実体を生成
     // client.setCACert(rootCACertificate); // ルートCA証明書を設定
@@ -117,117 +123,111 @@ int httpGetWeather(int city, char *out, int out_len, int data_number){
     Serial.print("URL       : ");
     Serial.println(s);
     Serial.println("Recieving contents...");
-    delay(10);
+    delay(1);
     
     int httpCode = https.GET();                 // HTTP接続の開始
     Serial.print("httpCode  : ");
     Serial.println(httpCode);                   // httpCodeをシリアル出力
-    delay(10);
-    https.getString().toCharArray(s, 2048);     // 受信結果を変数sへ代入
+    // Serial.println(s);                       // 受信結果をシリアル出力
+    
+    len = https.getSize();
+    Serial.print("Length    : ");
+    Serial.println(len);
+    delay(1);
+
+    if(httpCode != 200 || len < 128){           // HTTP接続に失敗したとき
+        https.end();                            // HTTPクライアントの処理を終了
+        client.stop();                          // TLS(SSL)通信の停止
+        Serial.println("ERROR: Failed to connect or length < 128");
+        return 0;
+    }
+
+
+//  https.getString().toCharArray(s, 2048);     // 受信結果を変数sへ代入
+//  size=strlen(s);
+    WiFiClient * stream = https.getStreamPtr(); // get tcp stream
+    size = stream->available();
+    len -= stream->readBytes(s+BUF_N/2, ((size > BUF_N/2) ? BUF_N/2 : size));
+    done = 0;
+
+    // 解析処理 weathers
+    while(https.connected() && len > 0 && size > 0){
+        memcpy(s,s+BUF_N/2,BUF_N/2);
+        len -= stream->readBytes(s+BUF_N/2, ((size > BUF_N/2) ? BUF_N/2 : size));
+        cp = s;
+        while(cp - s < BUF_N/2){
+            if(done == 0){
+                cp = strstr(cp,"\"weathers\"");
+                if(!cp || cp - s >= BUF_N/2) break;
+                cp += 13;
+                dist=0;
+                _httpg_weather_code=0;
+                cp2 = strstr(cp, "晴れ");
+                if(cp2){
+                    dist = (int)(cp2 - cp);
+                    strcpy(_httpg_weather, "晴");
+                    strcpy(_httpg_weather_disp,"Fine");
+                    _httpg_weather_code=3;
+                }
+                cp2 = strstr(cp, "くもり");
+                if(cp2 && (int)(cp2 - cp) < dist){
+                    dist = (int)(cp2 - cp);
+                    strcpy(_httpg_weather, "曇");
+                    strcpy(_httpg_weather_disp,"Cloudy");
+                    _httpg_weather_code=2;
+                }
+                cp2 = strstr(cp, "雨");
+                if(cp2 && (int)(cp2 - cp) < dist){
+                    dist = (int)(cp2 - cp);
+                    strcpy(_httpg_weather, "雨");
+                    strcpy(_httpg_weather_disp,"Rainy");
+                    _httpg_weather_code=1;
+                }
+                cp2 = strstr(cp, "雪");
+                if(cp2 && (int)(cp2 - cp) < dist){
+                    dist = (int)(cp2 - cp);
+                    strcpy(_httpg_weather, "雪");
+                    strcpy(_httpg_weather_disp,"Snowy");
+                    _httpg_weather_code=4;
+                }
+                if(_httpg_weather_code==0){
+                    strcpy(_httpg_weather, "－");
+                    strcpy(_httpg_weather_disp,"Unknown");
+                }
+                Serial.print("  weather : ");
+                Serial.print(_httpg_weather_disp);
+                Serial.print(" / ");
+                Serial.println(_httpg_weather);
+                done++;
+            }
+            if(done == 1){
+                cp = strstr(cp,"\"tempsMin\"");
+                if(!cp || cp - s >= BUF_N/2) break;
+                cp += 16;
+                _httpg_temp_L=atoi(cp);
+                Serial.print("   temp_L : ");
+                Serial.println(_httpg_temp_L);
+                done++;
+            }
+            if(done == 2){
+                cp = strstr(s,"\"tempsMax\"");
+                if(!cp || cp - s >= BUF_N/2) break;
+                cp += 16;
+                _httpg_temp_H=atoi(cp);
+                Serial.print("   temp_H : ");
+                Serial.println(_httpg_temp_H);
+                done++;
+            }
+            if(done == 3) break;
+        }
+        if(done == 3) break;
+        size = stream->available();
+        delay(1);
+    }
     https.end();                                // HTTPクライアントの処理を終了
     client.stop();                              // TLS(SSL)通信の停止
-    delay(10);
-    // Serial.println(s);                       // 受信結果をシリアル出力
-    if(httpCode != 200){                        // HTTP接続に失敗したとき
-        Serial.println("ERROR: Failed to connect");
-        return 0;
-    }                                           // パース方法は受信サンプル参照
+    delay(1);
     
-    // 解析処理 weathers
-    size=strlen(s);
-    Serial.print("Recieved  : ");
-    Serial.println(size);
-    if(size < 128){
-        Serial.print("ERROR : parser [strlen(https.getString)] / ");
-        Serial.println(size);
-        return 0;
-	}
-    cp = strstr(s,"\"weathers\"");
-    if( !cp ){
-        Serial.print("ERROR : parser [weathers] / ");
-        Serial.println((int)(s-cp));
-        return 0;
-    }
-    if(strlen(cp) <= 13){
-        Serial.print("ERROR : parser [strlen(weathers) <= 13] / ");
-        Serial.println(strlen(cp));
-        return 0;
-    }
-    cp += 13;
-	
-    dist=0;
-    _httpg_weather_code=0;
-    cp2 = strstr(cp, "晴れ");
-    if(cp2){
-		dist = (int)(cp2 - cp);
-    	strcpy(_httpg_weather, "晴");
-        strcpy(_httpg_weather_disp,"Fine");
-        _httpg_weather_code=3;
-    }
-    cp2 = strstr(cp, "くもり");
-    if(cp2 && (int)(cp2 - cp) < dist){
-		dist = (int)(cp2 - cp);
-    	strcpy(_httpg_weather, "曇");
-        strcpy(_httpg_weather_disp,"Cloudy");
-        _httpg_weather_code=2;
-	}
-    cp2 = strstr(cp, "雨");
-    if(cp2 && (int)(cp2 - cp) < dist){
-		dist = (int)(cp2 - cp);
-    	strcpy(_httpg_weather, "雨");
-        strcpy(_httpg_weather_disp,"Rainy");
-        _httpg_weather_code=1;
-	}
-    cp2 = strstr(cp, "雪");
-    if(cp2 && (int)(cp2 - cp) < dist){
-		dist = (int)(cp2 - cp);
-    	strcpy(_httpg_weather, "雪");
-        strcpy(_httpg_weather_disp,"Snowy");
-        _httpg_weather_code=4;
-	}
-	if(_httpg_weather_code==0){
-	    strcpy(_httpg_weather, "－");
-	    strcpy(_httpg_weather_disp,"Unknown");
-	}
-    Serial.print("  weather : ");
-    Serial.print(_httpg_weather_disp);
-    Serial.print(" / ");
-    Serial.println(_httpg_weather);
-    
-    cp = strstr(s,"\"tempsMin\"");
-    if( !cp ){
-        Serial.print("ERROR : parser [tempsMin] / ");
-        Serial.println((int)(s-cp));
-        return 0;
-    }
-    if(strlen(cp) <= 16){
-        Serial.print("ERROR : parser [strlen(tempsMin) <= 16] / ");
-        Serial.println(strlen(cp));
-        return 0;
-    }
-    cp += 16;
-    _httpg_temp_L=atoi(cp+1);
-    Serial.print("   temp_L : ");
-    Serial.println(_httpg_temp_L);
-    
-    cp = strstr(s,"\"tempsMax\"");
-    if( !cp ){
-        Serial.print("ERROR : parser [tempsMax] / ");
-        Serial.println((int)(s-cp));
-        return 0;
-    }
-    if(strlen(cp) <= 16){
-        Serial.print("ERROR : parser [strlen(tempsMax) <= 16] / ");
-        Serial.println(strlen(cp));
-        return 0;
-    }
-    cp += 16;
-    _httpg_temp_H=atoi(cp+1);
-    Serial.print("   temp_H : ");
-    Serial.println(_httpg_temp_H);
-    
-    Serial.print(size);                     // 保存したファイルサイズを表示
-    Serial.print(" Bytes, ");
     Serial.print(millis()-time);
     Serial.println("ms, Done");
     
@@ -236,8 +236,8 @@ int httpGetWeather(int city, char *out, int out_len, int data_number){
 }
 
 /*
-	以下はYahoo!天気・災害のRSS配信情報(配信終了)を使用する場合の処理部です。
-	すでにサービスが停止しています。
+    以下はYahoo!天気・災害のRSS配信情報(配信終了)を使用する場合の処理部です。
+    すでにサービスが停止しています。
 */
 
 // ご注意：
