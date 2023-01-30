@@ -38,7 +38,7 @@ HTTPコンテンツの連続受信方法, https://github.com/espressif/arduino-e
 
 #define BUF_N 128                           // バッファサイズ 2の倍数 128以上
 
-int _httpg_day=0;                           // 天気予報日
+int _httpg_day=-1;                           // 天気予報日
 char _httpg_weather[17]="";                 // 天気予報
 char _httpg_weather_disp[9]="";             // 天気予報・表示用(Fine/Cloudy/Rainy/Snowy)
 char _httpg_weather_code=0;                 // 天気コード(4:Snowy,3:Fine,2:Cloudy,1:Rainy)
