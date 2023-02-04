@@ -47,7 +47,7 @@ void loop(){                                    // 繰り返し実行する関�
         M5.Lcd.print('.');                      // 接続用プログレス表示
     }
     char s[17];                                 // 文字列変数を定義
-    int weather = httpGetWeather(CITY_ID,s,17); // 天気情報を取得
+    int weather = httpGetWeather(CITY_ID,s,16); // 天気情報を取得
     WiFi.disconnect(true);                      // WiFiアクセスポイントを切断
     WiFi.mode(WIFI_OFF);                        // 無線LANをOFFに設定する
     drawJpgHeadFile(wtrFiles[weather]);         // 天気の画像を表示

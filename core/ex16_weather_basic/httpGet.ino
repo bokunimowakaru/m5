@@ -68,7 +68,7 @@ int httpGetBufferedWeather(char *out, int out_len, int data_number){
             snprintf(out,out_len+1,"%s",_httpg_weather);
             break;
         default:
-            snprintf(out,out_len+1,"%s %d/%d%cC",_httpg_weather_disp,_httpg_temp_H,_httpg_temp_L,0xDF);
+            snprintf(out,out_len+1,"%s %d/%d C",_httpg_weather_disp,_httpg_temp_H,_httpg_temp_L);
             break;
     }
     #ifdef DEBUG_HTTPG
