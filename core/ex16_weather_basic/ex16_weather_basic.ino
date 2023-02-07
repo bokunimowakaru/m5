@@ -14,6 +14,9 @@ Example 16: 天気予報を表示する IoT TeleTele坊主 for M5Stack
 地域設定： #define CITY_ID に地域コードを設定してください。
 *******************************************************************************/
 
+#include "htWeatherData.h"                      // 天気情報格納用変数定義
+HtWetherData *getWeather(int city);             // 天気情報取得用関数宣言
+
 #include <M5Stack.h>                            // M5Stack用ライブラリの組み込み
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
@@ -26,9 +29,10 @@ Example 16: 天気予報を表示する IoT TeleTele坊主 for M5Stack
                     # 銚子地方気象台=120000(北西部など)
                     # 名古屋地方気象台=230000(西部など)
                     # 福岡管区気象台=400000(福岡地方など)
+# 取得先URL https://www.jma.go.jp/bosai/forecast/data/forecast/130000.json
 */
-const char wtrFiles[5][13]={ "wtr_uknw_jpg", "wtr_rain_jpg", "wtr_clud_jpg",
-                             "wtr_fine_jpg", "wtr_snow_jpg" };
+const char wtrFiles[5][13]={ "wtr_uknw_jpg", "wtr_fine_jpg", "wtr_clud_jpg",
+                             "wtr_rain_jpg", "wtr_snow_jpg" };
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
@@ -46,12 +50,12 @@ void loop(){                                    // 繰り返し実行する関�
         delay(500);                             // 待ち時間処理(LED点滅用)
         M5.Lcd.print('.');                      // 接続用プログレス表示
     }
-    char s[17];                                 // 文字列変数を定義
-    int weather = httpGetWeather(CITY_ID,s,16); // 天気情報を取得
+    HtWetherData *weather;
+    weather = getWeather(CITY_ID);              // 天気情報を取得
     WiFi.disconnect(true);                      // WiFiアクセスポイントを切断
     WiFi.mode(WIFI_OFF);                        // 無線LANをOFFに設定する
-    drawJpgHeadFile(wtrFiles[weather]);         // 天気の画像を表示
-    M5.Lcd.drawCentreString(s,164,200,2);       // 天気予報情報表示
+    drawJpgHeadFile(wtrFiles[weather->code]);   // 天気の画像を表示
+    M5.Lcd.drawCentreString(weather->text,164,200,2); // 天気予報情報表示
     while(1){
         if(millis() % 3600000ul < 500) return;  // 1時間に1回だけ天気を取得
         M5.update();                            // ボタン情報を更新
@@ -60,10 +64,10 @@ void loop(){                                    // 繰り返し実行する関�
             return;                             // 再取得を実行
         }
         if( M5.BtnB.read() && M5.BtnC.wasPressed() ){   // ボタンBを押しながらC
-            weather++;                                  // 天気を変更
-            if(weather > 4) weather = 1;                // 天気が4を超えたら1に
-            drawJpgHeadFile(wtrFiles[weather]);         // 天気の画像を表示
-            M5.Lcd.drawCentreString(s,164,200,2);       // 天気予報情報表示
+            weather->code++;                            // 天気を変更
+            if(weather->code > 4) weather->code = 1;    // 天気が4を超えたら1に
+            drawJpgHeadFile(wtrFiles[weather->code]);   // 天気の画像を表示
+            M5.Lcd.drawCentreString(weather->text,164,200,2); // 天気予報情報表示
         }
     }
 }
