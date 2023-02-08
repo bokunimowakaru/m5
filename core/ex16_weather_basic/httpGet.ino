@@ -38,7 +38,7 @@ HTTPコンテンツの連続受信方法, https://github.com/espressif/arduino-e
 #include <HTTPClient.h>                     // HTTP通信用ライブラリ
 
 #define TIMEOUT 6000                        // タイムアウト 6秒
-#define BUF_N 2048                          // バッファサイズ 2の倍数 128以上
+#define BUF_N 271 * 2                       // バッファサイズ 2の倍数 128以上
 
 // 関数宣言 struct利用関数を宣言しておく(Arduinoの自動関数宣言回避用)
 HtWetherData *getWeather(int city);         // 天気情報取得
