@@ -38,28 +38,33 @@ m5stack/M5Stack is licensed under the MIT License
 #define TFT_GREY 0x5AEB                 //  01011 010111 01011
 #define TFT_DARK 0x18E3                 //  00011 000111 00011
 
-#define Faces_num 5                     // 時計盤の種類数
-byte Face = 4;                          // 時計盤の種類の選択(0～2)
+#define wtrFaces_num 7                     // 時計盤の種類数
+byte wtrFace = 5;                       // 時計盤の種類の選択(0～2)
+byte wtrHour = 0;                       // 24時間制の現在時 0～23
 
-const uint16_t NeedleColor[Faces_num][4] = {  // 針の色設定 短針,長針,秒針
+const uint16_t NeedleColor[wtrFaces_num][6] = {  // 針の色設定 短針,長針,秒針
     {TFT_GREEN,TFT_WHITE,TFT_WHITE,TFT_RED},
     {TFT_GREEN,TFT_BLACK,TFT_BLACK,TFT_RED},
     {TFT_GREEN,TFT_WHITE,TFT_WHITE,TFT_RED},
     {TFT_GREEN,TFT_BLACK,TFT_BLACK,TFT_RED},
-    {TFT_GREEN,TFT_BLACK,TFT_BLACK,TFT_RED}
+    {TFT_GREEN,TFT_BLACK,TFT_BLACK,TFT_RED},
+    {TFT_GREEN,TFT_BLACK,TFT_BLACK,TFT_RED},
+    {TFT_GREEN,TFT_WHITE,TFT_WHITE,TFT_RED}
 };
-const byte NeedleLen[Faces_num][4] = {        // 短針(時針)の長さ設定
+const byte NeedleLen[wtrFaces_num][7] = {        // 短針(時針)の長さ設定
     {33,66,98,96},
     {33,66,98,96},
     {30,60,89,86},
     {30,54,89,86},
+    {33,66,98,96},
+    {33,66,98,96},
     {33,66,98,96}
 };
-const uint16_t TextColor[Faces_num] = {       // 時計盤の文字色
-    TFT_WHITE, TFT_BLACK, TFT_WHITE, TFT_BLACK, TFT_BLACK
+const uint16_t TextColor[wtrFaces_num] = {       // 時計盤の文字色
+    TFT_WHITE, TFT_BLACK, TFT_WHITE, TFT_BLACK, TFT_BLACK, TFT_BLACK, TFT_WHITE
 };
-const uint16_t BgColor[Faces_num] = {         // 時計盤の背景色
-    TFT_DARK, LIGHTGREY, TFT_BLACK, TFT_WHITE, TFT_WHITE
+const uint16_t BgColor[wtrFaces_num] = {         // 時計盤の背景色
+    TFT_DARK, LIGHTGREY, TFT_BLACK, TFT_WHITE, TFT_WHITE, TFT_WHITE, TFT_BLACK
 };
 
 // uint32_t targetTime = 0;             // for next 1 second timeout
@@ -76,6 +81,9 @@ uint16_t *buf_txt = NULL;
 String TEXT[2] = {"",""};
 char wtrFileName[13] = "";
 int wtrFileLength = 0;
+int wtrCodeInADay[2] = {0,0};
+int wtrTemp[4][2];   // 時刻;気温temps
+byte wtrPop[6][2];           // 時刻;降水確率pops
 
 void redrawNeedleLine(int i, int len, uint16_t color){
     uint16_t x, y;
@@ -111,12 +119,14 @@ void drawNeedleLine(int i, float degree, int len, uint16_t color){
 }
 
 void clock_redrawNeedle(){
-    for(int i=AlarmEn?0:1; i<4; i++) redrawNeedleLine(i, NeedleLen[Face][i],NeedleColor[Face][i]);
+    for(int i=AlarmEn?0:1; i<4; i++) redrawNeedleLine(i, NeedleLen[wtrFace][i],NeedleColor[wtrFace][i]);
     M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
 }
 
 int clock_init(int clockface) {
-    if(0 <= clockface && clockface < Faces_num) Face = clockface; else Face = 0;
+    if(0 <= clockface && clockface < wtrFaces_num) wtrFace = clockface; else wtrFace = 0;
+    if(wtrFace <= 3) wtrFace = 4;  // 天気専用
+    Serial.printf("DEBUG clock_init wtrFace = %d\n", wtrFace);
 
     if(!buf_bg){
         if(psramInit()){
@@ -132,10 +142,10 @@ int clock_init(int clockface) {
     uint16_t x0, yy0, xn, yn;
     M5.Lcd.fillScreen(TFT_BLACK);
 /*
-    switch(Face){
+    switch(wtrFace){
         case 4:
             M5.Lcd.drawJpg(wallpaper_jpg, wallpaper_jpg_len);
-            M5.Lcd.setTextColor(TextColor[Face]);
+            M5.Lcd.setTextColor(TextColor[wtrFace]);
             for(int i = 0; i < 360; i += 30){
                 sx  = cos((i - 90) * 0.0174532925);
                 sy  = sin((i - 90) * 0.0174532925);
@@ -149,11 +159,11 @@ int clock_init(int clockface) {
             break;
         case 3:
             M5.Lcd.drawJpg(clock2_jpg, clock_jpg_len);
-            M5.Lcd.setTextColor(TextColor[Face]);
+            M5.Lcd.setTextColor(TextColor[wtrFace]);
             break;
         case 2:
             M5.Lcd.drawJpg(clock_jpg, clock_jpg_len);
-            M5.Lcd.setTextColor(TextColor[Face]);
+            M5.Lcd.setTextColor(TextColor[wtrFace]);
             for(int i = 0; i < 360; i += 30){
                 xn = cos((i - 90) * 0.0174532925) * 70 + 160;
                 yn = sin((i - 90) * 0.0174532925) * 70 + 120;
@@ -167,8 +177,8 @@ int clock_init(int clockface) {
             M5.Lcd.fillCircle(160, 120, 118, DARKGREY);
             M5.Lcd.fillCircle(160, 120, 117, TFT_GREY);
             M5.Lcd.fillCircle(160, 120, 102, DARKGREY);
-            M5.Lcd.fillCircle(160, 120, 101, BgColor[Face]);
-            M5.Lcd.setTextColor(TextColor[Face]);
+            M5.Lcd.fillCircle(160, 120, 101, BgColor[wtrFace]);
+            M5.Lcd.setTextColor(TextColor[wtrFace]);
             for (int i = 0; i < 360; i += 6) {              // Draw 60 dots
                 sx  = cos((i - 90) * 0.0174532925);
                 sy  = sin((i - 90) * 0.0174532925);
@@ -190,25 +200,33 @@ int clock_init(int clockface) {
             }
             break;
     }
-*/
-    // 天気表示専用
-    if(wtrFileLength == 0 || strlen(wtrFileName) == 0 ){
-        M5.Lcd.drawJpg(wtr_uknw_jpg, wtr_uknw_jpg_len);
-    }else{
-        drawJpgHeadFile(wtrFileName);
+*/    
+    if(wtrFace == 4){
+        wtrFileLength = getJpgHeadSize(wtrFileName);
+        if(wtrFileLength == 0 || strlen(wtrFileName) == 0 ){
+            Serial.printf("DEBUG clock_init wtrFace = %d wtrFileLength=%d wtrFileName=%s\n", wtrFace, wtrFileLength, wtrFileName);
+            M5.Lcd.drawJpg(wtr_uknw_jpg, wtr_uknw_jpg_len);
+        }else{
+            Serial.printf("DEBUG clock_init wtrFace = %d wtrFileName=%s\n", wtrFace, wtrFileName);
+            drawJpgHeadFile(wtrFileName);
+        }
+    }else if(wtrFace == 5 || wtrFace == 6){
+        for(int x=0; x<320; x+=80)for(int y=0; y<240; y+=80){
+            drawJpgHeadFile(getWtrFileName(0),x,y,wtrFace==5?1:0);
+        }
     }
-    M5.Lcd.setTextColor(TextColor[Face]);
+
+    M5.Lcd.setTextColor(TextColor[wtrFace]);
     for(int i = 0; i < 360; i += 30){
         sx  = cos((i - 90) * 0.0174532925);
         sy  = sin((i - 90) * 0.0174532925);
-        x0  = sx * 90 + 160;
-        yy0 = sy * 90 + 120;
+        x0  = sx * 88 + 160;
+        yy0 = sy * 88 + 120;
         xn  = sx * 109 + 160;
         yn  = sy * 109 + 120;
         M5.Lcd.fillCircle(x0, yy0, 3, DARKGREY);
-        M5.Lcd.drawCentreString(String(i ? i/30 : 12),xn,yn-10,4);
+        // M5.Lcd.drawCentreString(String(i ? i/30 : 12),xn,yn-10,4);
     }
-    // ここまで 天気表示専用
 
     M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
     //M5.Lcd.readRect(60, 20, 200, 200, (uint16_t *)buf_bg);
@@ -224,18 +242,87 @@ int clock_init(int clockface) {
     }
     clock_redrawNeedle();
     for(int i=0;i<2;i++) TEXT[i] = ""; 
-    return Face;
+    return wtrFace;
 }
 
 int clock_init(int clockface, const char *filename) {
     strncpy(wtrFileName,filename,13);
     wtrFileLength = getJpgHeadSize(filename);
-    return clock_init(Face);
+    return clock_init(clockface);
 }
 
 
 int clock_init(){
-    return clock_init(Face);
+    return clock_init(wtrFace);
+}
+
+void clock_showWeather(){
+    if(wtrFace != 5 && wtrFace != 6) return;
+    drawJpgHeadFile(getWtrFileName(wtrCodeInADay[0]+1),0,0,wtrFace==5?1:0);
+    drawJpgHeadFile(getWtrFileName(wtrCodeInADay[1]+1),240,0,wtrFace==5?1:0);
+    if( wtrHour >= 12 && wtrHour < 18 ){
+        M5.Lcd.drawCentreString("Night",40,80-8*(7-wtrFace),1);
+    }else if( wtrHour>= 18 ){
+        M5.Lcd.drawCentreString("Tomorrow",280,80-8*(7-wtrFace),1);
+    }
+}
+
+void clock_showWeather(int c0,int c1){
+    wtrCodeInADay[0]=c0;
+    wtrCodeInADay[1]=c1;
+    strcpy(wtrFileName, wtrFiles[wtrCodeInADay[0]+1]);
+    wtrFileLength = getJpgHeadSize(wtrFileName);
+    if(wtrFace == 5 || wtrFace == 6) clock_showWeather();
+}
+
+void clock_showTemperature(){
+    if(wtrFace != 5 && wtrFace != 6) return;
+    M5.Lcd.drawCentreString("Temp.",50,180,2);
+    String S = "-";
+    int day_prev = 0;
+    for(int i=0; i<4; i++){
+        if(i>0 && day_prev != wtrTemp[i][0] /24){
+            M5.Lcd.drawCentreString("|",20*i, 200, 2);
+            M5.Lcd.drawCentreString("|",20*i, 220, 2);
+        }
+        day_prev = wtrTemp[i][0]/24;
+        if(wtrTemp[i][0] >= 0) S = String(wtrTemp[i][0] % 24); else S = "-";
+        M5.Lcd.drawCentreString(S, 20*i+10, 200, 2);
+        if(wtrTemp[i][1] >= -100) S = String(wtrTemp[i][1]); else S = "-";
+        M5.Lcd.drawCentreString(S, 20*i+10, 220, 2);
+    }
+    M5.Lcd.drawCentreString("h",90,200,2);
+    M5.Lcd.drawCentreString("C",90,220,2);
+}
+
+void clock_showTemperature(int temp_s[][2]){
+    for(int i=0; i<4; i++){
+        wtrTemp[i][0] = temp_s[i][0];
+        wtrTemp[i][1] = temp_s[i][1];
+    }
+    clock_showTemperature();
+}
+
+void clock_showPop(){
+    if(wtrFace != 5 && wtrFace != 6) return;
+    M5.Lcd.drawCentreString("P.O.P.",265,180,2);
+    String S = "-";
+    for(int i=0; i<4; i++){
+        if(wtrPop[i+1][0] >= 0) S = String(wtrPop[i+1][0]); else S = "-";
+        M5.Lcd.drawCentreString(S,20*i+230,200,2);
+        if(wtrPop[i+1][1] >= 0) S = String(wtrPop[i+1][1]); else S = "-";
+        M5.Lcd.drawCentreString(S,20*i+230,220,2);
+    }
+    M5.Lcd.drawCentreString("h",310,200,2);
+    M5.Lcd.drawCentreString("%",310,220,2);
+}
+
+void clock_showPop(byte pop_s[][2]){
+    for(int i=0; i<6; i++){
+        wtrPop[i][0] = pop_s[i][0];
+        wtrPop[i][1] = pop_s[i][1];
+    }
+    clock_showPop();
 }
 
 void clock_showText(String S, int pos){
@@ -244,7 +331,7 @@ void clock_showText(String S, int pos){
     if(S.length() > 12) S = S.substring(0,12); // 12文字以内
 
     int pos2 = pos < 0 ? 0 : 1;
-    for(int i=0; i<4; i++) clearNeedleLine(i, NeedleLen[Face][i]);
+    for(int i=0; i<4; i++) clearNeedleLine(i, NeedleLen[wtrFace][i]);
     if(TEXT[pos2] != "" && TEXT[pos2] != S){
         if(buf_txt){
             for(int x=0; x<80; x++){
@@ -253,7 +340,7 @@ void clock_showText(String S, int pos){
                 }
             }
         }else{
-            M5.Lcd.fillRect(120,120-pos,80,15,BgColor[Face]);
+            M5.Lcd.fillRect(120,120-pos,80,15,BgColor[wtrFace]);
         }
     }
     M5.Lcd.drawCentreString(S,160,120-pos,2);
@@ -272,7 +359,9 @@ void clock_showText(String S){
 
 void clock_Needle(unsigned long ms){
     if(!ms) ms = (((hh * 60 + mm) * 60 + ss) * 1000) + millis();
-    uint8_t hour = (ms / 3600000) % 24;
+    wtrHour = (ms / 3600000) % 24;
+    ms %= 43200000;                           // 12時間制に変換
+    uint8_t hour = (ms / 3600000) % 12;
     uint8_t min  = (ms / 60000) % 60;
     uint8_t sec  = (ms / 1000) % 60;
     uint8_t centi  = (ms/10) % 100;
@@ -284,17 +373,17 @@ void clock_Needle(unsigned long ms){
         (fmod(fabs(mdeg - hdeg),360) < 16)
       ||(fmod(fabs(sdeg - hdeg),360) < 16)
       ||(int(hdeg - degree_prev[1] + 0.5))
-    ) drawNeedleLine(1, hdeg, NeedleLen[Face][1],NeedleColor[Face][1]);
+    ) drawNeedleLine(1, hdeg, NeedleLen[wtrFace][1],NeedleColor[wtrFace][1]);
     if(
         (fmod(fabs(sdeg - mdeg),360) < 16)
       ||(int(mdeg - degree_prev[2] + 0.5))
-    ) drawNeedleLine(2, mdeg, NeedleLen[Face][2],NeedleColor[Face][2]);
+    ) drawNeedleLine(2, mdeg, NeedleLen[wtrFace][2],NeedleColor[wtrFace][2]);
     if(AlarmEn && (
         (fmod(fabs(sdeg - degree_alrm),360) < 16)
-    )) drawNeedleLine(0, degree_alrm, NeedleLen[Face][0],NeedleColor[Face][0]);
+    )) drawNeedleLine(0, degree_alrm, NeedleLen[wtrFace][0],NeedleColor[wtrFace][0]);
     if(
          int(sdeg - degree_prev[3] + 0.5)
-    ) drawNeedleLine(3, sdeg, NeedleLen[Face][3],NeedleColor[Face][3]);
+    ) drawNeedleLine(3, sdeg, NeedleLen[wtrFace][3],NeedleColor[wtrFace][3]);
     M5.Lcd.fillCircle(160, 120, 3, TFT_RED);
 }
 
@@ -303,7 +392,7 @@ void clock_Needle(){
 }
 
 void clock_AlarmOff(){
-    if(AlarmEn) clearNeedleLine(0, NeedleLen[Face][0]);
+    if(AlarmEn) clearNeedleLine(0, NeedleLen[wtrFace][0]);
     AlarmEn = false;
     clock_redrawNeedle();
 }
@@ -313,12 +402,11 @@ void clock_Alarm(unsigned long ms){
         ms %= 43200000ul;
         AlarmEn = true;
         degree_alrm = (float)ms / 3600000. * 30.;
-        drawNeedleLine(0, degree_alrm, NeedleLen[Face][0],NeedleColor[Face][0]);
+        drawNeedleLine(0, degree_alrm, NeedleLen[wtrFace][0],NeedleColor[wtrFace][0]);
     }else{
         clock_AlarmOff();
     }
 }
-
 
 static uint8_t conv2d(const char* p) {
     uint8_t v = 0;
