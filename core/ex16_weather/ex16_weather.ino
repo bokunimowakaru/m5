@@ -177,7 +177,7 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.Speaker.setVolume(1);                    // アラーム音量を1に設定(0～10)
     M5.Lcd.setBrightness(30);                   // LCD輝度を30に
     // drawJpsHeadFilesTest(); delay(10000);    // テスト表示
-    clock_init();                               // 時計用ライブラリの起動
+    clock_init(face_mode);                      // 時計用ライブラリの起動
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
 }
 
