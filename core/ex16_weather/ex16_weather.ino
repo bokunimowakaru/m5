@@ -73,7 +73,7 @@ unsigned long time_ms = - NTP_INTERVAL;         // Wi-FiをONしたマイコン�
 unsigned long jma_ms = - JMA_INTERVAL;          // 天気取得したマイコン時間(ms)
 String date_S = "1970/01/01";                   // 日付を保持する文字列変数
 String alrm_S = "7:00";                         // アラーム時刻(文字列)
-byte face_mode = 5;                             // 時計盤の種類を選択 5～7
+byte face_mode = 5;                             // 時計盤の種類を選択 4～6
 byte Hour = 0;                                  // 24時間制の現在時 0～23
 boolean Alarm = false;                          // アラーム設定状態
 byte setting = 0;                               // アラーム時刻設定モード
@@ -143,7 +143,7 @@ int weather(){
                 c1 = c3;    // 翌日を左側に
                 c3 = c2;    // c3はc2と同じ値にする。
             }
-            clock_init(5);   // 天気と時計を表示
+            clock_init(face_mode);   // 天気と時計を表示
             clock_showWeather(c1,c2);
             clock_showTemperature(data->temps);
             clock_showPop(data->pops);
