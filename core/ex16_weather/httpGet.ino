@@ -153,7 +153,7 @@ int httpGetWeather(int city, char *out, int out_len, int data_number){
     snprintf(s,BUF_N,"https://www.jma.go.jp/bosai/forecast/data/forecast/%d.json",city);
     
     WiFiClientSecure client;                // TLS/TCP/IP接続部の実体を生成
-
+    
     // 証明書を確認するとき（安全）：
         client.setCACert(rootCACertificate); // ルートCA証明書を設定
     
@@ -484,7 +484,7 @@ int httpGetWeather(int city, char *out, int out_len, int data_number){
                 }
                 Serial.println();
                 for(i=0;i<3;i++){   // Sort 
-                    if(_ht_data.temps[i][0] > _ht_data.temps[i+1][0]){
+                    if(_ht_data.temps[i][0] > _ht_data.temps[i+1][0] && _ht_data.temps[i+1][0] > -100){
                         int tmp = _ht_data.temps[i][0];
                         _ht_data.temps[i][0] = _ht_data.temps[i+1][0];
                         _ht_data.temps[i+1][0] = tmp;
