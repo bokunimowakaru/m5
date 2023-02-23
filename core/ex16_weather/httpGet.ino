@@ -33,6 +33,8 @@ HTTPコンテンツの連続受信方法, https://github.com/espressif/arduino-e
 *******************************************************************************/
 
 #include "htWeatherData.h"
+#include "rootCACertificate.h"
+
 #include <WiFi.h>                           // ESP32用WiFiライブラリ
 #include <WiFiClientSecure.h>               // TLS(SSL)通信用ライブラリ
 #include <HTTPClient.h>                     // HTTP通信用ライブラリ
@@ -122,9 +124,9 @@ void http_debug_step(int step, unsigned long time){
 }
 
 HtWetherData *getWeather(int city){
-	char s[17];
-	httpGetWeather(city, _ht_data.text, 16, -1);
-	return &_ht_data;
+    char s[17];
+    httpGetWeather(city, _ht_data.text, 16, -1);
+    return &_ht_data;
 }
 
 
@@ -151,8 +153,13 @@ int httpGetWeather(int city, char *out, int out_len, int data_number){
     snprintf(s,BUF_N,"https://www.jma.go.jp/bosai/forecast/data/forecast/%d.json",city);
     
     WiFiClientSecure client;                // TLS/TCP/IP接続部の実体を生成
-    // client.setCACert(rootCACertificate); // ルートCA証明書を設定
-    client.setInsecure();                   // サーバ証明書を確認しない
+
+    // 証明書を確認するとき（安全）：
+        client.setCACert(rootCACertificate); // ルートCA証明書を設定
+    
+    // 証明書を確認しないとき（有効期限切れ時などの動作確認用）：
+    //  client.setInsecure();               // サーバ証明書を確認しない
+    
     HTTPClient https;                       // HTTP接続部の実体を生成
     https.begin(client, String(s));         // 初期化と接続情報の設定
     https.setTimeout(TIMEOUT);

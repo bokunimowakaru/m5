@@ -10,8 +10,13 @@ Example 16: 天気予報を表示する IoT TeleTele坊主 for M5Stack
 # 良く読んでから利用ください。
 # 気象業務法   https://www.jma.go.jp/jma/kishou/info/ml-17.html
 # 予報業務許可 https://www.jma.go.jp/jma/kishou/minkan/q_a_m.html
+# (参考情報)
+# 本ソフトを書き込んだ M5Stack 等を、不特定多数の人が見れる用途で使用する場合、
+# 気象業務に相当する場合があります（ソースコード内の参考情報を参照）。
+# 一例として、展示場や待合室などに設置したり、インターネットに配信したりする
+# 場合を含みます。
+# ただし、研究目的や学習目的での使用は対象外となる場合があります。
 
-地域設定： #define CITY_ID に地域コードを設定してください。
 *******************************************************************************/
 
 #include "htWeatherData.h"                      // 天気情報格納用変数定義
@@ -21,8 +26,15 @@ HtWetherData *getWeather(int city);             // 天気情報取得用関数�
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
 
+/******************************************************************************
+ Wi-Fi設定： ホームゲートウェイ等の無線アクセスポイントの情報を設定してください
+*******************************************************************************/
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
 #define PASS "password"                         // パスワード
+
+/******************************************************************************
+ 地域設定： #define CITY_ID に地域コードを設定してください。
+*******************************************************************************/
 #define CITY_ID 130000                          // 地域コード
 /*                  # 気象庁=130000(東京地方など)
                     # 大阪管区気象台=270000(大阪府など)
@@ -86,6 +98,9 @@ void dispWeather(){
     clock_showWeather();
     clock_showTemperature();
     clock_showPop();
+    clock_showText(date_S);                 // 日付を表示
+    if(Alarm) clock_showText(alrm_S, 46);   // アラーム表示
+    else clock_showText(weather_s, 46);     // 天気表示
 }
 
 int weather(){
@@ -208,8 +223,6 @@ void loop() {                                   // 繰り返し実行する関�
         setting = 0;                            // 設定モードを解除
         clock_init();                           // 時計画面の書き直し
         dispWeather();                          // 天気情報の書き直し
-        clock_showText(date_S);                 // date_Sの日付を再表示
-        if(Alarm) clock_showText(alrm_S, 46);   // アラーム表示
     }
     // ボタン操作
     M5.update();                                // ボタン情報の取得
@@ -219,8 +232,6 @@ void loop() {                                   // 繰り返し実行する関�
         adj = 0;                                // 針の操作をしない
         face_mode = clock_init(face_mode + 1);  // 時計盤の種類を変更
         dispWeather();                          // 天気情報の書き直し
-        clock_showText(date_S);                 // 日付を表示
-        if(Alarm) clock_showText(alrm_S, 46);   // アラーム表示
     }
     if(adj < 0 && setting == 0){                // 左ボタン(設定モードでない)
         adj = 0;                                // 針の操作をしない
