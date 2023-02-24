@@ -1,5 +1,5 @@
 /*******************************************************************************
-Example 16: 天気予報を表示する IoT TeleTele坊主 for M5Stack
+Example 16: 天気予報を表示する IoT TeleTele坊主 for M5Stack Core2
 
 時計画面上に天気アイコンと、降水確率を表示します。
 詳細： https://bokunimo.net/blog/esp/3426/
@@ -25,7 +25,7 @@ Example 16: 天気予報を表示する IoT TeleTele坊主 for M5Stack
 #include "htWeatherData.h"                      // 天気情報格納用変数定義
 HtWetherData *getWeather(int city);             // 天気情報取得用関数宣言
 
-#include <M5Stack.h>                            // M5Stack用ライブラリの組み込み
+#include <M5Core2.h>                            // M5Stack用ライブラリの組み込み
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
 
@@ -177,7 +177,8 @@ void ntp(){                                     // NTPで時刻を取得する
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    M5.Speaker.setVolume(1);                    // アラーム音量を1に設定(0～10)
+    M5.Spk.begin();                             // Initialize the speaker.
+    M5.Spk.DingDong();                          // Play the DingDong sound.
     M5.Lcd.setBrightness(30);                   // LCD輝度を30に
     // drawJpsHeadFilesTest(); delay(10000);    // テスト表示
     clock_init(face_mode);                      // 時計用ライブラリの起動
@@ -206,7 +207,7 @@ void loop() {                                   // 繰り返し実行する関�
             }
         }
         M5.Lcd.setBrightness(0);                // LCD輝度を0に
-        // M5.Speaker.tone(880, 20);               // 20ms、音を鳴らす
+        M5.Spk.DingDong();                      // Play the DingDong sound.
         delay(50);
         M5.Lcd.setBrightness(100); delay(50);   // LCD輝度を0に
     }
@@ -320,12 +321,12 @@ void loop() {                                   // 繰り返し実行する関�
 
 /******************************************************************************
 【参考文献】Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/m5core/arduino
+https://docs.m5stack.com/en/quick_start/core2/arduino
 *******************************************************************************/
 
 /******************************************************************************
 【参考文献】M5Stack Arduino Library API 情報：
-https://docs.m5stack.com/en/api/core/system
+https://docs.m5stack.com/en/api/core2/system
 *******************************************************************************/
 
 /*******************************************************************************
@@ -364,3 +365,19 @@ https://github.com/bokunimowakaru/esp/tree/master/2_example/example62_weather
 https://github.com/bokunimowakaru/esp/tree/master/5_learn32/esp32_25_wtr_lcd
 https://github.com/bokunimowakaru/m5s/blob/master/example03_wea/example03_wea.ino
 *******************************************************************************/
+
+/*******************************************************************************
+【参考文献】speak
+********************************************************************************
+*******************************************************************************
+* Copyright (c) 2021 by M5Stack
+*                  Equipped with M5Core2 sample source code
+*                          配套  M5Core2 示例源代码
+* Visit for more information: https://docs.m5stack.com/en/core/core2
+* 获取更多资料请访问: https://docs.m5stack.com/zh_CN/core/core2
+*
+* Describe: Speaker example.  喇叭示例
+* Date: 2022/7/26
+*******************************************************************************
+*/
+ 

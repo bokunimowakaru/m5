@@ -1,6 +1,9 @@
 /*******************************************************************************
 Example 16: 天気予報を表示する IoT TeleTele坊主 for M5Stack
 
+天気アイコンと、降水確率を表示します。
+詳細： https://bokunimo.net/blog/esp/3426/
+
                                           Copyright (c) 2019-2023 Wataru KUNINO
 ********************************************************************************
 
@@ -31,8 +34,6 @@ HtWetherData *getWeather(int city);             // 天気情報取得用関数�
                     # 福岡管区気象台=400000(福岡地方など)
 # 取得先URL https://www.jma.go.jp/bosai/forecast/data/forecast/130000.json
 */
-const char wtrFiles[5][13]={ "wtr_uknw_jpg", "wtr_fine_jpg", "wtr_clud_jpg",
-                             "wtr_rain_jpg", "wtr_snow_jpg" };
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
@@ -63,12 +64,14 @@ void loop(){                                    // 繰り返し実行する関�
             drawJpgHeadFile(wtrFiles[0]);       // 背景画像表示
             return;                             // 再取得を実行
         }
+        /* 天気アイコンの変更処理
         if( M5.BtnB.read() && M5.BtnC.wasPressed() ){   // ボタンBを押しながらC
             weather->code++;                            // 天気を変更
             if(weather->code > 4) weather->code = 1;    // 天気が4を超えたら1に
             drawJpgHeadFile(wtrFiles[weather->code]);   // 天気の画像を表示
             M5.Lcd.drawCentreString(weather->text,164,200,2); // 天気予報情報表示
         }
+        */
     }
 }
 
