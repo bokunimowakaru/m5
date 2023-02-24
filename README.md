@@ -72,6 +72,9 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 ![実行画面ex10](/pictures/ex10_thumb.gif)
 
+詳細説明（M5Stackで防犯カメラ）
+[https://bokunimo.net/blog/esp/2722/](https://bokunimo.net/blog/esp/2722/)  
+
 ### 応用編
 
 |フォルダ名   |内容                                                                               |
@@ -96,12 +99,17 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 ![実行画面ex15](/pictures/ex15_clock_thumb_2.png)
 
+詳細説明（M5StackでLINEにアラーム通知するIoT時計）
+[https://bokunimo.net/blog/esp/2773/](https://bokunimo.net/blog/esp/2773/)  
+
 #### 天気予報情報表示 ex16_weather
 
 天気予報情報を表示する IoT TeleTele坊主 for M5Stackです。1時間ごとに気象庁の天気予報情報サイトにアクセスし、アナログ時計風のM5Stackの画面上にアイコン表示します。降水確率や予想気温も表示します。  
 なお、本ソフトを利用した M5Stack を不特定多数の人が見れる用途で使用すると、気象業務に該当し、法律違反となる場合があります（ソースコード内の参考情報を参照）。  
-
 ![実行画面ex16](/pictures/ex16_weather_thumb.png)
+
+詳細説明（M5Stackで天気アイコン表示）
+[https://bokunimo.net/blog/esp/3426/](https://bokunimo.net/blog/esp/3426/)  
 
 ## Arduino IDE 用の ESP32 開発環境のセットアップ
 
