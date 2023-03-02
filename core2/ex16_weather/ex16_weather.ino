@@ -142,9 +142,7 @@ int weather(){
                 c1 = c2;    // c1とc2を入れ替える
                 c2 = c3;    // c3はc2と同じ値にする。つまり、最初にc1をc3に入れておく
             }else if( Hour>= 18 ){
-                c2 = c1;    // 当日を右側に
-                c1 = c3;    // 翌日を左側に
-                c3 = c2;    // c3はc2と同じ値にする。
+                c2 = c3;    // 翌日を右側に
             }
             clock_init(face_mode);   // 天気と時計を表示
             clock_showWeather(c1,c2);
