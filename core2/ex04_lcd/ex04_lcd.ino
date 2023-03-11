@@ -93,8 +93,8 @@ void setup(){                                   // 起動時に一度だけ実�
 
 void loop(){                                    // 繰り返し実行する関数
     server.handleClient();                      // クライアントからWebサーバ呼出
-    char lcd[54];                               // 表示用変数(49バイト48文字)
-    memset(lcd, 0, 54);                         // 文字列変数lcd初期化(49バイト)
+    char lcd[54];                               // 表示用変数(54バイト53文字)
+    memset(lcd, 0, 54);                         // 文字列変数lcd初期化(54バイト)
     int len = udp.parsePacket();                // 受信パケット長を変数lenに代入
     if(len==0)return;                           // 未受信のときはloop()の先頭に
     udp.read(lcd, 53);                          // 受信データを文字列変数lcdへ
