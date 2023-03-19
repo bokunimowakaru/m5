@@ -49,6 +49,7 @@ void setup(){                                   // 起動時に一度だけ実�
     bh1750Setup(6,5);                           // 照度センサの初期化
     M5.begin();                                 // M5StickC用Lcdライブラリの起動
 //  M5.Lcd.setBrightness(200);                  // LCDの輝度設定(#if 0で未定義)
+    M5.Lcd.setRotation(2);                      // LCDを縦向き表示に設定
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
     analogMeterInit("lx", "Illum", 0, 1000);    // アナログ・メータの初期表示
