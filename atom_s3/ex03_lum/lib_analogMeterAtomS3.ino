@@ -86,7 +86,7 @@ void loop() {
 // #########################################################################
 void analogMeterInit()
 {
-  M5.Lcd.setRotation(1);
+  M5.Lcd.setRotation(2);
   M5.Lcd.setTextSize(1);
 
   // Meter outline (0,0) to (319,83) 320x80
