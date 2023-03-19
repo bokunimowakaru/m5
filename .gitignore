@@ -37,3 +37,8 @@
 #photo
 photo/
 photo/*.jpg
+
+# Arduino
+debug.cfg
+debug_custom.json
+*.svd
