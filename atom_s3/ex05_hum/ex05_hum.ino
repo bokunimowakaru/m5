@@ -79,7 +79,6 @@ void loop(){                                    // 繰り返し実行する関�
     }
     if(millis()%500) return;                    // 以下は500msに1回だけ実行する
 
-    M5.Lcd.fillRect(91, 72, 37, 8, BLACK);      // Wi-Fi接続の待ち時間
     M5.Lcd.setCursor(91, 72);                   // 文字位置を設定
     M5.Lcd.printf("(%d) ",WiFi.status());       // Wi-Fi状態番号を表示
     M5.Lcd.print((SLEEP_P/1000 - millis()%(SLEEP_P/1000))/1000);
