@@ -50,14 +50,16 @@ RTC_DATA_ATTR int disp = 0;                     // メータ表示番号 0～2
  *****************************************************************************/
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
-void disp_init(){ switch(disp){                 // アナログ・メータの初期表示用
-    case 1: analogMeterInit("Celsius", "Temp.", 0, 40); break;
-    case 2: analogMeterInit("RH%", "Humi.", 0, 100); break;
-    default: analogMeterInit("Celsius", "WGBT", 0, 40); break;
+void disp_init(){
+    switch(disp){                               // アナログ・メータの初期表示用
+        case 1: analogMeterInit("Celsius", "Temp.", 0, 40); break;
+        case 2: analogMeterInit("RH%", "Humi.", 0, 100); break;
+        default: analogMeterInit("Celsius", "WGBT", 0, 40); break;
+    }
     M5.Lcd.setTextColor(WHITE);                 // 文字色を白に
     M5.Lcd.setCursor(0,72);                     // 文字の表示位置を原点に設定
     M5.Lcd.print("ex.05 Humid.");               // タイトル表示
-}}
+}
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     shtSetup(6,5);                              // 湿度センサの初期化
@@ -79,6 +81,7 @@ void loop(){                                    // 繰り返し実行する関�
     }
     if(millis()%500) return;                    // 以下は500msに1回だけ実行する
 
+    M5.Lcd.fillRect(91, 72, 37, 8, BLACK);      // Wi-Fi接続の待ち時間
     M5.Lcd.setCursor(91, 72);                   // 文字位置を設定
     M5.Lcd.printf("(%d) ",WiFi.status());       // Wi-Fi状態番号を表示
     M5.Lcd.print((SLEEP_P/1000 - millis()%(SLEEP_P/1000))/1000);
