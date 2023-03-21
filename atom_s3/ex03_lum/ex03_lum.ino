@@ -136,6 +136,7 @@ https://docs.m5stack.com/en/api/stickc/system_m5stickc
 
 BH1750FVI データシート 2011.11 - Rev.D (ローム)
 
+M5Atom S3用ライブラリ(GitHub)：
 https://github.com/m5stack/M5AtomS3
 
 【引用コード】

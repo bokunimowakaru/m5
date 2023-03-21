@@ -147,6 +147,7 @@ https://docs.m5stack.com/en/quick_start/atoms3/arduino
 M5StickC Arduino Library API 情報 (M5StackC 用 ※ATOM S3用ではない )：
 https://docs.m5stack.com/en/api/stickc/system_m5stickc
 
+M5Atom S3用ライブラリ(GitHub)：
 https://github.com/m5stack/M5AtomS3
 
 【引用コード】
