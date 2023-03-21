@@ -2,7 +2,7 @@
 Example 2: ESP32 (IoTセンサ) Wi-Fi ボタン for ESP32 / ATOM / ATOM Lite
 ・ボタンを押下するとUDPでLAN内に文字列"Ping"を送信します。
 ・LINE用トークンを設定すれば、LINEアプリに「ボタンが押されました」を通知。
-・別の子機となる Wi-Fi コンシェルジェ証明担当(ワイヤレスLED子機)のIPアドレスを
+・別の子機となる Wi-Fi コンシェルジェ照明担当(ワイヤレスLED子機)のIPアドレスを
 　設定すれば、ボタンを押下したときに子機のLEDをON、押し続けたときにOFFに制御。
 
                                           Copyright (c) 2021-2022 Wataru KUNINO
@@ -40,7 +40,7 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex02_sw
 #define LINE_TOKEN  "your_token"                // LINE Notify トークン★要設定
 
 /******************************************************************************
- Wi-Fi コンシェルジェ証明担当（ワイヤレスLED子機） の設定
+ Wi-Fi コンシェルジェ照明担当（ワイヤレスLED子機） の設定
  ******************************************************************************
  ※ex01_led または ex01_led_io が動作する、別のESP32C3搭載デバイスが必要です
     1. ex01_led/ex01_led_io搭載デバイスのシリアルターミナルでIPアドレスを確認
