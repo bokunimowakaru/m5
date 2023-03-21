@@ -53,10 +53,10 @@ void handleRoot(){
 
 void btnUpdate(){                               // ボタン状態に応じてLEDを制御
     M5.update();                                // M5Stack用IO状態の更新
-    int btn = M5.Btn.wasPressed();              // ボタンの状態をbtnへ代入
-    if( btn == 1 ) led_stat = !led_stat;        // ボタン押下時led_statを反転
-    if( btnC == 1 ) led_stat = 1;               // ボタンB押下時led_stat=1を代入
-    if( btnA || btnC) ledControl(led_stat);     // ボタン操作時にLED制御を実行
+    if( M5.Btn.wasPressed() ){                  // ボタンが押されていた時
+        led_stat = !led_stat;                   // led_statを反転
+        ledControl(led_stat);                   // LED制御を実行
+    }
 }
 
 void setup(){                                   // 起動時に一度だけ実行する関数
