@@ -1,9 +1,9 @@
 # m5
-IoT Code Examples for ESP32, M5Stack, M5Stick C, M5Stick C Plus, ATOM, ATOM  Lite
+IoT Code Examples for ESP32, M5Stack, M5Stick C, M5Stick C Plus, ATOM, ATOM  Lite, ATOM S3
 
-## サンプル集
+## サンプルプログラム集
 
-ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5Stick C, M5Stick C Plus, ATOM Lite に対応したサンプル・プログラム集です。
+ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5Stick C, M5Stick C Plus, ATOM Lite, ATOM S3 に対応したサンプル・プログラム集です。
 
 ## 本コンテンツの最新版とダウンロード方法
 
@@ -25,6 +25,7 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 |フォルダ名 |内容                                                  |
 |-----------|------------------------------------------------------|
 |atom       |M5Stack製 ATOM / ATOM Lite / 通常の ESP32-WROOM-32 用 |
+|atom_s3    |M5Stack製 ATOM S3 用
 |core       |M5Stack製 Core 用                                     |
 |stick_cplus|M5Stack製 M5Stick C Plus 用                           |
 |pictures   |関連画像ファイル                                      |
@@ -147,6 +148,9 @@ by 国野 亘 Wataru KUNINO
 
 ## GitHub Pages (This Document)
 * [https://git.bokunimo.com/m5/](https://git.bokunimo.com/m5/)  
+
+* M5 ATOM S3  
+  [https://git.bokunimo.com/m5/atom_s3/](https://git.bokunimo.com/m5/atom_s3/)
 
 ----------------------------------------------------------------
 

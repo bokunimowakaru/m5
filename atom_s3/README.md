@@ -1,4 +1,7 @@
-## M5Atom S3の独自の注意点
+# m5/atom_s3
+IoT Code Examples for M5 ATOM S3
+
+## M5Stack製 ATOM S3 の 注意点
 
 - ライブラリ M5AtomS3 by M5Stack が必要 (version=0.0.2で動作確認)
 - ライブラリ FastLED が必要
@@ -10,9 +13,23 @@
     M5.dis.drawpix(0xff0000);
     M5.dis.show();
 
+## 基礎編 サンプルプログラム集 基礎編
+
+フォルダ [m5/atom_s3](https://github.com/bokunimowakaru/m5/tree/master/atom_s3) には、下記のサンプル・プログラムを収録しています。
+
+|フォルダ名   |内容                                                                               |
+|-------------|-----------------------------------------------------------------------------------|
+|ex00_hello   |Arduino IDE インストール後の動作確認用プログラム                                   |
+|ex01_led     |LED制御用プログラム。HTTPサーバ機能によりブラウザから制御可能                      |
+|ex02_sw      |押しボタンの送信プログラム。ex01_ledのLEDの制御やLINEへの送信が可能                |
+|ex03_lum     |照度センサの送信プログラム。照度値をクラウド(Ambient)に送信しグラフ化が可能        |
+|ex05_hum     |温度＋湿度センサの送信プログラム。家じゅうの部屋に設置すれば居住環境の監視が可能   |
+
 ## 書き込み方法
-If you need to burn the firmware, please press and hold the reset button (about 2 seconds) until the internal green LED lights up, then you can release it, at this time the device has entered download mode and waited for burning.  
-また、Arduino IDE (2.0.4で確認)のシリアルポートを、書き込む都度に設定する必要がある。
+
+M5 ATOM S3 をパソコンのUSB端子に接続し、電源ボタン（本体のサイドボタン）を長押しし（約2秒）、本体内のLEDが緑色に点灯したら、ボタンを離してください。  
+また、Arduino IDE の［ツール］メニュー内の［ポート］から、M5 ATOM を接続したシリアルポートを選択してから、書き込みを実行します。  
+Arduino IDE のバージョン 2.0.4 の場合、書き込む都度に、シリアルポートを再設定する必要があります。
 
 ## GPIO
 - GPIO4 赤外線LED 
