@@ -6,7 +6,7 @@
 #
 ################################################################################
 # 使用、改変、再配布は自由に行えますが、無保証です。権利情報の改変は不可です。
-# Copyright (c) 2020-2021 Wataru KUNINO
+# Copyright (c) 2020-2023 Wataru KUNINO
 # 
 # 引用元：
 # https://github.com/bokunimowakaru/m5camera/blob/master/tools/gz2header.py
@@ -103,6 +103,8 @@ while len(argv) >= 2:
 
 	fp = open(saveto, mode='w')
 	print('#define '+filename[0:n]+'_bmp_len',bmp_len, file = fp)
+	print('#define '+filename[0:n]+'_bmp_x',width, file = fp)
+	print('#define '+filename[0:n]+'_bmp_y',height, file = fp)
 	print('const uint16_t '+filename[0:n]+'_bmp[] = {', file = fp)
 	i=0
 	rgb565 = 0;
