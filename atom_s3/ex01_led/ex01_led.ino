@@ -61,10 +61,10 @@ void btnUpdate(){                               // ボタン状態に応じてLE
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    led_setup(PIN_LED_RGB);                     // RGB LED 初期設定(ポート設定)
-    ledControl(led_stat);                       // LED制御関数ledControlを実行
 //  M5.Lcd.setBrightness(200);                  // LCDの輝度設定(#if 0で未定義)
     M5.Lcd.setRotation(2);                      // LCDを縦向き表示に設定
+    led_setup(PIN_LED_RGB);                     // RGB LED 初期設定(ポート設定)
+    ledControl(led_stat);                       // LED制御関数ledControlを実行
     M5.Lcd.setTextColor(BLACK);                 // 文字色を黒に
     M5.Lcd.println("ex01 M5 LED HTTP");         // タイトル「LED HTTP」を表示
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
