@@ -1,17 +1,22 @@
 # m5/atom_s3
-IoT Code Examples for M5 ATOM S3
+IoT Code Examples for M5 ATOM S3 (AtomS3)
+
+![M5 AtomS3 ワイヤレスLチカ実験](https://bokunimo.net/blog/wp-content/uploads/2023/03/ex01_02_2.jpg)
 
 ## M5Stack製 ATOM S3 の 注意点
 
-- ライブラリ M5AtomS3 by M5Stack が必要 (version=0.0.2で動作確認)
-- ライブラリ FastLED が必要
-- setBrightness が無効化されている (version=0.0.2)
-- 表示色が不正確  
-   (保有ハードウェアの問題か? 白と黒は出ているのでソフト起因の可能性が高い)
-- シリアル出力は USBSerial を使用する
-- 内蔵 LED 出力は M5.dis を使って 24bit で色を指定
+- ライブラリ M5AtomS3 by M5Stack が必要 (version=0.0.2で動作確認)  
+- ライブラリ FastLED が必要  
+- setBrightness が無効化されている (version=0.0.2)  
+- 色指定による描画において表示色が指定と異なる  
+   (ソフト起因の可能性が高い)
+- シリアル出力は USBSerial を使用する  
+- 内蔵 LED 出力は M5.dis を使って 24bit で色を指定  
     M5.dis.drawpix(0xff0000);
     M5.dis.show();
+- LCD へのテキスト文字表示で、左端のドットがかける  
+- LCD が、やや斜めになっている  
+   (真っすぐに戻してもしても、同じ方向に戻る)  
 
 ## 基礎編 サンプルプログラム集 基礎編
 
@@ -35,6 +40,12 @@ Arduino IDE のバージョン 2.0.4 の場合、書き込む都度に、シリ�
 - GPIO4 赤外線LED 
 - GPIO41 ボタン
 - ATOM-HAT使用時のI2C：SDAは GPIO6、SCLは GPIO5
+
+## ブログ記事
+
+本サンプル集の概要を筆者のブログページに書きました。動作の様子の写真などを公開しているので、ご覧ください。  
+
+- [M5 AtomS3 (M5Stack製) 用 Arduino サンプル・プログラム](https://bokunimo.net/blog/esp/3464/)  
 
 ## 参考文献
 - Arduino IDE 開発環境イントール方法：  
