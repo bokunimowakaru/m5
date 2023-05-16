@@ -36,7 +36,7 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
         head += Res_Png                             # PNG形式での応答を設定
 
     if path[0:7] == '/photo0' and path[-4:] == '.jpg': # リクエスト先がphoto0X.jpg
-        fp = open('photo'+path, 'rb')               # 画像ファイルを開く
+        fp = open('html'+path, 'rb')                # 画像ファイルを開く
         res = fp.read()                             # 画像データを変数へ代入
         fp.close()                                  # ファイルを閉じる
         head += Res_Jpeg                            # JPG形式での応答を設定
