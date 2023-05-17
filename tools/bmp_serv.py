@@ -14,12 +14,18 @@ Res_Text = [('Content-type', 'text/plain; charset=utf-8')]
 Res_Png  = [('Content-type', 'image/png')]
 Res_Jpeg = [('Content-type', 'image/jpeg')]
 
+jpg_page = 1    # 写真_ページ番号
+jpg_page_n = 3  # 合計ページ数
+bmp_page = 1    # 写真_ページ番号
+bmp_page_n = 3  # 合計ページ数
+
 def wsgi_app(environ, start_response):              # HTTPアクセス受信時の処理
     path  = environ.get('PATH_INFO')                # リクエスト先のパスを代入
     query = environ.get('QUERY_STRING')             # クエリを代入
 
     res = None                                      # 応答値を代入する変数の定義
     head = []
+    global jpg_page, jpg_page_n, bmp_page, bmp_page_n
 
     if path == '/ok.txt':                           # リクエスト先がok.txtの時
         res = 'OK\r\n'.encode()                     # 応答メッセージ作成
@@ -34,6 +40,24 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
         res = fp.read()                             # 画像データを変数へ代入
         fp.close()                                  # ファイルを閉じる
         head += Res_Png                             # PNG形式での応答を設定
+
+    if path == '/photo.jpg':                        # リクエスト先がphoto.jpg
+        fp = open('html/photo' + format(jpg_page,'#02d') + '.jpg', 'rb')
+        res = fp.read()                             # 画像データを変数へ代入
+        fp.close()                                  # ファイルを閉じる
+        head += Res_Jpeg                            # JPG形式での応答を設定
+        jpg_page += 1
+        if jpg_page > jpg_page_n:
+            jpg_page = 1
+
+    if path == '/color.bmp':                        # リクエスト先がcolor.bmp
+        fp = open('html/color' + format(bmp_page,'#02d') + '.bmp', 'rb')
+        res = fp.read()                             # 画像データを変数へ代入
+        fp.close()                                  # ファイルを閉じる
+        head += Res_Jpeg                            # BMP形式での応答を設定
+        bmp_page += 1
+        if bmp_page > bmp_page_n:
+            bmp_page = 1
 
     if path[0:7] == '/photo0' and path[-4:] == '.jpg': # リクエスト先がphoto0X.jpg
         fp = open('html'+path, 'rb')                # 画像ファイルを開く

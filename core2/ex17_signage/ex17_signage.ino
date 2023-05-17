@@ -41,8 +41,9 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2
 #define NTP_PORT 8888                           // NTP待ち受けポート
 #define NTP_INTERVAL 3 * 3600 * 1000            // 3時間
 
-String files[] = {"photo01.jpg","photo02.jpg","photo03.jpg"}; // ファイル名
-int file_num = 2;                               // ファイル番号
+String files[] = {"photo.jpg","color.bmp"};     // ファイル名
+int file_num = 0;                               // ファイル番号
+boolean clock_en = true;                        // 時計表示
 unsigned long TIME = 0;                         // 時計表示用の基準時刻(秒)
 unsigned long TIME_ntp = 0;                     // NTPで取得したときの時刻(秒)
 unsigned long TIME_ms = 0;                      // NTPに接続したマイコン時刻(ms)
@@ -60,7 +61,7 @@ void httpget(){                                 // コンテンツ(画像)を取
         psram = (byte *) ps_malloc(BMP_PSRAM_SIZE); // 1MBの疑似SRAMを確保
     }
     if(!psram){                                 // 確保できなかった場合
-        file = SPIFFS.open("/tmp.jpg","w");     // SPIFFSを使用
+        file = SPIFFS.open("/tmp","w");         // SPIFFSを使用
         if(file==0) return;                     // ファイルを開けれなければ戻る
     }
     HTTPClient http;                            // HTTPリクエスト用インスタンス
@@ -82,12 +83,20 @@ void httpget(){                                 // コンテンツ(画像)を取
         }
         Serial.printf("Loaded %d Bytes\n",len);
         if(psram){
-            M5.Lcd.drawJpg(psram, len);
+            if(files[file_num].endsWith(".jpg")){
+                M5.Lcd.drawJpg(psram, len);
+            }else if(files[file_num].endsWith(".bmp")){
+                M5.Lcd.drawBitmap(0, 0, 320, 240, psram);
+            }
         }else{
             file.close();                       // ファイルを閉じる
-            M5.Lcd.drawJpgFile(SPIFFS, "/tmp.jpg",0,0);
+            if(files[file_num].endsWith(".jpg")){
+                M5.Lcd.drawJpgFile(SPIFFS, "/tmp",0,0);
+            }else if(files[file_num].endsWith(".bmp")){
+                M5.Lcd.drawBmpFile(SPIFFS, "/tmp",0,0);
+            }
         }
-        clock_init(-1);                         // 壁紙を維持して時計を再描画
+        if(clock_en) clock_init(-1);            // 壁紙を維持して時計を再描画
     }
     http.end();                                 // HTTP通信を終了する
     file.close();                               // ファイルを閉じる
@@ -118,7 +127,7 @@ void loop() {                                   // 繰り返し実行する関�
     unsigned long time = TIME + (millis() - TIME_ms)/1000; // 表示する時刻
     unsigned long t_ms = (TIME % 43200)*1000 + (millis() - TIME_ms);
     t_ms %= 43200000;
-    clock_Needle(t_ms);                         // 12時間制で時計の針を表示する
+    if(clock_en) clock_Needle(t_ms);            // 12時間制で時計の針を表示する
 
     String time_S = time2str(time);             // 現在の日時を文字列に変換
     if(time_S.substring(0,10) != date_S){       // 日付が変化した時
@@ -131,12 +140,20 @@ void loop() {                                   // 繰り返し実行する関�
     delay(100);                                 // 待ち時間0.1秒
     int btn = M5.BtnA.wasPressed() + 2 * M5.BtnB.wasPressed()\
                                    + 3 * M5.BtnC.wasPressed();
-    if(btn > 0 && btn <= 3){
+    if(btn > 0 && btn <= 2){
         file_num = btn - 1; 
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_GET;
         clock_showText("Pressed "+String(btn)); // HTTPサーバ接続試行中を表示
     }
+    if(btn == 3){
+        clock_en != clock_en;
+        if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
+        runApp |= RUN_GET;
+        char on_off[2][4]={"ON","OFF"};
+        clock_showText("Clock "+String(on_off[clock_en]));
+    }
+    
     // NTPサーバから時刻情報を取得する
     if(millis() - time_ms > NTP_INTERVAL){      // NTP実行時刻になったとき
         time_ms = millis();                     // 現在のマイコン時刻を保持
@@ -155,7 +172,7 @@ void loop() {                                   // 繰り返し実行する関�
     }
 
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
-    clock_showText("Connected", 46);            // 接続完了表示
+    clock_showText("Connected");                // 接続完了表示
     if(runApp & RUN_GET){
         httpget();
         runApp &= ~RUN_GET;
