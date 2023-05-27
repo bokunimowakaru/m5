@@ -48,6 +48,10 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 |ex09_talk    |Wi-Fiコンシェルジェ［音声アナウンス担当］音声合成 AquesTalk Pico LSI ATP3012用     |
 |ex10_cam     |Wi-Fiコンシェルジェ［カメラ担当］SeeedStudio Grove Serial Camera Kit 用            |
 
+Wi-Fiを使用するサンプル・プログラムについては、実行前に #define SSID と #define PASS の書き換えが必要です。
+お持ちの無線アクセスポイントに合わせて設定してください。  
+m5フォルダ内にある setWifiSSID.sh を使用すれば、一括で全プログラムのSSIDとパスワードを変更できます。  
+
 #### 赤外線リモコン ex08_ir_out
 
 下図は、赤外線リモコン信号を受信したり、LAN内の別の端末のブラウザからの遠隔制御でリモコン信号を送信することが出来る、ex08_ir_outの画面の一例です。  

@@ -4,7 +4,7 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2
 ・定期的にHTTPサーバから画像を取得し、LCDに表示します。
 ・また、NTPサーバから時刻情報を取得し、時計を表示します。
 
-    使用機材(例)：M5Stack Core2
+    使用機材(例)：M5Stack Core2、Raspberry Pi、インターネット接続環境
 
 【機能】
 ・インターネット上のNTPサーバから時刻を自動取得します。
@@ -12,14 +12,17 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2
 ・画像保持用に疑似SRAMを使用します(確保できなかった場合はSPIFFS FLASHを使用)
 
 【準備】
-・HTTPサーバが必要です。
-・HTTPサーバのサンプルはtoolsフォルダ内の signage_serv.py にあります。
-・送信する画像はtools内のhtmlフォルダに保存してください。
+・HTTPサーバが必要です。#define BMP_SERVERに設定してください。
+・初期状態ではGitHub上の画像を取得します。#define BMP_SERVER が重複しているので
+　動作確認後にhttpsから始まる方の行を削除してください。
+・Raspberry Pi用のHTTPサーバはtoolsフォルダ内の signage_serv.py にあります。
+　cd ~/m5/tools⏎ ./signage_serv.py⏎ を実行してHTTPサーバを起動してください。
+・送信する画像はtools内のhtmlフォルダに保存してあります。
 
 【操作方法】
-・左ボタンを押すと####################W
-・中央ボタンで#############。
-・右ボタンで、############。
+・左ボタンを押すと、JPEG画像を取得して時計とともに表示します。
+・中央ボタンで、2値BMP画像を取得して時計とともに表示します。
+・右ボタンで、2値BMP画像を取得し、コントラストを高めて表示します。
 
 【参考文献】
 本ファイルの末尾に記載します。
@@ -35,9 +38,8 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2
 
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
 #define PASS "password"                         // パスワード
-//#define BMP_SERVER "http://192.168.1.2:8080/" // コンテンツ・サーバのURL
-#define BMP_SERVER \
-"https://raw.githubusercontent.com/bokunimowakaru/m5/master/tools/html/"
+#define BMP_SERVER "http://192.168.1.2:8080/"   // LAN上のコンテンツ・サーバのURL
+#define BMP_SERVER "https://raw.githubusercontent.com/bokunimowakaru/m5/master/tools/html/"
 #define BMP_INTERVAL 3 * 60 * 1000              // コンテンツ取得間隔 3分
 #define BMP_PSRAM_SIZE 1048576                  // 1MBの疑似SRAMを確保
 #define NTP_SERVER "ntp.nict.jp"                // NTPサーバのURL
