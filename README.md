@@ -162,8 +162,10 @@ by 国野 亘 Wataru KUNINO
 
 ----------------------------------------------------------------
 
-## GitHub Pages (This Document)
-* [https://git.bokunimo.com/m5/](https://git.bokunimo.com/m5/)  
+## GitHub Pages  
+
+*  (This Document)  
+  [https://git.bokunimo.com/m5/](https://git.bokunimo.com/m5/)  
 
 * M5 ATOM S3  
   [https://git.bokunimo.com/m5/atom_s3/](https://git.bokunimo.com/m5/atom_s3/)

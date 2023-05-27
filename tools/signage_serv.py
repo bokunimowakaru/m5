@@ -2,11 +2,17 @@
 # coding: utf-8
 
 ################################################################################
-# signage_serv.py WSGI 版
+# signage_serv.py
+# ex17_signage デジタル・サイネージ for M5Stack にコンテンツを配信するHTTPサーバ
+# ・一般ユーザ(piユーザなど)で使用するとポート番号8080でHTTPサーバが起動します。
+# ・インターネット・ブラウザなどでアクセスするとコンテンツを応答します。
+# ・サーバ上で動作確認する場合は http://127.0.0.1:8080/ にアクセスしてください。
 #
 #                                          Copyright (c) 2019-2023 Wataru KUNINO
 ################################################################################
-# 元：https://github.com/bokunimowakaru/iot/blob/master/server/web_serv.py
+# 参考文献(引用元)
+# https://github.com/bokunimowakaru/iot/blob/master/server/web_serv.py
+################################################################################
 
 from wsgiref.simple_server import make_server
 from urllib import parse
@@ -16,10 +22,10 @@ Res_Text = [('Content-type', 'text/plain; charset=utf-8')]
 Res_Png  = [('Content-type', 'image/png')]
 Res_Jpeg = [('Content-type', 'image/jpeg')]
 
-jpg_page = 0    # JPEG画像_ページ番号
-jpg_page_n = 3  # 合計ページ数
-bmp_page = 0    # BMP画像_ページ番号
-bmp_page_n = 3  # 合計ページ数
+jpg_page = 0    # JPEG画像_ページ番号, 0はphoto.jpg
+jpg_page_n = 3  # JPEG画像_最大ページ番号(photo01.jpg～photo03.jpg)
+bmp_page = 0    # BMP画像_ページ番号, 0はmono.bmp
+bmp_page_n = 3  # BMP画像_最大ページ番号(mono01.bmp～mono03.bmp)
 
 disp_x = 320
 disp_y = 240
