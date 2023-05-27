@@ -86,6 +86,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 |ex14_mogura  |インターネット上でランキング競争 M5Stackのボタンを使った もぐらたたき ゲーム       |
 |ex15_clock   |インターネット時刻を取得してアナログ時計風に表示＆アラーム時刻にLINEに通知         |
 |ex16_weather |インターネットから天気予報情報を取得して天気アイコンで表示                         |
+|ex17_signage |デジタル・サイネージ for M5Stack, LAN or インターネットから情報を取得して表示      |
 
 ![実行画面ex11～14](/pictures/ex11_14_thumb.gif)
 
@@ -111,6 +112,17 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 詳細説明（M5Stackで天気アイコン表示）
 [https://bokunimo.net/blog/esp/3426/](https://bokunimo.net/blog/esp/3426/)  
+
+#### デジタル・サイネージ for M5Stack ex17_signage
+
+定期的にHTTPサーバから画像を取得し、LCDに表示します。  
+左ボタンでJPEG画像、中央ボタンでBMP画像、右ボタンで時計表示なしのBMP画像を表示します。  
+HTTPサーバは、Raspberry Piなどで動作するHTTPサーバ(toolsフォルダ内に保存したsignage_serv.py)を用います。  
+このように役割を分担することで、Raspberry Pi側の様々なコンテンツをM5Stack上で表示できるようになります。
+本例のsignage_serv.pyでは、M5Stackからのアクセスを受けるたびに、異なる画像を配信し、スライドショーのように表示することが出来ます。  
+さらに、Raspberry Pi側のプログラムで配信するコンテンツを動的に作ることも可能です。
+その場合も、M5Stack側はHTTPサーバから取得したJPEG画像やBMP画像を表示するだけなので、ソフトウェアの書き換え不要で、新しいコンテンツに対応することが出来ます。  
+※現在、M5Stack CORE2版のみを公開しています。
 
 ## Arduino IDE 用の ESP32 開発環境のセットアップ
 
