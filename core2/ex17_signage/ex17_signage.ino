@@ -13,7 +13,7 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2
 
 【準備】
 ・HTTPサーバが必要です。
-・HTTPサーバのサンプルはtoolsフォルダ内の bmp_serv.py にあります。
+・HTTPサーバのサンプルはtoolsフォルダ内の signage_serv.py にあります。
 ・送信する画像はtools内のhtmlフォルダに保存してください。
 
 【操作方法】
@@ -29,19 +29,22 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2
 
 #include <M5Core2.h>                            // M5Stack用ライブラリの組み込み
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
+#include <WiFiClientSecure.h>                   // TLS(SSL)通信用ライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
 #include <SPIFFS.h>
 
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
 #define PASS "password"                         // パスワード
-#define BMP_SERVER "http://192.168.1.2:8080/"   // コンテンツ・サーバのURL
+//#define BMP_SERVER "http://192.168.1.2:8080/" // コンテンツ・サーバのURL
+#define BMP_SERVER \
+"https://raw.githubusercontent.com/bokunimowakaru/m5/master/tools/html/"
 #define BMP_INTERVAL 3 * 60 * 1000              // コンテンツ取得間隔 3分
 #define BMP_PSRAM_SIZE 1048576                  // 1MBの疑似SRAMを確保
 #define NTP_SERVER "ntp.nict.jp"                // NTPサーバのURL
 #define NTP_PORT 8888                           // NTP待ち受けポート
 #define NTP_INTERVAL 3 * 3600 * 1000            // 3時間
 
-String files[] = {"photo.jpg","color.bmp"};     // ファイル名
+String files[] = {"photo.jpg","mono.bmp","mono.bmp"}; // ファイル名
 int file_num = 0;                               // ファイル番号
 boolean clock_en = true;                        // 時計表示
 unsigned long TIME = 0;                         // 時計表示用の基準時刻(秒)
@@ -64,6 +67,8 @@ void httpget(){                                 // コンテンツ(画像)を取
         file = SPIFFS.open("/tmp","w");         // SPIFFSを使用
         if(file==0) return;                     // ファイルを開けれなければ戻る
     }
+    WiFiClientSecure client;                    // TLS/TCP/IP接続部の実体を生成
+    client.setInsecure(); // 証明書を確認しない // client.setCACert(証明書); 
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(5000);               // タイムアウトを5秒に設定する
     http.begin(String(BMP_SERVER)+files[file_num]);  // HTTPリクエスト先を設定
@@ -86,19 +91,20 @@ void httpget(){                                 // コンテンツ(画像)を取
             if(files[file_num].endsWith(".jpg")){
                 M5.Lcd.drawJpg(psram, len);
             }else if(files[file_num].endsWith(".bmp")){
-                M5.Lcd.drawBitmap(0, 0, 320, 240, psram);
+                drawMonoBitmap(psram, 320, 240,clock_en ? 128 : 255);
             }
         }else{
             file.close();                       // ファイルを閉じる
             if(files[file_num].endsWith(".jpg")){
                 M5.Lcd.drawJpgFile(SPIFFS, "/tmp",0,0);
             }else if(files[file_num].endsWith(".bmp")){
-                M5.Lcd.drawBmpFile(SPIFFS, "/tmp",0,0);
+                drawMonoBitmapFile("/tmp",clock_en ? 128 : 255);
             }
         }
         if(clock_en) clock_init(-1);            // 壁紙を維持して時計を再描画
-    }
+    }else Serial.println("ERROR HTTP "+String(http.GET()));
     http.end();                                 // HTTP通信を終了する
+    client.stop();                              // TLS(SSL)通信の停止
     file.close();                               // ファイルを閉じる
     free(psram);                                // 疑似SRAMを開放する
 }
@@ -140,18 +146,26 @@ void loop() {                                   // 繰り返し実行する関�
     delay(100);                                 // 待ち時間0.1秒
     int btn = M5.BtnA.wasPressed() + 2 * M5.BtnB.wasPressed()\
                                    + 3 * M5.BtnC.wasPressed();
-    if(btn > 0 && btn <= 2){
+    if(btn > 0 && btn <= 3){
+        M5.Spk.DingDong();                      // Play the DingDong sound.
         file_num = btn - 1; 
+        switch(btn){
+            case 1:
+                clock_en = true;
+                clock_showText("Get JPEG");
+                break;
+            case 2:
+                clock_en = true;
+                clock_showText("Get BMP");
+                break;
+            case 3:
+            default:
+                clock_en = false;
+                M5.Lcd.fillRect(120,150,80,15,TFT_WHITE);
+                M5.Lcd.drawCentreString("Clock OFF",160,150,2);
+        }
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_GET;
-        clock_showText("Pressed "+String(btn)); // HTTPサーバ接続試行中を表示
-    }
-    if(btn == 3){
-        clock_en != clock_en;
-        if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
-        runApp |= RUN_GET;
-        char on_off[2][4]={"ON","OFF"};
-        clock_showText("Clock "+String(on_off[clock_en]));
     }
     
     // NTPサーバから時刻情報を取得する
@@ -160,7 +174,7 @@ void loop() {                                   // 繰り返し実行する関�
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_NTP;
         runApp |= RUN_GET;
-        clock_showText("to NTP");               // NTP接続試行中を表示
+        if(clock_en)clock_showText("to NTP");   // NTP接続試行中を表示
     }
     
     // BMPサーバから画像データを取得する
@@ -168,11 +182,11 @@ void loop() {                                   // 繰り返し実行する関�
         bmp_ms = millis();                      // 現在のマイコン時刻を保持
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_GET;
-        clock_showText("to HtServ");            // HTTPサーバ接続試行中を表示
+        if(clock_en)clock_showText("to HtServ"); // HTTPサーバ接続試行中を表示
     }
 
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
-    clock_showText("Connected");                // 接続完了表示
+    if(clock_en) clock_showText("Connected");   // 接続完了表示
     if(runApp & RUN_GET){
         httpget();
         runApp &= ~RUN_GET;
