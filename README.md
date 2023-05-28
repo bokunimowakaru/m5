@@ -124,7 +124,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 ![デジタル・サイネージ](/pictures/ex17_sinage.png)
 
-HTTPサーバは、Raspberry Piなどで動作するHTTPサーバ(toolsフォルダ内に保存したsignage_serv.py)を用います。  
+コンテンツの配信には、Raspberry Piなどで動作するHTTPサーバ(toolsフォルダ内に保存したsignage_serv.py)を用います。  
 このように役割を分担することで、Raspberry Pi側の様々なコンテンツをM5Stack上で表示できるようになります。
 本例のsignage_serv.pyでは、M5Stackからのアクセスを受けるたびに、異なる画像を配信し、スライドショーのように表示することが出来ます。  
 さらに、Raspberry Pi側のプログラムで配信するコンテンツを動的に作ることも可能です。
