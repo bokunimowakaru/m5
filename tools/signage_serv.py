@@ -16,6 +16,7 @@
 
 from wsgiref.simple_server import make_server
 from urllib import parse
+from os.path import isfile
 
 Res_Html = [('Content-type', 'text/html; charset=utf-8')]
 Res_Text = [('Content-type', 'text/plain; charset=utf-8')]
@@ -32,6 +33,7 @@ disp_y = 240
 
 def wsgi_app(environ, start_response):              # HTTPアクセス受信時の処理
     path  = environ.get('PATH_INFO')                # リクエスト先のパスを代入
+    # print(path)
     query = parse.parse_qsl(environ.get('QUERY_STRING'))  # クエリを代入
     try:
         for (key, val) in query:
@@ -79,7 +81,9 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
         head += Res_Jpeg                            # JPG形式での応答を設定
 
     if path == '/mono.bmp':                         # リクエスト先がmono.bmp
-        if bmp_page == 0:
+        if isfile('html/out.bmp'):
+            fp = open('html/out.bmp', 'rb')
+        elif bmp_page == 0:
             fp = open('html/mono.bmp', 'rb')
         else:
             fp = open('html/mono' + format(bmp_page,'#02d') + '.bmp', 'rb')
@@ -98,7 +102,7 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
 
     if res is not None:                             # 変数res
         head.append( ('Content-Length',str(len(res))) )  # コンテンツ長
-        print(head)
+        # print(head)
         start_response('200 OK', head)              # 応答を設定
         return [res]                                # 応答メッセージを返却
     else:
