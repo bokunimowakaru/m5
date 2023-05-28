@@ -122,7 +122,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 定期的にHTTPサーバから画像を取得し、LCDに表示します。  
 左ボタンでJPEG画像、中央ボタンでBMP画像、右ボタンで時計表示なしのBMP画像を表示します。  
 
-![実行画面ex17](/pictures/ex17_sinage_thumb.jpg)
+![デジタル・サイネージ](/pictures/ex17_sinage.png)
 
 HTTPサーバは、Raspberry Piなどで動作するHTTPサーバ(toolsフォルダ内に保存したsignage_serv.py)を用います。  
 このように役割を分担することで、Raspberry Pi側の様々なコンテンツをM5Stack上で表示できるようになります。
@@ -130,6 +130,8 @@ HTTPサーバは、Raspberry Piなどで動作するHTTPサーバ(toolsフォル
 さらに、Raspberry Pi側のプログラムで配信するコンテンツを動的に作ることも可能です。
 その場合も、M5Stack側はHTTPサーバから取得したJPEG画像やBMP画像を表示するだけなので、ソフトウェアの書き換え不要で、新しいコンテンツに対応することが出来ます。  
 ※現在、M5Stack CORE2版のみを公開しています。
+
+![実行画面ex17](/pictures/ex17_sinage_thumb.jpg)
 
 ## Arduino IDE 用の ESP32 開発環境のセットアップ
 
