@@ -49,6 +49,25 @@ Wi-Fiコンシェルジェ［カメラ担当］ex10_cam で製作したカメラ
 ex10_cam による撮影(通知)時と、Wi-Fi人感センサ ex06_pir が人体などの動きを検知した時に、写真を撮影し、photoフォルダに写真を保存します。
 
 -------------------------------------------------------------------------------
-by bokunimo.net(https://bokunimo.net/)
-- ブログ (https://bokuniomo.net/blog/)
-- M5Stackのブログ (https://bokunimo.net/blog/menu/m5stack/)
+by 国野 亘 Wataru KUNINO  
+
+- ウェブサイト bokunimo.net [https://bokunimo.net/](https://bokunimo.net/)
+- ブログ [https://bokuniomo.net/blog/](https://bokuniomo.net/blog/)
+- M5Stackのブログ [https://bokunimo.net/blog/menu/m5stack/](https://bokunimo.net/blog/menu/m5stack/)
+
+----------------------------------------------------------------
+
+## GitHub Pages  
+
+*  m5  
+  [https://git.bokunimo.com/m5/](https://git.bokunimo.com/m5/)  
+
+*  (This Document)  
+  [https://git.bokunimo.com/m5/tools/](https://git.bokunimo.com/m5/tools/)  
+
+----------------------------------------------------------------
+
+# git.bokunimo.com GitHub Pages site
+[http://git.bokunimo.com/](http://git.bokunimo.com/)  
+
+----------------------------------------------------------------
