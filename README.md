@@ -58,8 +58,9 @@ m5フォルダ内にある setWifiSSID.sh を使用すれば、一括で全プ�
 
 ![実行画面ex08](/pictures/ex08_thumb.gif)
 
-詳細説明（M5Stackでリモコン送信&受信）
+詳細説明（M5Stackでリモコン送信&受信）  
 [https://bokunimo.net/blog/esp/2685/](https://bokunimo.net/blog/esp/2685/)  
+
 M5Stack with IR Remote Unit receives infrared signal or transmits infrared signal from your PCs in the LAN.
 
 ### 音声合成 ex09_talk
@@ -68,7 +69,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 ![実行画面ex09](/pictures/ex09_thumb.gif)
 
-詳細説明（M5Stackで音声出力）
+詳細説明（M5Stackで音声出力）  
 [https://bokunimo.net/blog/esp/2708/](https://bokunimo.net/blog/esp/2708/)  
 
 ### カメラ ex10_cam
@@ -77,7 +78,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 ![実行画面ex10](/pictures/ex10_thumb.gif)
 
-詳細説明（M5Stackで防犯カメラ）
+詳細説明（M5Stackで防犯カメラ）  
 [https://bokunimo.net/blog/esp/2722/](https://bokunimo.net/blog/esp/2722/)  
 
 ## 応用編
@@ -105,7 +106,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 ![実行画面ex15](/pictures/ex15_clock_thumb_2.png)
 
-詳細説明（M5StackでLINEにアラーム通知するIoT時計）
+詳細説明（M5StackでLINEにアラーム通知するIoT時計）  
 [https://bokunimo.net/blog/esp/2773/](https://bokunimo.net/blog/esp/2773/)  
 
 ### 天気予報情報表示 ex16_weather
@@ -114,7 +115,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 なお、本ソフトを利用した M5Stack を不特定多数の人が見れる用途で使用すると、気象業務に該当し、法律違反となる場合があります（ソースコード内の参考情報を参照）。  
 ![実行画面ex16](/pictures/ex16_weather_thumb.png)
 
-詳細説明（M5Stackで天気アイコン表示）
+詳細説明（M5Stackで天気アイコン表示）  
 [https://bokunimo.net/blog/esp/3426/](https://bokunimo.net/blog/esp/3426/)  
 
 ### デジタル・サイネージ for M5Stack ex17_signage
@@ -129,7 +130,12 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 本例のsignage_serv.pyでは、M5Stackからのアクセスを受けるたびに、異なる画像を配信し、スライドショーのように表示することが出来ます。  
 さらに、Raspberry Pi側のプログラムで配信するコンテンツを動的に作ることも可能です。
 その場合も、M5Stack側はHTTPサーバから取得したJPEG画像やBMP画像を表示するだけなので、ソフトウェアの書き換え不要で、新しいコンテンツに対応することが出来ます。  
-※現在、M5Stack CORE2版のみを公開しています。
+
+※現在、M5Stack CORE2版のみを公開しています。  
+※M5StackのLCDは僅か2インチで、輝度も室内向けです。屋外で掲示板として使用することは出来ません。  
+
+詳細説明（M5Stackで My デジタル・サイネージの実験）  
+[https://bokunimo.net/blog/esp/3677/](https://bokunimo.net/blog/esp/3677/)  
 
 ![実行画面ex17](/pictures/ex17_sinage_thumb.jpg)
 
