@@ -32,7 +32,7 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 |tools      |関連ツール                                            |
 |LICENSE    |ライセンス内容(MITライセンス:要権利表示・無保証)      |
 
-### 基礎編
+## 基礎編
 
 |フォルダ名   |内容                                                                               |
 |-------------|-----------------------------------------------------------------------------------|
@@ -52,7 +52,7 @@ Wi-Fiを使用するサンプル・プログラムについては、実行前に
 お持ちの無線アクセスポイントに合わせて設定してください。  
 m5フォルダ内にある setWifiSSID.sh を使用すれば、一括で全プログラムのSSIDとパスワードを変更できます。  
 
-#### 赤外線リモコン ex08_ir_out
+### 赤外線リモコン ex08_ir_out
 
 下図は、赤外線リモコン信号を受信したり、LAN内の別の端末のブラウザからの遠隔制御でリモコン信号を送信することが出来る、ex08_ir_outの画面の一例です。  
 
@@ -62,7 +62,7 @@ m5フォルダ内にある setWifiSSID.sh を使用すれば、一括で全プ�
 [https://bokunimo.net/blog/esp/2685/](https://bokunimo.net/blog/esp/2685/)  
 M5Stack with IR Remote Unit receives infrared signal or transmits infrared signal from your PCs in the LAN.
 
-#### 音声合成 ex09_talk
+### 音声合成 ex09_talk
 
 下図は、音声合成 AquesTalk Pico LSI ATP3012 で音声を発話する ex09_talk の動作例です。LAN内の端末のブラウザからローマ字ベースの音声コードを入力して、しゃべらせることも可能です。  
 
@@ -71,7 +71,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 詳細説明（M5Stackで音声出力）
 [https://bokunimo.net/blog/esp/2708/](https://bokunimo.net/blog/esp/2708/)  
 
-#### カメラ ex10_cam
+### カメラ ex10_cam
 
 下図は、M5Stackに接続したカメラ (SeeedStudio Grove Serial Camera Kit)を、LAN内の端末のブラウザから撮影し、液晶画面とブラウザに表示するプログラム ex10_cam の実行例です。  
 
@@ -80,7 +80,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 詳細説明（M5Stackで防犯カメラ）
 [https://bokunimo.net/blog/esp/2722/](https://bokunimo.net/blog/esp/2722/)  
 
-### 応用編
+## 応用編
 
 |フォルダ名   |内容                                                                               |
 |-------------|-----------------------------------------------------------------------------------|
@@ -94,7 +94,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 ![実行画面ex11～14](/pictures/ex11_14_thumb.gif)
 
-#### 時計 ex15_clock
+### 時計 ex15_clock
 
 アナログ時計風の画面を表示するインターネット対応の時計です。アラーム時刻になるとLINEに通知し、スマホなどでアラームが鳴ったことを確認することが出来ます。  
 下図は、左から順に、(1)起動時、(2)インターネット時刻取得後、(3)アラーム設定画面、(4)アラーム待機画面です。  
@@ -108,7 +108,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 詳細説明（M5StackでLINEにアラーム通知するIoT時計）
 [https://bokunimo.net/blog/esp/2773/](https://bokunimo.net/blog/esp/2773/)  
 
-#### 天気予報情報表示 ex16_weather
+### 天気予報情報表示 ex16_weather
 
 天気予報情報を表示する IoT TeleTele坊主 for M5Stackです。1時間ごとに気象庁の天気予報情報サイトにアクセスし、アナログ時計風のM5Stackの画面上にアイコン表示します。降水確率や予想気温も表示します。  
 なお、本ソフトを利用した M5Stack を不特定多数の人が見れる用途で使用すると、気象業務に該当し、法律違反となる場合があります（ソースコード内の参考情報を参照）。  
@@ -117,7 +117,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 詳細説明（M5Stackで天気アイコン表示）
 [https://bokunimo.net/blog/esp/3426/](https://bokunimo.net/blog/esp/3426/)  
 
-#### デジタル・サイネージ for M5Stack ex17_signage
+### デジタル・サイネージ for M5Stack ex17_signage
 
 定期的にHTTPサーバから画像を取得し、LCDに表示します。  
 左ボタンでJPEG画像、中央ボタンでBMP画像、右ボタンで時計表示なしのBMP画像を表示します。  
