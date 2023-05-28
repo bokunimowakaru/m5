@@ -52,7 +52,7 @@ ex10_cam による撮影(通知)時と、Wi-Fi人感センサ ex06_pir が人体
 by 国野 亘 Wataru KUNINO  
 
 - ウェブサイト bokunimo.net [https://bokunimo.net/](https://bokunimo.net/)
-- ブログ [https://bokuniomo.net/blog/](https://bokuniomo.net/blog/)
+- ブログ [https://bokunimo.net/blog/](https://bokunimo.net/blog/)
 - M5Stackのブログ [https://bokunimo.net/blog/menu/m5stack/](https://bokunimo.net/blog/menu/m5stack/)
 
 ----------------------------------------------------------------
