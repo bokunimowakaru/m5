@@ -131,7 +131,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 さらに、Raspberry Pi側のプログラムで配信するコンテンツを動的に作ることも可能です。
 その場合も、M5Stack側はHTTPサーバから取得したJPEG画像やBMP画像を表示するだけなので、ソフトウェアの書き換え不要で、新しいコンテンツに対応することが出来ます。  
 
-※現在、M5Stack CORE2版のみを公開しています。  
+※M5Stack CORE2用はアナログ時計風の表示、CORE用はテキスト文字で日時を表示します。  
 ※M5StackのLCDは僅か2インチで、輝度も室内向けです。屋外で掲示板として使用することは出来ません。  
 
 詳細説明（M5Stackで My デジタル・サイネージの実験）  
