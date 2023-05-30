@@ -1,10 +1,10 @@
 /*******************************************************************************
-Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2 アナログ時計版
+Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core デジタル時計 Basic版
 
 ・定期的(1分ごと)にHTTPサーバから画像を取得し、LCDに表示します。
 ・また、NTPサーバから時刻情報を取得し、時計を表示します。
 
-    使用機材(例)：M5Stack Core2、Raspberry Pi、インターネット接続環境
+    使用機材(例)：M5Stack Core、Raspberry Pi、インターネット接続環境
 
 【機能】
 ・インターネット上のNTPサーバから時刻を自動取得します。
@@ -20,8 +20,8 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2 アナログ
 ・送信する画像はtools内のhtmlフォルダに保存してあります。
 
 【操作方法】
-・左ボタンを押すと、JPEG画像を取得して時計とともに表示します。
-・中央ボタンで、2値BMP画像を取得して時計とともに表示します。
+・左ボタンを押すと、JPEG画像を取得して時刻情報とともに表示します。
+・中央ボタンで、2値BMP画像を取得して時刻情報とともに表示します。
 ・右ボタンで、2値BMP画像を取得し、コントラストを高めて表示します。
 
 【参考文献】
@@ -34,7 +34,7 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2 アナログ
                                           Copyright (c) 2023 Wataru KUNINO
 *******************************************************************************/
 
-#include <M5Core2.h>                            // M5Stack用ライブラリの組み込み
+#include <M5Stack.h>                            // M5Stack用ライブラリの組み込み
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <WiFiClientSecure.h>                   // TLS(SSL)通信用ライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
@@ -44,8 +44,7 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2 アナログ
 #define PASS "password"                         // パスワード
 #define BMP_SERVER "http://192.168.1.2:8080/"   // LAN上のコンテンツ・サーバのURL
 #define BMP_SERVER "https://raw.githubusercontent.com/bokunimowakaru/m5/master/tools/html/"
-#define BMP_INTERVAL 1 * 60 * 1000              // コンテンツ取得間隔 1分
-#define BMP_PSRAM_SIZE 1048576                  // 1MBの疑似SRAMを確保
+#define BMP_PSRAM_SIZE 32768                    // BMPファイルの最大サイズ32KB
 #define NTP_SERVER "ntp.nict.jp"                // NTPサーバのURL
 #define NTP_PORT 8888                           // NTP待ち受けポート
 #define NTP_INTERVAL 3 * 3600 * 1000            // 3時間
@@ -57,20 +56,17 @@ unsigned long TIME = 0;                         // 時計表示用の基準時�
 unsigned long TIME_ntp = 0;                     // NTPで取得したときの時刻(秒)
 unsigned long TIME_ms = 0;                      // NTPに接続したマイコン時刻(ms)
 unsigned long time_ms = - NTP_INTERVAL;         // Wi-FiをONしたマイコン時刻(ms)
-unsigned long bmp_ms = - BMP_INTERVAL;          // 画像取得用 Wi-Fi ON 時刻(ms)
-String date_S = "1970/01/01";                   // 日付を保持する文字列変数
+String date_S = "1970/01/01,00:00";             // 日付を保持する文字列変数
 byte runApp = 0;                                // ネット機能 1:NTP, 2:LINE
     #define RUN_NTP   1     // NTP実行中
     #define RUN_GET   2     // HTTP GET実行中
 
 void httpget(){                                 // コンテンツ(画像)を取得する
-    byte *psram = NULL;                         // 疑似SRAM用
-    if(psramInit()){
-        psram = (byte *) ps_malloc(BMP_PSRAM_SIZE); // 1MBの疑似SRAMを確保
-    }
-    if(!psram){                                 // 確保できなかった場合
-        Serial.printf("ERROR: PSRAM\n");
-        return;                                 // PSRAMを確保できなければ戻る
+    File file;                                  // SRAMが無かった時のFLASH用
+    file = SPIFFS.open("/tmp","w");             // SPIFFSを使用
+    if(file==0){
+        Serial.printf("ERROR: SPIFFS\n");
+        return;                                 // ファイルを開けれなければ戻る
     }
     WiFiClientSecure client;                    // TLS/TCP/IP接続部の実体を生成
     client.setInsecure(); // 証明書を確認しない // client.setCACert(証明書); 
@@ -84,8 +80,8 @@ void httpget(){                                 // コンテンツ(画像)を取
         );
         return;
     }
-
-    byte buf[1024];                         // 1Kバイトの受信バッファ作成
+        
+    byte buf[1024];                             // 1Kバイトの受信バッファ作成
     int len = 0;
     WiFiClient *stream = http.getStreamPtr();
     int read_n = stream->available();
@@ -93,7 +89,7 @@ void httpget(){                                 // コンテンツ(画像)を取
         if(read_n > 1024) read_n = 1024; else delay(100);
         if(len + read_n > BMP_PSRAM_SIZE) read_n = BMP_PSRAM_SIZE - len;
         stream->readBytes(buf, read_n);
-        memcpy(psram+len,buf,read_n); 
+        file.write(buf,read_n);
         len += read_n;
         read_n = stream->available();
         // Serial.printf("len=%d, read_n=%d\n",len,read_n);
@@ -101,17 +97,22 @@ void httpget(){                                 // コンテンツ(画像)を取
     Serial.printf("Loaded %d Bytes\n",len);
     http.end();                                 // HTTP通信を終了する
     client.stop();                              // TLS(SSL)通信の停止
+    file.close();                               // ファイルを閉じる
     
     // 取得したコンテンツの表示
     if(files[file_num].endsWith(".jpg")){
-        M5.Lcd.drawJpg(psram, len);
+        M5.Lcd.drawJpgFile(SPIFFS, "/tmp",0,0);
     }else if(files[file_num].endsWith(".bmp")){
-        drawMonoBitmap(psram, 320, 240,clock_en ? 128 : 255);
+        drawMonoBitmapFile("/tmp",clock_en ? 128 : 255);
     }
     
     // 時計表示
-    if(clock_en) clock_init(-1);            // 壁紙を維持して時計を再描画
-    free(psram);                                // 疑似SRAMを開放する
+    if(clock_en){
+        M5.Lcd.setTextColor(TFT_BLACK);
+        M5.Lcd.drawCentreString(date_S.substring(0,10),160,80,4);
+        M5.Lcd.drawCentreString(date_S.substring(11,16),160,160,4);
+    }
+    return;                                     // ファイルを開けれなければ戻る
 }
 
 void ntp(){                                     // NTPで時刻を取得する
@@ -123,9 +124,11 @@ void ntp(){                                     // NTPで時刻を取得する
 void setup(){                                   // 一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
     M5.Lcd.setBrightness(100);                  // LCD輝度を100に
-    clock_init();                               // 時計用ライブラリの起動
-    M5.Spk.begin();                             // Initialize the speaker.
-    M5.Spk.DingDong();                          // Play the DingDong sound.
+    if(!SPIFFS.begin()){                        // SDカード失敗時に SPIFFS開始
+        M5.Lcd.println("Formating FS");         // SPIFFS未フォーマット時の表示
+        SPIFFS.format();                        // ファイル全消去
+        M5.Lcd.println( SPIFFS.begin() ? "OK" : "ERROR"); delay(3000);
+    }
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
 }
 
@@ -133,36 +136,33 @@ void loop() {                                   // 繰り返し実行する関�
     unsigned long time = TIME + (millis() - TIME_ms)/1000; // 表示する時刻
     unsigned long t_ms = (TIME % 43200)*1000 + (millis() - TIME_ms);
     t_ms %= 43200000;
-    if(clock_en) clock_Needle(t_ms);            // 12時間制で時計の針を表示する
 
     String time_S = time2str(time);             // 現在の日時を文字列に変換
-    if(time_S.substring(0,10) != date_S){       // 日付が変化した時
-        date_S = time_S.substring(0,10);        // date_Sを取得した日付に更新
-        clock_showText(date_S);                 // date_Sの日付を表示
+    if(time_S.substring(0,16) != date_S){       // 日時が変化した時
+        date_S = time_S.substring(0,16);        // date_Sを取得した日付に更新
+        if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
+        runApp |= RUN_GET;
     }
     
-    // ボタン操作時にサーバから画像を取得
     M5.update();                                // ボタン情報の取得
     delay(100);                                 // 待ち時間0.1秒
     int btn = M5.BtnA.wasPressed() + 2 * M5.BtnB.wasPressed()\
                                    + 3 * M5.BtnC.wasPressed();
     if(btn > 0 && btn <= 3){
-        M5.Spk.DingDong();                      // Play the DingDong sound.
         file_num = btn - 1; 
         switch(btn){
             case 1:
                 clock_en = true;
-                clock_showText("Get JPEG");
+                M5.Lcd.drawCentreString("Get JPEG",160,120,2);
                 break;
             case 2:
                 clock_en = true;
-                clock_showText("Get BMP");
+                M5.Lcd.drawCentreString("Get BMP",160,120,2);
                 break;
             case 3:
             default:
                 clock_en = false;
-                M5.Lcd.fillRect(120,150,80,15,TFT_WHITE);
-                M5.Lcd.drawCentreString("Clock OFF",160,150,2);
+                M5.Lcd.drawCentreString("Clock OFF",160,120,2);
         }
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_GET;
@@ -174,19 +174,11 @@ void loop() {                                   // 繰り返し実行する関�
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_NTP;
         runApp |= RUN_GET;
-        if(clock_en)clock_showText("to NTP");   // NTP接続試行中を表示
+        M5.Lcd.drawCentreString("to NTP",160,120,2);
     }
     
-    // BMPサーバから画像データを取得する
-    if(millis() - bmp_ms > BMP_INTERVAL){       // 画像取得時刻になったとき
-        bmp_ms = millis();                      // 現在のマイコン時刻を保持
-        if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
-        runApp |= RUN_GET;
-        if(clock_en)clock_showText("to HtServ"); // HTTPサーバ接続試行中を表示
-    }
-
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
-    if(clock_en) clock_showText("Connected");   // 接続完了表示
+        M5.Lcd.drawCentreString("Connected",160,132,2); // 接続完了表示
     if(runApp & RUN_GET){
         httpget();
         runApp &= ~RUN_GET;
@@ -235,19 +227,3 @@ https://docs.m5stack.com/en/api/core2/system
 【参考文献】Example 15 : Wi-Fi NTP時計 for M5Stack Core2：
 https://github.com/bokunimowakaru/m5/tree/master/core2/ex15_clock
 *******************************************************************************/
-
-/*******************************************************************************
-【参考文献】speak
-********************************************************************************
-*******************************************************************************
-* Copyright (c) 2021 by M5Stack
-*                  Equipped with M5Core2 sample source code
-*                          配套  M5Core2 示例源代码
-* Visit for more information: https://docs.m5stack.com/en/core/core2
-* 获取更多资料请访问: https://docs.m5stack.com/zh_CN/core/core2
-*
-* Describe: Speaker example.  喇叭示例
-* Date: 2022/7/26
-*******************************************************************************
-*/
- 
