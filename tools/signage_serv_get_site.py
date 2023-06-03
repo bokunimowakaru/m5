@@ -4,19 +4,35 @@
 ################################################################################
 # signage_serv.py
 # ex17_signage デジタル・サイネージ for M5Stack にコンテンツを配信するHTTPサーバ
-# ・一般ユーザ(piユーザなど)で使用するとポート番号8080でHTTPサーバが起動します。
-# ・インターネット・ブラウザなどでアクセスするとコンテンツを応答します。
-# ・サーバ上で動作確認する場合は http://127.0.0.1:8080/ にアクセスしてください。
 #
 #                                          Copyright (c) 2019-2023 Wataru KUNINO
+################################################################################
+# 参考文献1: Raspberry Pi でブラウザを自動操作してみる 【Python】, いろはぷらっと
+# https://irohaplat.com/raspberry-pi-selenium-installation/
+################################################################################
+# 参考文献2: Webサイトのスクリーンショットを自動化する方法, Kazuki Yonemoto
+# https://zenn.dev/kazuki_tam/articles/6c3cf0729c5b847cc2a4
+################################################################################
+# 参考文献3: Selenium 公式サイト
+# https://www.selenium.dev/
 ################################################################################
 # 参考文献(引用元)
 # https://github.com/bokunimowakaru/iot/blob/master/server/web_serv.py
 ################################################################################
 
-from wsgiref.simple_server import make_server
+url = 'https://ambidata.io/bd/board.html?id=128'    # コンテンツのURL例(Ambient)
+# url = 'https://www.nict.go.jp/JST/JST5.html'      # コンテンツのURL例(NICT)
+
+from PIL import Image
+import io
+
+from selenium import webdriver                      # Selenium インポート(文献2)
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+from wsgiref.simple_server import make_server       # Webサーバ インポート
 from urllib import parse
-from os.path import isfile
 
 Res_Html = [('Content-type', 'text/html; charset=utf-8')]
 Res_Text = [('Content-type', 'text/plain; charset=utf-8')]
@@ -24,15 +40,23 @@ Res_Png  = [('Content-type', 'image/png')]
 Res_Jpeg = [('Content-type', 'image/jpeg')]
 Res_Bmp  = [('Content-type', 'image/bmp')]
 
-jpg_page = 0    # JPEG画像_ページ番号, 0はphoto.jpg
-jpg_page_n = 3  # JPEG画像_最大ページ番号(photo01.jpg～photo03.jpg)
-bmp_page = 0    # BMP画像_ページ番号, 0はmono.bmp
-bmp_page_n = 3  # BMP画像_最大ページ番号(mono01.bmp～mono03.bmp)
+windowSizeWidth = 640                               # ブラウザのショット幅
+windowSizeHeight = 480                              # ブラウザのショット高さ指定
+disp_x = 320                                        # 配信用のコンテンツ幅指定
+disp_y = 240                                        # 配信用のコンテンツ高さ指定
 
-disp_x = 320
-disp_y = 240
+options = webdriver.ChromeOptions()                 # Chromeドライバ設定
+options.add_argument('--headless=new')              # ヘッドレスモード(文献2)
+options.add_argument('--no-sandbox')
+options.add_argument('--disable-dev-shm-usage')
+driver = webdriver.Chrome('chromedriver',options=options)
+driver.implicitly_wait(10)
+driver.get(url)                                     # サイトURL取得
+WebDriverWait(driver, 15).until(EC.presence_of_all_elements_located)
+driver.set_window_size(windowSizeWidth, windowSizeHeight)
 
 def wsgi_app(environ, start_response):              # HTTPアクセス受信時の処理
+    global disp_x, disp_y
     path  = environ.get('PATH_INFO')                # リクエスト先のパスを代入
     # print(path)
     query = parse.parse_qsl(environ.get('QUERY_STRING'))  # クエリを代入
@@ -49,51 +73,41 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
     head = []
     global jpg_page, jpg_page_n, bmp_page, bmp_page_n
 
-    if path == '/ok.txt':                           # リクエスト先がok.txtの時
-        res = 'OK\r\n'.encode()                     # 応答メッセージ作成
-        head += Res_Text                            # TXT形式での応答を設定
-
-    if path == '/ok.html':                          # リクエスト先がok.htmlの時
-        res = '<html><h3>OK</h3></html>'.encode()   # 応答メッセージ作成
-        head += Res_Html                            # HTML形式での応答を設定
-
     if path == '/image.png':                        # リクエスト先がimage.png
-        fp = open('html/image.png', 'rb')           # 画像ファイルを開く
+        '''
+        driver.save_screenshot('html/chrome.png')   # スクリーン格納(文献2)
+        fp = open('html/chrome.png', 'rb')          # 画像ファイルを開く
         res = fp.read()                             # 画像データを変数へ代入
         fp.close()                                  # ファイルを閉じる
+        '''
+        png = driver.get_screenshot_as_png()        # Chromeからキャプチャ
+        fs = io.BytesIO(png)                        # BytesIO に転送
+        res = fs.getvalue()                         # BytesIO からresに代入
         head += Res_Png                             # PNG形式での応答を設定
 
     if path == '/photo.jpg':                        # リクエスト先がphoto.jpg
-        if jpg_page == 0:
-            fp = open('html/photo.jpg', 'rb')
-        else:
-            fp = open('html/photo' + format(jpg_page,'#02d') + '.jpg', 'rb')
-        res = fp.read()                             # 画像データを変数へ代入
-        fp.close()                                  # ファイルを閉じる
-        head += Res_Jpeg                            # JPG形式での応答を設定
-        jpg_page += 1
-        if jpg_page > jpg_page_n:
-            jpg_page = 0
-
-    if path[0:7] == '/photo0' and path[-4:] == '.jpg': # リクエスト先がphoto0X.jpg
-        fp = open('html'+path, 'rb')                # 画像ファイルを開く
-        res = fp.read()                             # 画像データを変数へ代入
-        fp.close()                                  # ファイルを閉じる
+        png = driver.get_screenshot_as_png()        # Chromeからキャプチャ
+        fs = io.BytesIO(png)                        # BytesIO に転送
+        image = Image.open(fs)                      # PILのオブジェクトにロード
+        del fs                                      # 解放
+        fs = io.BytesIO()                           # 空のBytesIOを生成
+        image.resize((disp_x, disp_y)).convert('RGB').save(fs, format='JPEG')
+        img = image.resize((disp_x, disp_y)).convert('RGB')
+        print(img.format)
+        res = fs.getvalue()                         # resに代入 #↑JPEG変換
         head += Res_Jpeg                            # JPG形式での応答を設定
 
     if path == '/mono.bmp':                         # リクエスト先がmono.bmp
-        if isfile('html/out.bmp'):
-            fp = open('html/out.bmp', 'rb')
-        elif bmp_page == 0:
-            fp = open('html/mono.bmp', 'rb')
-        else:
-            fp = open('html/mono' + format(bmp_page,'#02d') + '.bmp', 'rb')
-        res = fp.read()                             # 画像データを変数へ代入
-        fp.close()                                  # ファイルを閉じる
+        png = driver.get_screenshot_as_png()        # Chromeからキャプチャ
+        fs = io.BytesIO(png)                        # BytesIO に転送
+        image = Image.open(fs)                      # PILのオブジェクトにロード
+        del fs                                      # 解放
+        fs = io.BytesIO()                           # 空のBytesIOを生成
+        image.resize((disp_x, disp_y)).convert('1').save(fs, format='BMP')
+        img = image.resize((disp_x, disp_y)).convert('1')
+        print(img.format)
+        res = fs.getvalue()                         # resに代入 #↑BMP変換
         head += Res_Bmp                             # BMP形式での応答を設定
-        bmp_page += 1
-        if bmp_page > bmp_page_n:
-            bmp_page = 0
 
     if path == '/' or path[0:7] == '/index.':       # リクエスト先がルート
         fp = open('html/index.html', 'r')           # HTMLファイルを開く
@@ -123,3 +137,4 @@ def main():                                         # メイン関数
 
 if __name__ == "__main__":                          # プログラム実行時に
     main()                                          # メイン関数を実行
+    driver.quit()                                   # ブラウザ稼働終了(文献2)
