@@ -92,8 +92,6 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
         del fs                                      # 解放
         fs = io.BytesIO()                           # 空のBytesIOを生成
         image.resize((disp_x, disp_y)).convert('RGB').save(fs, format='JPEG')
-        img = image.resize((disp_x, disp_y)).convert('RGB')
-        print(img.format)
         res = fs.getvalue()                         # resに代入 #↑JPEG変換
         head += Res_Jpeg                            # JPG形式での応答を設定
 
@@ -104,8 +102,6 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
         del fs                                      # 解放
         fs = io.BytesIO()                           # 空のBytesIOを生成
         image.resize((disp_x, disp_y)).convert('1').save(fs, format='BMP')
-        img = image.resize((disp_x, disp_y)).convert('1')
-        print(img.format)
         res = fs.getvalue()                         # resに代入 #↑BMP変換
         head += Res_Bmp                             # BMP形式での応答を設定
 
