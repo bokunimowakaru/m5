@@ -2,9 +2,15 @@
 # coding: utf-8
 
 ################################################################################
-# signage_serv.py
-# ex17_signage デジタル・サイネージ for M5Stack にコンテンツを配信するHTTPサーバ
+# signage_serv_get_site.py
+# ex17_signage_get_site デジタル・サイネージ for M5Stack にWebコンテンツを配信
 #
+# 実行方法：
+# $ ./signage_serv_get_site.py ⏎
+#
+# 詳細：
+# https://bokunimo.net/blog/esp/3698/
+
 #                                          Copyright (c) 2019-2023 Wataru KUNINO
 ################################################################################
 # 参考文献1: Raspberry Pi でブラウザを自動操作してみる 【Python】, いろはぷらっと
@@ -21,7 +27,11 @@
 ################################################################################
 
 url = 'https://ambidata.io/bd/board.html?id=128'    # コンテンツのURL例(Ambient)
-# url = 'https://www.nict.go.jp/JST/JST5.html'      # コンテンツのURL例(NICT)
+
+# コンテンツの例 (気象庁-大阪府の天気予報，NICT-日本標準時，bokunimo.net-ホーム)
+# url='https://www.jma.go.jp/bosai/forecast/#area_type=offices&area_code=270000'
+# url='https://www.nict.go.jp/JST/JST5.html'
+# url='https://bokunimo.net/'
 
 from PIL import Image
 import io
@@ -74,8 +84,8 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
     global jpg_page, jpg_page_n, bmp_page, bmp_page_n
 
     if path == '/image.png':                        # リクエスト先がimage.png
-        '''
         driver.save_screenshot('html/chrome.png')   # スクリーン格納(文献2)
+        '''
         fp = open('html/chrome.png', 'rb')          # 画像ファイルを開く
         res = fp.read()                             # 画像データを変数へ代入
         fp.close()                                  # ファイルを閉じる

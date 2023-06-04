@@ -1,13 +1,18 @@
 #!/bin/bash
 
 ################################################################################
-# signage_serv.py ニュース取得 拡張モジュール
+# signage_serv_get_news.py ニュース取得 拡張モジュール
 #
 # ex17_signage デジタル・サイネージ for M5Stack にコンテンツを配信するHTTPサーバ
 # signage_serv.py 用の拡張モジュールです。
 #
-# 実行方法
-# nohup ./signage_serv_get_news.sh &> /dev/null &
+# 実行方法：
+# $ cd ~/m5/tools ⏎
+# $ nohup ./signage_serv_get_news.sh &> /dev/null & ⏎
+# $ ./signage_serv.py ⏎
+#
+# 詳細：
+# https://bokunimo.net/blog/esp/3677/
 #
 #                                          Copyright (c) 2023 Wataru KUNINO
 ################################################################################
