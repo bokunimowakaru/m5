@@ -121,7 +121,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 ### デジタル・サイネージ for M5Stack ex17_signage
 
 定期的にHTTPサーバから画像を取得し、LCDに表示します。  
-左ボタンでJPEG画像、中央ボタンでBMP画像、右ボタンで時計表示なしのBMP画像を表示します。  
+左ボタンでJPEG画像表示、中央ボタンでBMP画像表示、右ボタンで時計表示の有無を切り替えます。  
 
 ![デジタル・サイネージ](/pictures/ex17_sinage.png)
 
