@@ -134,10 +134,16 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 ※M5Stack CORE2用はアナログ時計風の表示、CORE用はテキスト文字で日時を表示します。  
 ※M5StackのLCDは僅か2インチで、輝度も室内向けです。屋外で掲示板として使用することは出来ません。  
 
-詳細説明（M5Stackで My デジタル・サイネージの実験）  
+詳細説明1（M5Stackで My デジタル・サイネージの実験）  
 [https://bokunimo.net/blog/esp/3677/](https://bokunimo.net/blog/esp/3677/)  
 
-![実行画面ex17](/pictures/ex17_sinage_thumb.jpg)
+![実行画面ex17-1](/pictures/ex17_sinage_thumb.jpg)  
+
+詳細説明2（Webコンテンツを M5Stack に 配信する – Selenium）  
+[https://bokunimo.net/blog/esp/3698/](https://bokunimo.net/blog/esp/3698/)  
+
+![実行画面ex17-2](https://bokunimo.net/blog/wp-content/uploads/2023/06/chrome_sites.jpg)  
+
 
 ## Arduino IDE 用の ESP32 開発環境のセットアップ
 
