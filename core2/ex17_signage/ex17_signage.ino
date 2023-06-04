@@ -22,7 +22,7 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2 アナログ
 【操作方法】
 ・左ボタンを押すと、JPEG画像を取得して時計とともに表示します。
 ・中央ボタンで、2値BMP画像を取得して時計とともに表示します。
-・右ボタンで、2値BMP画像を取得し、コントラストを高めて表示します。
+・右ボタンで、時計表示のOFF/ON切り替えを行います。
 
 【参考文献】
 ・本ファイルの末尾に記載します。
@@ -50,7 +50,7 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core2 アナログ
 #define NTP_PORT 8888                           // NTP待ち受けポート
 #define NTP_INTERVAL 3 * 3600 * 1000            // 3時間
 
-String files[] = {"photo.jpg","mono.bmp","mono.bmp"}; // ファイル名
+String files[] = {"photo.jpg","mono.bmp"};      // ファイル名
 int file_num = 0;                               // ファイル番号
 boolean clock_en = true;                        // 時計表示
 unsigned long TIME = 0;                         // 時計表示用の基準時刻(秒)
@@ -69,31 +69,32 @@ void httpget(){                                 // コンテンツ(画像)を取
         psram = (byte *) ps_malloc(BMP_PSRAM_SIZE); // 1MBの疑似SRAMを確保
     }
     if(!psram){                                 // 確保できなかった場合
-        Serial.printf("ERROR: PSRAM\n");
+        disp_text("ERROR PSRAM");
         return;                                 // PSRAMを確保できなければ戻る
     }
     WiFiClientSecure client;                    // TLS/TCP/IP接続部の実体を生成
     client.setInsecure(); // 証明書を確認しない // client.setCACert(証明書); 
     HTTPClient http;                            // HTTPリクエスト用インスタンス
-    http.setConnectTimeout(5000);               // タイムアウトを5秒に設定する
+    http.setConnectTimeout(10000);              // タイムアウトを10秒に設定する
     http.begin(String(BMP_SERVER)+files[file_num]);  // HTTPリクエスト先を設定
-    if(http.GET() != 200 || http.getSize() <= 0){
+    int code = http.GET();
+    if(code != 200 || http.getSize() <= 0){
         Serial.println( \
-            "ERROR HTTP Code="+String(http.GET()) + \
+            "ERROR HTTP Code="+String(code) + \
             ", Size="+String(http.getSize()) \
         );
+        disp_text("HTTP "+String(code));
+        free(psram);                            // 疑似SRAMを開放する
         return;
     }
 
-    byte buf[1024];                         // 1Kバイトの受信バッファ作成
     int len = 0;
     WiFiClient *stream = http.getStreamPtr();
     int read_n = stream->available();
     while(stream && read_n > 0 && len < BMP_PSRAM_SIZE ){
         if(read_n > 1024) read_n = 1024; else delay(100);
         if(len + read_n > BMP_PSRAM_SIZE) read_n = BMP_PSRAM_SIZE - len;
-        stream->readBytes(buf, read_n);
-        memcpy(psram+len,buf,read_n); 
+        stream->readBytes(psram + len, read_n);
         len += read_n;
         read_n = stream->available();
         // Serial.printf("len=%d, read_n=%d\n",len,read_n);
@@ -110,7 +111,7 @@ void httpget(){                                 // コンテンツ(画像)を取
     }
     
     // 時計表示
-    if(clock_en) clock_init(-1);            // 壁紙を維持して時計を再描画
+    if(clock_en) clock_init(-1);                // 壁紙を維持して時計を再描画
     free(psram);                                // 疑似SRAMを開放する
 }
 
@@ -118,6 +119,11 @@ void ntp(){                                     // NTPで時刻を取得する
     TIME = getNtpTime(NTP_SERVER,NTP_PORT);     // NTPを用いて時刻を取得
     TIME_ntp = TIME;                            // NTP取得時刻を保持
     TIME_ms = millis();                         // NTPサーバ接続時刻を保持
+}
+
+void disp_text(String S){
+    M5.Lcd.fillRect(120,150,80,15,TFT_WHITE);
+    M5.Lcd.drawCentreString(S,160,150,2);
 }
 
 void setup(){                                   // 一度だけ実行する関数
@@ -143,30 +149,31 @@ void loop() {                                   // 繰り返し実行する関�
     
     // ボタン操作時にサーバから画像を取得
     M5.update();                                // ボタン情報の取得
-    delay(100);                                 // 待ち時間0.1秒
     int btn = M5.BtnA.wasPressed() + 2 * M5.BtnB.wasPressed()\
                                    + 3 * M5.BtnC.wasPressed();
     if(btn > 0 && btn <= 3){
+        M5.Axp.SetLDOEnable(3, 1);
         M5.Spk.DingDong();                      // Play the DingDong sound.
-        file_num = btn - 1; 
+        delay(100);
         switch(btn){
             case 1:
-                clock_en = true;
-                clock_showText("Get JPEG");
+                file_num = 0;
+                disp_text("Get JPEG");
                 break;
             case 2:
-                clock_en = true;
-                clock_showText("Get BMP");
+                file_num = 1;
+                disp_text("Get BMP");
                 break;
             case 3:
             default:
-                clock_en = false;
-                M5.Lcd.fillRect(120,150,80,15,TFT_WHITE);
-                M5.Lcd.drawCentreString("Clock OFF",160,150,2);
+                clock_en = !clock_en;
+                char off_on[2][4] = {"OFF","ON"};
+                disp_text("Clock "+String(off_on[clock_en]));
         }
+        M5.Axp.SetLDOEnable(3, 0);
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_GET;
-    }
+    }else delay(100);
     
     // NTPサーバから時刻情報を取得する
     if(millis() - time_ms > NTP_INTERVAL){      // NTP実行時刻になったとき
@@ -174,7 +181,7 @@ void loop() {                                   // 繰り返し実行する関�
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_NTP;
         runApp |= RUN_GET;
-        if(clock_en)clock_showText("to NTP");   // NTP接続試行中を表示
+        disp_text("to NTP");                    // NTP接続試行中を表示
     }
     
     // BMPサーバから画像データを取得する
@@ -182,18 +189,18 @@ void loop() {                                   // 繰り返し実行する関�
         bmp_ms = millis();                      // 現在のマイコン時刻を保持
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_GET;
-        if(clock_en)clock_showText("to HtServ"); // HTTPサーバ接続試行中を表示
+        disp_text("to HtServ");                 // HTTPサーバ接続試行中を表示
     }
 
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
-    if(clock_en) clock_showText("Connected");   // 接続完了表示
-    if(runApp & RUN_GET){
-        httpget();
-        runApp &= ~RUN_GET;
-    }
+    disp_text("Connected");                     // 接続完了表示
     if(runApp & RUN_NTP){
         ntp();
         runApp &= ~RUN_NTP;
+    }
+    if(runApp & RUN_GET){
+        httpget();
+        runApp &= ~RUN_GET;
     }
     if(!runApp){
         WiFi.disconnect();                      // Wi-Fiの切断

@@ -22,7 +22,7 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core デジタル�
 【操作方法】
 ・左ボタンを押すと、JPEG画像を取得して時刻情報とともに表示します。
 ・中央ボタンで、2値BMP画像を取得して時刻情報とともに表示します。
-・右ボタンで、2値BMP画像を取得し、コントラストを高めて表示します。
+・右ボタンで、時計表示のOFF/ON切り替えを行います。
 
 【参考文献】
 ・本ファイルの末尾に記載します。
@@ -49,7 +49,7 @@ Example 17 : Wi-Fi デジタル・サイネージ for M5Stack Core デジタル�
 #define NTP_PORT 8888                           // NTP待ち受けポート
 #define NTP_INTERVAL 3 * 3600 * 1000            // 3時間
 
-String files[] = {"photo.jpg","mono.bmp","mono.bmp"}; // ファイル名
+String files[] = {"photo.jpg","mono.bmp"};      // ファイル名
 int file_num = 0;                               // ファイル番号
 boolean clock_en = true;                        // 時計表示
 unsigned long TIME = 0;                         // 時計表示用の基準時刻(秒)
@@ -71,13 +71,15 @@ void httpget(){                                 // コンテンツ(画像)を取
     WiFiClientSecure client;                    // TLS/TCP/IP接続部の実体を生成
     client.setInsecure(); // 証明書を確認しない // client.setCACert(証明書); 
     HTTPClient http;                            // HTTPリクエスト用インスタンス
-    http.setConnectTimeout(5000);               // タイムアウトを5秒に設定する
+    http.setConnectTimeout(10000);              // タイムアウトを10秒に設定する
     http.begin(String(BMP_SERVER)+files[file_num]);  // HTTPリクエスト先を設定
-    if(http.GET() != 200 || http.getSize() <= 0){
+    int code = http.GET();
+    if(code != 200 || http.getSize() <= 0){
         Serial.println( \
-            "ERROR HTTP Code="+String(http.GET()) + \
+            "ERROR HTTP Code="+String(code) + \
             ", Size="+String(http.getSize()) \
         );
+        disp_text("HTTP "+String(code));
         return;
     }
         
@@ -121,6 +123,11 @@ void ntp(){                                     // NTPで時刻を取得する
     TIME_ms = millis();                         // NTPサーバ接続時刻を保持
 }
 
+void disp_text(String S){
+    M5.Lcd.fillRect(120,120,80,15,TFT_WHITE);
+    M5.Lcd.drawCentreString(S,160,120,2);
+}
+
 void setup(){                                   // 一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
     M5.Lcd.setBrightness(100);                  // LCD輝度を100に
@@ -145,28 +152,28 @@ void loop() {                                   // 繰り返し実行する関�
     }
     
     M5.update();                                // ボタン情報の取得
-    delay(100);                                 // 待ち時間0.1秒
     int btn = M5.BtnA.wasPressed() + 2 * M5.BtnB.wasPressed()\
                                    + 3 * M5.BtnC.wasPressed();
     if(btn > 0 && btn <= 3){
-        file_num = btn - 1; 
         switch(btn){
             case 1:
-                clock_en = true;
-                M5.Lcd.drawCentreString("Get JPEG",160,120,2);
+                file_num = 0;
+                disp_text("Get JPEG");
                 break;
             case 2:
-                clock_en = true;
-                M5.Lcd.drawCentreString("Get BMP",160,120,2);
+                file_num = 1;
+                disp_text("Get BMP");
                 break;
             case 3:
             default:
-                clock_en = false;
-                M5.Lcd.drawCentreString("Clock OFF",160,120,2);
+                clock_en = !clock_en;
+                char off_on[2][4] = {"OFF","ON"};
+                disp_text("Clock "+String(off_on[clock_en]));
         }
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_GET;
     }
+    delay(100);
     
     // NTPサーバから時刻情報を取得する
     if(millis() - time_ms > NTP_INTERVAL){      // NTP実行時刻になったとき
@@ -174,18 +181,18 @@ void loop() {                                   // 繰り返し実行する関�
         if(!runApp) WiFi.begin(SSID,PASS);      // 無線LANアクセスポイント接続
         runApp |= RUN_NTP;
         runApp |= RUN_GET;
-        M5.Lcd.drawCentreString("to NTP",160,120,2);
+        disp_text("to NTP");                    // NTP接続試行中を表示
     }
     
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
-        M5.Lcd.drawCentreString("Connected",160,132,2); // 接続完了表示
-    if(runApp & RUN_GET){
-        httpget();
-        runApp &= ~RUN_GET;
-    }
+    disp_text("Connected");                     // 接続完了表示
     if(runApp & RUN_NTP){
         ntp();
         runApp &= ~RUN_NTP;
+    }
+    if(runApp & RUN_GET){
+        httpget();
+        runApp &= ~RUN_GET;
     }
     if(!runApp){
         WiFi.disconnect();                      // Wi-Fiの切断
