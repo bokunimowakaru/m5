@@ -74,7 +74,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 より自然な音声をRaspberry Pi から本機へ配信する方法をブログとリポジトリaquestalkpi2pico で公開しています。  
 
-(ブログ) 日本語からAquesTalk Pico LSIに音声記号列を生成して送信  
+(ブログ) 音声記号列を生成して AquesTalk Pico LSI に送信  
 [https://bokunimo.net/blog/esp/1475/](https://bokunimo.net/blog/esp/1475/)  
 
 (リポジトリ) aquestalkpi2pico  
