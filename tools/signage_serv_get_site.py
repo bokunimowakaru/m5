@@ -52,8 +52,6 @@ Res_Bmp  = [('Content-type', 'image/bmp')]
 
 windowSizeWidth = 640                               # ブラウザのショット幅
 windowSizeHeight = 480                              # ブラウザのショット高さ指定
-disp_x = 320                                        # 配信用のコンテンツ幅指定
-disp_y = 240                                        # 配信用のコンテンツ高さ指定
 
 options = webdriver.ChromeOptions()                 # Chromeドライバ設定
 options.add_argument('--headless=new')              # ヘッドレスモード(文献2)
@@ -66,7 +64,8 @@ WebDriverWait(driver, 15).until(EC.presence_of_all_elements_located)
 driver.set_window_size(windowSizeWidth, windowSizeHeight)
 
 def wsgi_app(environ, start_response):              # HTTPアクセス受信時の処理
-    global disp_x, disp_y
+    disp_x = 320                                    # 配信用のコンテンツ幅指定
+    disp_y = 240                                    # 配信用のコンテンツ高さ指定
     path  = environ.get('PATH_INFO')                # リクエスト先のパスを代入
     # print(path)
     query = parse.parse_qsl(environ.get('QUERY_STRING'))  # クエリを代入

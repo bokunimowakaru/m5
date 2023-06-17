@@ -39,9 +39,6 @@ jpg_page_n = 3  # JPEG画像_最大ページ番号(photo01.jpg～photo03.jpg)
 bmp_page = 0    # BMP画像_ページ番号, 0はmono.bmp
 bmp_page_n = 3  # BMP画像_最大ページ番号(mono01.bmp～mono03.bmp)
 
-disp_x = 0      # 画像サイズ変換用 Width
-disp_y = 0      # 画像サイズ変換用 Height
-
 def resize(data,x,y,format='JPEG'):
     fp = io.BytesIO(data)                           # がぞプデータをBytesIO に
     image = Image.open(fp)                          # PILのオブジェクトにロード
@@ -54,7 +51,8 @@ def resize(data,x,y,format='JPEG'):
     return fp.getvalue()                            # BytesIOデータを応答
 
 def wsgi_app(environ, start_response):              # HTTPアクセス受信時の処理
-    global disp_x, disp_y
+    disp_x = 320                                    # 配信用のコンテンツ幅指定
+    disp_y = 240                                    # 配信用のコンテンツ高さ指定
     path  = environ.get('PATH_INFO')                # リクエスト先のパスを代入
     # print(path)
     query = parse.parse_qsl(environ.get('QUERY_STRING'))  # クエリを代入
