@@ -51,8 +51,8 @@ def resize(data,x,y,format='JPEG'):
     return fp.getvalue()                            # BytesIOデータを応答
 
 def wsgi_app(environ, start_response):              # HTTPアクセス受信時の処理
-    disp_x = 320                                    # 配信用のコンテンツ幅指定
-    disp_y = 240                                    # 配信用のコンテンツ高さ指定
+    disp_x = 0                                      # 配信用のコンテンツ幅指定
+    disp_y = 0                                      # 配信用のコンテンツ高さ指定
     path  = environ.get('PATH_INFO')                # リクエスト先のパスを代入
     # print(path)
     query = parse.parse_qsl(environ.get('QUERY_STRING'))  # クエリを代入
