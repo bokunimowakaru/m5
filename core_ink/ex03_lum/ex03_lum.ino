@@ -1,41 +1,15 @@
 /*******************************************************************************
-Example 5: ESP32 (IoTセンサ) Wi-Fi 温湿度計 SENSIRION製 SHT30/SHT31/SHT35 版
-                                                           for M5Stack CORE INK
+Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for M5Stack CORE INK
+・照度センサ から取得した照度値を送信するIoTセンサです。
 
-・デジタルI2Cインタフェース搭載センサから取得した温湿度を送信するIoTセンサです。
-
-    使用機材(例)：M5Stack CORE INK + ENV II/III HAT
-
-    ESP32 のI2Cポート:
-        SHT30/SHT31/SHT35 SDAポート G25
-        SHT30/SHT31/SHT35 SCLポート G26
+    使用機材(例)：M5Stack CORE INK + HAT-DLIGHT
         HAT 設定方法＝shtSetup(25,26);
 
     ENV II/III HAT の代わりに ENV II/III UNIT (Grove互換端子)を使用するときは
     ポート番号の変更が必要です。
         UNIT設定方法＝shtSetup(32,33);
-
-注意: ENV HATのバージョンによって搭載されているセンサが異なります。
-      このプログラムは SHT30 用です。初代 ENV HAT には対応していません。
-
-ENV HAT     DHT12 + BMP280 + BMM150
-ENV II HAT  SHT30 + BMP280 + BMM150
-ENV III HAT SHT30 + QMP6988
-*******************************************************************************
-【参考文献】
-Arduino IDE 開発環境イントール方法：
-https://docs.m5stack.com/en/quick_start/coreink/arduino
-
-M5Stack Arduino Library API 情報：
-https://docs.m5stack.com/en/api/coreink/system_api
-
-【引用コード】
-https://github.com/bokunimowakaru/esp/tree/master/2_example/example09_hum_sht31
-https://github.com/bokunimowakaru/esp/tree/master/2_example/example41_hum_sht31
-https://github.com/bokunimowakaru/m5s/tree/master/example04d_temp_hum_sht
-https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex05_hum
-
-                                          Copyright (c) 2016-2023 Wataru KUNINO
+    
+                                          Copyright (c) 2021-2023 Wataru KUNINO
 *******************************************************************************/
 
 #include <M5CoreInk.h>                          // M5Stack用ライブラリ組み込み
@@ -44,17 +18,16 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex05_hum
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
 // #include "esp_sleep.h"                       // ESP32用Deep Sleep ライブラリ
 
-#define SSID "1234ABCD"                         // 無線LANアクセスポイントのSSID
+#define SSID "1234ABCD"                         // 無線LANアクセスポイントSSID
 #define PASS "password"                         // パスワード
 #define PORT 1024                               // 送信のポート番号
 #define SLEEP_P 30*1000000ul                    // スリープ時間 30秒(uint32_t)
-#define DEVICE "humid_5,"                       // デバイス名(5字+"_"+番号+",")
+#define DEVICE "illum_5,"                       // デバイス名(5字+"_"+番号+",")
 
 /******************************************************************************
  Ambient 設定
  ******************************************************************************
  ※Ambientのアカウント登録と、チャネルID、ライトキーの取得が必要です。
-
     1. https://ambidata.io/ へアクセス
     2. 右上の[ユーザ登録(無料)]ボタンでメールアドレス、パスワードを設定して
        アカウントを登録
@@ -75,49 +48,7 @@ https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex05_hum
  *****************************************************************************/
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
-Ink_Sprite InkPageSprite(&M5.M5Ink);            // M5Inkインスタンス作成
-int eInk_x = 0;                                 // E-Ink表示用のX座標
-int eInk_y = 0;                                 // E-Ink表示用のY座標
-
-void eInk_println(){                            // E-Inkの改行処理
-    eInk_x = 0;                                 // (改行処理)X座標を左端へ
-    eInk_y += 16;                               // (改行処理)Y座標を下の行へ
-    if(eInk_y >= 200) eInk_y = 200 - 16;        // 最下段を超えた時に最下段へ
-}
-
-void eInk_print(String text){                   // E-Inkに文字列を表示する
-    char c[2];
-    InkPageSprite.creatSprite(0,0,200,200);     // 画像用バッファの作成
-    for(int i=0; i < text.length(); i++){       // 文字数分の繰り返し処理
-        text.substring(i).toCharArray(c, 2);    // 1文字+終端の取り出し
-        if(c[0] < 0x20 || c[0] >= 0x7f) continue;   // 表示不可文字の処理を排除
-        InkPageSprite.drawChar(eInk_x,eInk_y,c[0]); // バッファに文字を描画
-        eInk_x += 8;                            // 座標1文字分
-        if(eInk_x >= 200){                      // X座標が右端を超えた時
-            eInk_println();                     // 改行処理
-        }
-    }
-    InkPageSprite.pushSprite();                 // push the sprite.
-}
-
-void eInk_println(uint32_t ip){                 // IPアドレスを表示する
-    char s[16];
-    sprintf(s,"%d.%d.%d.%d",ip&255,(ip>>8)&255,(ip>>16)&255,(ip>>24)&255);
-    eInk_print(String(s));                      // eInk_printで文字列を表示
-    eInk_println();                             // 改行
-}
-
-
-void eInk_println(String text){                 // E-Inkに文字列を表示する
-    eInk_print(text);                           // eInk_printで文字列を表示
-    eInk_x = 0;                                 // (改行処理)X座標を左端へ
-    eInk_y += 16;                               // (改行処理)Y座標を下の行へ
-    if(eInk_y >= 200) eInk_y = 200 - 16;        // 最下段を超えた時に最下段へ
-}
-
 int batt_mv(){                                  // 電池電圧確認
-    // 　　参考文献 M5 https://docs.m5stack.com/en/core/coreink
-    // 　　R41 = 20K, R42 = 5.1K, ADC=GPIO35,   [BAT]--[R41]--*--[R42]--GND
     int PIN_AIN = 35;                           // 電池電圧取得用のADCポート
     float adc;                                  // ADC値の代入用
     pinMode(PIN_AIN, ANALOG);                   // GPIO35をアナログ入力に
@@ -128,11 +59,9 @@ int batt_mv(){                                  // 電池電圧確認
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    M5.M5Ink.isInit();                          // E-Inkの初期化
-    M5.M5Ink.clear();                           // E-Inkを消去
+    eInk_print_setup();                         // E-Inkの初期化(eInk_print.ino)
     eInk_println("Example 5 HUM");              // 「Example 5 HUM」を表示
     eInk_println("BAT= " + String(batt_mv()) +" mV"); // 電池電圧をE-Inkに表示
-    shtSetup(25,26);                            // 湿度センサの初期化
 
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
@@ -142,19 +71,17 @@ void setup(){                                   // 起動時に一度だけ実�
         delay(500);                             // 待ち時間処理
     }
     eInk_println(WiFi.localIP());               // 本機のアドレスをE-Inkに表示
+    bh1750Setup(25,26);                         // 照度センサの初期化
 }
 
 void loop(){                                    // 繰り返し実行する関数
-    float temp = getTemp();                     // 温度を取得して変数tempに代入
-    float hum = getHum();                       // 湿度を取得して変数humに代入
+    float lux = getLux();                       // 照度(lux)を取得
     int batt = batt_mv();                       // 電池電圧を取得してbattに代入
-    if(temp < -100. || hum < 0.) sleep();       // 取得失敗時に末尾のsleepを実行
 
-    String S = String(DEVICE);                  // 送信データSにデバイス名を代入
-    S += String(temp,1) + ", ";                 // 変数tempの値を追記
-    S += String(hum,1) + ", ";                  // 変数humの値を追記
-    S += String(batt);                          // 変数battの値を追記
+    String S = String(DEVICE) + String(lux,0);  // 送信データSにデバイス名を代入
+    S += ", " + String(batt);                   // 変数battの値を追記
     eInk_println(S);                            // 送信データSをE-Ink表示
+
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
     udp.println(S);                             // 送信データSをUDP送信
@@ -162,9 +89,9 @@ void loop(){                                    // 繰り返し実行する関�
     if(strcmp(Amb_Id,"00000") == 0) sleep();    // Ambient未設定時にsleepを実行
 
     S = "{\"writeKey\":\""+String(Amb_Key);     // (項目)writeKey,(値)ライトキー
-    S += "\",\"d1\":\"" + String(temp,2);       // (項目)d1,(値)温度
-    S += "\",\"d2\":\"" + String(hum,2);        // (項目)d2,(値)湿度
-    S += "\",\"d3\":\"" + String(batt) + "\"}"; // (項目)d3,(値)電圧
+    S += "\",\"d1\":\"" + String(lux);          // (項目)d1,(値)照度
+    S += "\",\"d2\":\"" + String(batt) + "\"}"; // (項目)d2,(値)電圧
+
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
     String url = "http://ambidata.io/api/v2/channels/"+String(Amb_Id)+"/data";
@@ -189,3 +116,29 @@ void sleep(){                                   // スリープ実行用の関�
     eInk_println("Power OFF");                  // E-Inkへメッセージを表示
     M5.shutdown();                              // 電源OFF
 }
+
+/******************************************************************************
+【参考文献】
+Arduino IDE 開発環境イントール方法：
+https://docs.m5stack.com/en/quick_start/coreink/arduino
+
+M5Stack Arduino Library API 情報：
+https://docs.m5stack.com/en/api/coreink/system_api
+
+BH1750FVI データシート 2011.11 - Rev.D (ローム)
+
+電池電圧の取得：
+https://docs.m5stack.com/en/core/coreink
+R41 = 20K
+R42 = 5.1K
+ADC=GPIO35
+
+[BAT]--[R41]--*--[R42]--GND
+              |
+              +--GPIO35
+
+【引用コード】
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example06_lum
+https://github.com/bokunimowakaru/esp/tree/master/2_example/example38_lum
+https://github.com/bokunimowakaru/esp32c3/tree/master/learning/ex03_lum
+*******************************************************************************/
