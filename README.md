@@ -72,6 +72,14 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 詳細説明（M5Stackで音声出力）  
 [https://bokunimo.net/blog/esp/2708/](https://bokunimo.net/blog/esp/2708/)  
 
+より自然な音声をRaspberry Pi から本機へ配信する方法をブログとリポジトリaquestalkpi2pico で公開しています。  
+
+(ブログ) 音声記号列を生成して AquesTalk Pico LSI に送信  
+[https://bokunimo.net/blog/esp/1475/](https://bokunimo.net/blog/esp/1475/)  
+
+(リポジトリ) aquestalkpi2pico  
+[https://git.bokunimo.com/aquestalkpi2pico/](https://git.bokunimo.com/aquestalkpi2pico/)  
+
 ### カメラ ex10_cam
 
 下図は、M5Stackに接続したカメラ (SeeedStudio Grove Serial Camera Kit)を、LAN内の端末のブラウザから撮影し、液晶画面とブラウザに表示するプログラム ex10_cam の実行例です。  
