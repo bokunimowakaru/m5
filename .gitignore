@@ -42,3 +42,12 @@ photo/*.jpg
 debug.cfg
 debug_custom.json
 *.svd
+
+# sazanami
+tools/font/sazanami-gothic*
+
+# html
+tools/html/chrome.jpg
+tools/html/chrome.png
+tools/html/chrome*.png
+tools/html/chrome*.jpg

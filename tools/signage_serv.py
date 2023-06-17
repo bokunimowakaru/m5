@@ -13,10 +13,19 @@
 # 参考文献(引用元)
 # https://github.com/bokunimowakaru/iot/blob/master/server/web_serv.py
 ################################################################################
+# テスト方法の一例
+# http://127.0.0.1:8080/
+# http://127.0.0.1:8080/image.png
+# http://127.0.0.1:8080/photo.jpg
+# http://127.0.0.1:8080/mono.bmp
+# http://127.0.0.1:8080/image.png?x=320&y=240
+# http://127.0.0.1:8080/photo.jpg?x=128&y=128
 
 from wsgiref.simple_server import make_server
 from urllib import parse
 from os.path import isfile
+from PIL import Image
+import io
 
 Res_Html = [('Content-type', 'text/html; charset=utf-8')]
 Res_Text = [('Content-type', 'text/plain; charset=utf-8')]
@@ -29,10 +38,22 @@ jpg_page_n = 3  # JPEG画像_最大ページ番号(photo01.jpg～photo03.jpg)
 bmp_page = 0    # BMP画像_ページ番号, 0はmono.bmp
 bmp_page_n = 3  # BMP画像_最大ページ番号(mono01.bmp～mono03.bmp)
 
-disp_x = 320
-disp_y = 240
+disp_x = 0      # 画像サイズ変換用 Width
+disp_y = 0      # 画像サイズ変換用 Height
+
+def resize(data,x,y,format='JPEG'):
+    fp = io.BytesIO(data)                           # がぞプデータをBytesIO に
+    image = Image.open(fp)                          # PILのオブジェクトにロード
+    del fp                                          # 解放
+    fp = io.BytesIO()                               # 空のBytesIOを生成
+    if format == 'BMP':
+        image.resize((x,y)).convert('1').save(fp,'BMP') # 2値BMPに変換
+    else:
+        image.resize((x,y)).convert('RGB').save(fp,format)
+    return fp.getvalue()                            # BytesIOデータを応答
 
 def wsgi_app(environ, start_response):              # HTTPアクセス受信時の処理
+    global disp_x, disp_y
     path  = environ.get('PATH_INFO')                # リクエスト先のパスを代入
     # print(path)
     query = parse.parse_qsl(environ.get('QUERY_STRING'))  # クエリを代入
@@ -61,6 +82,8 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
         fp = open('html/image.png', 'rb')           # 画像ファイルを開く
         res = fp.read()                             # 画像データを変数へ代入
         fp.close()                                  # ファイルを閉じる
+        if disp_x > 0 and disp_y > 0:               # ファイルサイズの変更処理
+            res = resize(res,disp_x,disp_y,'PNG')   # 変換
         head += Res_Png                             # PNG形式での応答を設定
 
     if path == '/photo.jpg':                        # リクエスト先がphoto.jpg
@@ -70,6 +93,8 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
             fp = open('html/photo' + format(jpg_page,'#02d') + '.jpg', 'rb')
         res = fp.read()                             # 画像データを変数へ代入
         fp.close()                                  # ファイルを閉じる
+        if disp_x > 0 and disp_y > 0:               # ファイルサイズの変更処理
+            res = resize(res,disp_x,disp_y,'JPEG')  # 変換
         head += Res_Jpeg                            # JPG形式での応答を設定
         jpg_page += 1
         if jpg_page > jpg_page_n:
@@ -79,6 +104,8 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
         fp = open('html'+path, 'rb')                # 画像ファイルを開く
         res = fp.read()                             # 画像データを変数へ代入
         fp.close()                                  # ファイルを閉じる
+        if disp_x > 0 and disp_y > 0:               # ファイルサイズの変更処理
+            res = resize(res,disp_x,disp_y,'JPEG')  # 変換
         head += Res_Jpeg                            # JPG形式での応答を設定
 
     if path == '/mono.bmp':                         # リクエスト先がmono.bmp
@@ -90,6 +117,8 @@ def wsgi_app(environ, start_response):              # HTTPアクセス受信時�
             fp = open('html/mono' + format(bmp_page,'#02d') + '.bmp', 'rb')
         res = fp.read()                             # 画像データを変数へ代入
         fp.close()                                  # ファイルを閉じる
+        if disp_x > 0 and disp_y > 0:               # ファイルサイズの変更処理
+            res = resize(res,disp_x,disp_y,'BMP')   # 変換
         head += Res_Bmp                             # BMP形式での応答を設定
         bmp_page += 1
         if bmp_page > bmp_page_n:
