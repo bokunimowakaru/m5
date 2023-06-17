@@ -14,12 +14,13 @@
 # https://github.com/bokunimowakaru/iot/blob/master/server/web_serv.py
 ################################################################################
 # テスト方法の一例
-# http://127.0.0.1:8080/
-# http://127.0.0.1:8080/image.png
-# http://127.0.0.1:8080/photo.jpg
-# http://127.0.0.1:8080/mono.bmp
-# http://127.0.0.1:8080/image.png?x=320&y=240
-# http://127.0.0.1:8080/photo.jpg?x=128&y=128
+# http://127.0.0.1:8080/                            (index.htmlを表示)
+# http://127.0.0.1:8080/image.png                   (PNG画像ファイルを表示)
+# http://127.0.0.1:8080/photo.jpg                   (JPEG画像ファイルを表示)
+# http://127.0.0.1:8080/mono.bmp                    (2値BMPファイルを表示)
+# http://127.0.0.1:8080/image.png?x=320&y=240       (320x240に変換して表示)
+# http://127.0.0.1:8080/photo.jpg?x=128&y=128       (128x128に変換して表示)
+# http://127.0.0.1:8080/photo.jpg?x=0&y=0           (元のサイズで表示)
 
 from wsgiref.simple_server import make_server
 from urllib import parse
