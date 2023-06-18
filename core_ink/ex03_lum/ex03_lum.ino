@@ -61,6 +61,7 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     eInk_print_setup();                         // E-Inkの初期化(eInk_print.ino)
     eInk_println("Example 3 LUM");              // 「Example 3 LUM」を表示
+    eInk_println("BAT= " + String(batt_mv()) +" mV"); // 電池電圧をE-Inkに表示
 
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
