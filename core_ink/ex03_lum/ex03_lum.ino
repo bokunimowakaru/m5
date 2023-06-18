@@ -16,7 +16,6 @@ Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for M5Stack CORE INK
 #include <WiFi.h>                               // ESP32用WiFiライブラリ
 #include <WiFiUdp.h>                            // UDP通信を行うライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
-// #include "esp_sleep.h"                       // ESP32用Deep Sleep ライブラリ
 
 #define SSID "1234ABCD"                         // 無線LANアクセスポイントSSID
 #define PASS "password"                         // パスワード
@@ -51,8 +50,9 @@ IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 int batt_mv(){                                  // 電池電圧確認
     int PIN_AIN = 35;                           // 電池電圧取得用のADCポート
     float adc;                                  // ADC値の代入用
+    analogSetAttenuation(ADC_2_5db);            // ADC 0.1V～1.25V入力用
     pinMode(PIN_AIN, ANALOG);                   // GPIO35をアナログ入力に
-    adc = analogRead(PIN_AIN) * 3300./4095.;    // AD変換器から値を取得
+    adc = analogReadMilliVolts(PIN_AIN);        // AD変換器から値を取得
     adc /= 5.1 / (20 + 5.1);                    // 抵抗分圧の逆数
     return (int)(adc + 0.5);                    // 電圧値(mV)を整数で応答
 }
@@ -60,8 +60,7 @@ int batt_mv(){                                  // 電池電圧確認
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
     eInk_print_setup();                         // E-Inkの初期化(eInk_print.ino)
-    eInk_println("Example 5 HUM");              // 「Example 5 HUM」を表示
-    eInk_println("BAT= " + String(batt_mv()) +" mV"); // 電池電圧をE-Inkに表示
+    eInk_println("Example 3 LUM");              // 「Example 3 LUM」を表示
 
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
@@ -71,6 +70,8 @@ void setup(){                                   // 起動時に一度だけ実�
         delay(500);                             // 待ち時間処理
     }
     eInk_println(WiFi.localIP());               // 本機のアドレスをE-Inkに表示
+    eInk_print("-> ");                          // 矢印をE-Inkに表示
+    eInk_println(UDPTO_IP);                     // UDPの宛先IPアドレスを表示
     bh1750Setup(25,26);                         // 照度センサの初期化
 }
 
@@ -81,7 +82,7 @@ void loop(){                                    // 繰り返し実行する関�
     String S = String(DEVICE) + String(lux,0);  // 送信データSにデバイス名を代入
     S += ", " + String(batt);                   // 変数battの値を追記
     eInk_println(S);                            // 送信データSをE-Ink表示
-
+    
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
     udp.println(S);                             // 送信データSをUDP送信
@@ -107,10 +108,10 @@ void sleep(){                                   // スリープ実行用の関�
     delay(100);                                 // 送信完了の待ち時間処理
     WiFi.disconnect();                          // Wi-Fiの切断
     digitalWrite(LED_EXT_PIN, HIGH);            // LED消灯
+    eInk_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
     if(batt_mv() > 3300){                       // 電圧が3300mV以上のとき
         int sec = (int)(SLEEP_P/1000000ul);     // 秒に変換
         eInk_println("Sleeping for " + String(sec) + " Seconds");
-        // esp_deep_sleep(SLEEP_P);             // Deep Sleepモードへ移行
         M5.shutdown(sec);                       // タイマー・スリープ
     }   // else:
     eInk_println("Power OFF");                  // E-Inkへメッセージを表示
@@ -137,6 +138,9 @@ ADC=GPIO35
               |
               +--GPIO35
 
+SY8089 データシート
+
+*******************************************************************************
 【引用コード】
 https://github.com/bokunimowakaru/esp/tree/master/2_example/example06_lum
 https://github.com/bokunimowakaru/esp/tree/master/2_example/example38_lum
