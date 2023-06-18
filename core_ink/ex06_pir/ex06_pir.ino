@@ -7,11 +7,6 @@ Example 6: ESP32 (IoTセンサ) 【Wi-Fi 人感センサ子機】ディープス
 
     M5Stack CORE INK + PIR HAT(AS312) に対応
     
-    ※ただし、HATの3.3Vに電源入力が必要です。
-    ※現状、USBを外すとスリープ時に3.3Vが供給されなくなり、
-    　センサが検知しても起動しません。
-    　【解決方法は調査中】
-
                                            Copyright (c) 2016-2023 Wataru KUNINO
 *******************************************************************************/
 
@@ -20,6 +15,7 @@ Example 6: ESP32 (IoTセンサ) 【Wi-Fi 人感センサ子機】ディープス
 #include <WiFiUdp.h>                            // UDP通信を行うライブラリ
 #include <HTTPClient.h>                         // HTTPクライアント用ライブラリ
 #include "esp_sleep.h"                          // ESP32用Deep Sleep ライブラリ
+#include "driver/rtc_io.h"
 
 /******************************************************************************
  LINE Notify 設定
@@ -137,7 +133,12 @@ void sleep(){                                   // スリープ実行用の関�
     eInk_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
     if(batt_mv() > 3300){                       // 電圧が3300mV以上のとき
         eInk_println("Sleeping until Ext0=" + String(pir_wake));  // 待ち表示
-        eInk_println("[!] Keep USB Pow Supply"); // 要USB電源供給表示
+        /* スリープ中に GPIO12 をHighレベルに維持する */
+        rtc_gpio_init(GPIO_NUM_12);
+        rtc_gpio_set_direction(GPIO_NUM_12,RTC_GPIO_MODE_OUTPUT_ONLY);
+        rtc_gpio_set_level(GPIO_NUM_12,1);
+        // eInk_println("[!] Keep USB Pow Supply"); // 要USB電源供給表示
+        // digitalWrite(POWER_HOLD_PIN, HIGH);
         esp_sleep_enable_ext0_wakeup(PIN_PIR_GPIO_NUM, pir_wake); // 割込み設定
         esp_deep_sleep_start();                 // Deep Sleepモードへ移行
     }   // else:
@@ -157,6 +158,10 @@ https://docs.m5stack.com/en/api/coreink/system_api
 SB412A データシート (NANYANG SENBA OPTICAL AND ELECTRONIC CO. LTD.)
 
 BS612 AS612 データシート (NANYANG SENBA OPTICAL AND ELECTRONIC CO. LTD.)
+
+M5 Core Ink 回路図：
+https://docs.m5stack.com/en/core/coreink
+PWR_SW&ADC：GPIO12で5V DCDCと3.3V DC-DCの動作を維持できる
 
 *******************************************************************************
 【引用コード】
