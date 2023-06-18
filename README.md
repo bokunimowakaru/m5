@@ -25,12 +25,15 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 |フォルダ名 |内容                                                  |
 |-----------|------------------------------------------------------|
 |atom       |M5Stack製 ATOM / ATOM Lite / 通常の ESP32-WROOM-32 用 |
-|atom_s3    |M5Stack製 ATOM S3 用
+|atom_s3    |M5Stack製 ATOM S3 用                                  |
 |core       |M5Stack製 Core 用                                     |
+|core_ink   |M5Stack製 Core Ink 用                                 |
 |stick_cplus|M5Stack製 M5Stick C Plus 用                           |
 |pictures   |関連画像ファイル                                      |
 |tools      |関連ツール                                            |
 |LICENSE    |ライセンス内容(MITライセンス:要権利表示・無保証)      |
+
+※収録プログラムはデバイスによって異なります。  
 
 ## 基礎編
 
