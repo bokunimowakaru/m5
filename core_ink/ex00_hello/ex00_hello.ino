@@ -26,7 +26,6 @@ int eInk_y = 0;                                 // E-Ink表示用のY座標
 
 void eInk_println(String text){                 // E-Inkに文字列を表示する
     char c[2];
-    InkPageSprite.creatSprite(0,0,200,200,0);   // 画像用バッファの作成
     for(int i=0; i < text.length(); i++){       // 文字数分の繰り返し処理
         text.substring(i).toCharArray(c, 2);    // 1文字+終端の取り出し
         if(c[0] < 0x20 || c[0] >= 0x7f) continue;   // 表示不可文字の処理を排除
@@ -48,6 +47,7 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.begin();                                 // M5Stack用ライブラリの起動
     M5.M5Ink.isInit();                          // E-Inkの初期化
     M5.M5Ink.clear();                           // E-Inkを消去
+    InkPageSprite.creatSprite(0,0,200,200);     // 画像用バッファの作成
     eInk_println("Example 0 M5Stack E-Ink");    // E-Inkにタイトルを表示
 }
 
@@ -76,6 +76,7 @@ void loop(){                                    // 繰り返し実行する関�
     }
     if( btnE == 1 ){                            // ボタン先頭が押されていた時
         M5.M5Ink.clear();                       // E-Inkを消去
+        InkPageSprite.clear(CLEAR_DRAWBUFF|CLEAR_LASTBUFF);
         eInk_x = 0;
         eInk_y = 0;
         eInk_println("Screen Cleared");         // E-Inkへメッセージを表示

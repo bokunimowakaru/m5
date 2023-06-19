@@ -72,8 +72,8 @@ int batt_mv(){                                  // 電池電圧確認
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    eInk_print_setup();                         // E-Inkの初期化(eInk_print.ino)
-    eInk_println("Example 5 HUM");              // 「Example 5 HUM」を表示
+    eInk_print_setup();                         // E-Ink初期化(lib_eInk_print)
+    eInk_println("Example 5 HUM",false);        // 「Example 5 HUM」を表示
     eInk_println("BAT= " + String(batt_mv()) +" mV"); // 電池電圧をE-Inkに表示
     shtSetup(25,26);                            // 湿度センサの初期化
 
@@ -84,8 +84,8 @@ void setup(){                                   // 起動時に一度だけ実�
         if(millis() > 30000) sleep();           // 30秒超過でスリープ
         delay(500);                             // 待ち時間処理
     }
-    eInk_println(WiFi.localIP());               // 本機のアドレスをE-Inkに表示
-    eInk_print("-> ");                          // 矢印をE-Inkに表示
+    eInk_println(WiFi.localIP(), false);        // 本機のアドレスをE-Inkに表示
+    eInk_print("-> ", false);                   // 矢印をE-Inkに表示
     eInk_println(UDPTO_IP);                     // UDPの宛先IPアドレスを表示
 }
 
@@ -99,7 +99,7 @@ void loop(){                                    // 繰り返し実行する関�
     S += String(temp,1) + ", ";                 // 変数tempの値を追記
     S += String(hum,1) + ", ";                  // 変数humの値を追記
     S += String(batt);                          // 変数battの値を追記
-    eInk_println(S);                            // 送信データSをE-Ink表示
+    eInk_println(S, false);                     // 送信データSをE-Ink表示
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
     udp.println(S);                             // 送信データSをUDP送信
@@ -115,7 +115,7 @@ void loop(){                                    // 繰り返し実行する関�
     String url = "http://ambidata.io/api/v2/channels/"+String(Amb_Id)+"/data";
     http.begin(url);                            // HTTPリクエスト先を設定する
     http.addHeader("Content-Type","application/json"); // JSON形式を設定する
-    eInk_println(url);                          // 送信URLを表示
+    eInk_println(url, false);                   // 送信URLを表示
     http.POST(S);                               // センサ値をAmbientへ送信する
     http.end();                                 // HTTP通信を終了する
     sleep();                                    // 下記のsleep関数を実行
