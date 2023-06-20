@@ -3,10 +3,11 @@ Example 5: ESP32 (IoTセンサ) Wi-Fi 温湿度計 SENSIRION製 SHT30/SHT31/SHT3
                                                            for M5Stack CORE INK
 
 ・デジタルI2Cインタフェース搭載センサから取得した温湿度を送信するIoTセンサです。
+・電子ペーパー搭載 M5Stack Core Ink の Ink画面にテキスト文字で情報を表示します。
 
     使用機材(例)：M5Stack CORE INK + ENV II/III HAT
 
-    ESP32 のI2Cポート:
+    M5Stack CORE INK のI2Cポート:
         SHT30/SHT31/SHT35 SDAポート G25
         SHT30/SHT31/SHT35 SCLポート G26
         HAT 設定方法＝shtSetup(25,26);
@@ -21,6 +22,8 @@ Example 5: ESP32 (IoTセンサ) Wi-Fi 温湿度計 SENSIRION製 SHT30/SHT31/SHT3
 ENV HAT     DHT12 + BMP280 + BMM150
 ENV II HAT  SHT30 + BMP280 + BMM150
 ENV III HAT SHT30 + QMP6988
+
+                                          Copyright (c) 2016-2023 Wataru KUNINO
 *******************************************************************************/
 
 #include <M5CoreInk.h>                          // M5Stack用ライブラリ組み込み
@@ -59,8 +62,6 @@ ENV III HAT SHT30 + QMP6988
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 int batt_mv(){                                  // 電池電圧確認
-    // 　　参考文献 M5 https://docs.m5stack.com/en/core/coreink
-    // 　　R41 = 20K, R42 = 5.1K, ADC=GPIO35,   [BAT]--[R41]--*--[R42]--GND
     int PIN_AIN = 35;                           // 電池電圧取得用のADCポート
     float adc;                                  // ADC値の代入用
     analogSetAttenuation(ADC_2_5db);            // ADC 0.1V～1.25V入力用
@@ -72,24 +73,25 @@ int batt_mv(){                                  // 電池電圧確認
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    eInk_print_setup();                         // E-Ink初期化(lib_eInk_print)
-    eInk_println("Example 5 HUM",false);        // 「Example 5 HUM」を表示
-    eInk_println("BAT= " + String(batt_mv()) +" mV"); // 電池電圧をE-Inkに表示
-    shtSetup(25,26);                            // 湿度センサの初期化
-
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
-    while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
-        eInk_print(".");                        // 接続試行中表示
-        if(millis() > 30000) sleep();           // 30秒超過でスリープ
-        delay(500);                             // 待ち時間処理
-    }
-    eInk_println(WiFi.localIP(), false);        // 本機のアドレスをE-Inkに表示
-    eInk_print("-> ", false);                   // 矢印をE-Inkに表示
-    eInk_println(UDPTO_IP);                     // UDPの宛先IPアドレスを表示
+    shtSetup(25,26);                            // 湿度センサの初期化
+    
+    ink_print_setup();                          // Ink初期化(lib_ink_print)
+    ink_println("Example 5 HUM");               // 「Example 5 HUM」を表示
+    ink_println("BAT= " + String(batt_mv()) +" mV"); // 電池電圧をInkに表示
 }
 
 void loop(){                                    // 繰り返し実行する関数
+    ink_print("...", false);                    // ...をInk用バッファへ
+    while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
+        if(millis() > 30000) sleep();           // 30秒超過でスリープ
+        if(millis()%500 == 0) ink_print(".");   // 接続試行中表示
+    }
+    ink_println(WiFi.localIP());                // 本機のアドレスをInkバッファへ
+    ink_print("-> ", false);                    // 矢印をInk用バッファへ
+    ink_println(UDPTO_IP);                      // UDPの宛先IPアドレスを表示
+
     float temp = getTemp();                     // 温度を取得して変数tempに代入
     float hum = getHum();                       // 湿度を取得して変数humに代入
     int batt = batt_mv();                       // 電池電圧を取得してbattに代入
@@ -99,7 +101,8 @@ void loop(){                                    // 繰り返し実行する関�
     S += String(temp,1) + ", ";                 // 変数tempの値を追記
     S += String(hum,1) + ", ";                  // 変数humの値を追記
     S += String(batt);                          // 変数battの値を追記
-    eInk_println(S, false);                     // 送信データSをE-Ink表示
+    ink_println(S);                             // 送信データSをInk表示
+    
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
     udp.println(S);                             // 送信データSをUDP送信
@@ -110,12 +113,13 @@ void loop(){                                    // 繰り返し実行する関�
     S += "\",\"d1\":\"" + String(temp,2);       // (項目)d1,(値)温度
     S += "\",\"d2\":\"" + String(hum,2);        // (項目)d2,(値)湿度
     S += "\",\"d3\":\"" + String(batt) + "\"}"; // (項目)d3,(値)電圧
+
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
     String url = "http://ambidata.io/api/v2/channels/"+String(Amb_Id)+"/data";
     http.begin(url);                            // HTTPリクエスト先を設定する
     http.addHeader("Content-Type","application/json"); // JSON形式を設定する
-    eInk_println(url, false);                   // 送信URLを表示
+    ink_println(url);                           // 送信URLを表示
     http.POST(S);                               // センサ値をAmbientへ送信する
     http.end();                                 // HTTP通信を終了する
     sleep();                                    // 下記のsleep関数を実行
@@ -125,13 +129,13 @@ void sleep(){                                   // スリープ実行用の関�
     delay(100);                                 // 送信完了の待ち時間処理
     WiFi.disconnect();                          // Wi-Fiの切断
     digitalWrite(LED_EXT_PIN, HIGH);            // LED消灯
-    eInk_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
+    ink_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
     if(batt_mv() > 3300){                       // 電圧が3300mV以上のとき
         int sec = (int)(SLEEP_P/1000000ul);     // 秒に変換
-        eInk_println("Sleeping for " + String(sec) + " Seconds");
+        ink_println("Sleeping for " + String(sec) + " Seconds");
         M5.shutdown(sec);                       // タイマー・スリープ
     }   // else:
-    eInk_println("Power OFF");                  // E-Inkへメッセージを表示
+    ink_println("Power OFF");                   // Inkへメッセージを表示
     M5.shutdown();                              // 電源OFF
 }
 

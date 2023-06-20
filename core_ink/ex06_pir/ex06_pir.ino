@@ -64,33 +64,36 @@ int batt_mv(){                                  // 電池電圧確認
 void setup(){                                   // 起動時に一度だけ実行する関数
     pinMode(PIN_PIR,INPUT);                     // センサ接続したポートを入力に
     pir = digitalRead(PIN_PIR);                 // 人感センサの状態を取得
-
+    
     M5.begin();                                 // M5Stack用ライブラリの起動
-    eInk_print_setup();                         // E-Inkの初期化(eInk_print.ino)
-    eInk_println("Example 6 PIR/Reed");         // 「Example 6 PIR/Reed」を表示
-    eInk_println("BAT= " + String(batt_mv()) +" mV"); // 電池電圧をE-Inkに表示
-    eInk_println("Wake= " + String(wake));      // 起動理由noをE-Inkに表示
-    if(wake != ESP_SLEEP_WAKEUP_EXT0) sleep();  // ボタン以外で起動時にスリープ
-
-    WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
-    WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
-    while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
-        eInk_print(".");                        // 接続試行中表示
-        if(millis() > 30000) sleep();           // 30秒超過でスリープ
-        delay(500);                             // 待ち時間処理
+    if(wake == ESP_SLEEP_WAKEUP_EXT0){          // タイマーによる起動時
+        WiFi.mode(WIFI_STA);                    // 無線LANをSTAモードに設定
+        WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイントへ接続
     }
-    eInk_println(WiFi.localIP());               // 本機のアドレスをE-Inkに表示
-    eInk_print("-> ");                          // 矢印をE-Inkに表示
-    eInk_println(UDPTO_IP);                     // UDPの宛先IPアドレスを表示
+    
+    ink_print_setup();                          // Inkの初期化(ink_print.ino)
+    ink_println("Example 6 PIR/Reed");          // 「Example 6 PIR/Reed」を表示
+    ink_println("BAT= " + String(batt_mv()) +" mV"); // 電池電圧をInkに表示
+    ink_println("Wake= " + String(wake));       // 起動理由noをInkに表示
+    if(wake != ESP_SLEEP_WAKEUP_EXT0) sleep();  // タイマー起動以外時にスリープ
 }
 
 void loop(){                                    // 繰り返し実行する関数
+    ink_print("...", false);                    // ...をInk用バッファへ
+    while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
+        if(millis() > 30000) sleep();           // 30秒超過でスリープ
+        if(millis()%500 == 0) ink_print(".");   // 接続試行中表示
+    }
+    ink_println(WiFi.localIP());                // 本機のアドレスをInkバッファへ
+    ink_print("-> ", false);                    // 矢印をInk用バッファへ
+    ink_println(UDPTO_IP);                      // UDPの宛先IPアドレスを表示
+
     pir = digitalRead(PIN_PIR);                 // 人感センサの最新の状態を取得
     String S = String(DEVICE);                  // 送信データ保持用の文字列変数
     S += String(int(PIR ^ PIR_XOR)) + ", ";     // 起動時PIR値を送信データに追記
     S += String(int(pir ^ PIR_XOR)) + ", ";     // 起動時PIR値を送信データに追記
     S += String(batt_mv());                     // 現在の電圧値を送信データに追記
-    eInk_println(S);                            // 送信データSをE-Ink表示
+    ink_println(S);                             // 送信データSをInk表示
 
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
@@ -103,7 +106,7 @@ void loop(){                                    // 繰り返し実行する関�
     String url;                                 // URLを格納する文字列変数を生成
     if(strlen(LINE_TOKEN) > 42){                // LINE_TOKEN設定時
         url = "https://notify-api.line.me/api/notify";  // LINEのURLを代入
-        eInk_println(url);                      // 送信URLを表示
+        ink_println(url);                       // 送信URLを表示
         http.begin(url);                        // HTTPリクエスト先を設定する
         http.addHeader("Content-Type","application/x-www-form-urlencoded");
         http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
@@ -130,19 +133,19 @@ void sleep(){                                   // スリープ実行用の関�
     boolean pir_wake = 0;
     if(PIR) pir_wake = 1;                       // 次回、IOがHighのときに起動
     digitalWrite(LED_EXT_PIN, HIGH);            // LED消灯
-    eInk_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
+    ink_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
     if(batt_mv() > 3300){                       // 電圧が3300mV以上のとき
-        eInk_println("Sleeping until Ext0=" + String(pir_wake));  // 待ち表示
+        ink_println("Sleeping until Ext0=" + String(pir_wake));  // 待ち表示
         /* スリープ中に GPIO12 をHighレベルに維持する */
         rtc_gpio_init(GPIO_NUM_12);
         rtc_gpio_set_direction(GPIO_NUM_12,RTC_GPIO_MODE_OUTPUT_ONLY);
         rtc_gpio_set_level(GPIO_NUM_12,1);
-        // eInk_println("[!] Keep USB Pow Supply"); // 要USB電源供給表示
+        // ink_println("[!] Keep USB Pow Supply"); // 要USB電源供給表示
         // digitalWrite(POWER_HOLD_PIN, HIGH);
         esp_sleep_enable_ext0_wakeup(PIN_PIR_GPIO_NUM, pir_wake); // 割込み設定
         esp_deep_sleep_start();                 // Deep Sleepモードへ移行
     }   // else:
-    eInk_println("Power OFF");                  // E-Inkへメッセージを表示
+    ink_println("Power OFF");                   // Inkへメッセージを表示
     M5.shutdown();                              // 電源OFF
 }
 

@@ -59,30 +59,32 @@ int batt_mv(){                                  // 電池電圧確認
 
 void setup(){                                   // 起動時に一度だけ実行する関数
     M5.begin();                                 // M5Stack用ライブラリの起動
-    eInk_print_setup();                         // E-Inkの初期化(eInk_print.ino)
-    eInk_println("Example 3 LUM");              // 「Example 3 LUM」を表示
-    eInk_println("BAT= " + String(batt_mv()) +" mV"); // 電池電圧をE-Inkに表示
-
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
-    while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
-        eInk_print(".");                        // 接続試行中表示
-        if(millis() > 30000) sleep();           // 30秒超過でスリープ
-        delay(500);                             // 待ち時間処理
-    }
-    eInk_println(WiFi.localIP());               // 本機のアドレスをE-Inkに表示
-    eInk_print("-> ");                          // 矢印をE-Inkに表示
-    eInk_println(UDPTO_IP);                     // UDPの宛先IPアドレスを表示
     bh1750Setup(25,26);                         // 照度センサの初期化
+    
+    ink_print_setup();                          // Inkの初期化(ink_print.ino)
+    ink_println("Example 3 LUM");               // 「Example 3 LUM」を表示
+    ink_println("BAT= " + String(batt_mv()) +" mV"); // 電池電圧をInkに表示
 }
 
 void loop(){                                    // 繰り返し実行する関数
+    ink_print("...", false);                    // ...をInk用バッファへ
+    while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
+        if(millis() > 30000) sleep();           // 30秒超過でスリープ
+        if(millis()%500 == 0) ink_print(".");   // 接続試行中表示
+    }
+    ink_println(WiFi.localIP());                // 本機のアドレスをInkに表示
+    ink_print("-> ", false);                    // 矢印をInk用バッファへ
+    ink_println(UDPTO_IP);                      // UDPの宛先IPアドレスを表示
+
     float lux = getLux();                       // 照度(lux)を取得
     int batt = batt_mv();                       // 電池電圧を取得してbattに代入
+    if(lux < 0.) sleep();                       // 取得失敗時に末尾のsleepを実行
 
     String S = String(DEVICE) + String(lux,0);  // 送信データSにデバイス名を代入
     S += ", " + String(batt);                   // 変数battの値を追記
-    eInk_println(S);                            // 送信データSをE-Ink表示
+    ink_println(S);                             // 送信データSをInk表示
     
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
@@ -99,7 +101,7 @@ void loop(){                                    // 繰り返し実行する関�
     String url = "http://ambidata.io/api/v2/channels/"+String(Amb_Id)+"/data";
     http.begin(url);                            // HTTPリクエスト先を設定する
     http.addHeader("Content-Type","application/json"); // JSON形式を設定する
-    eInk_println(url);                          // 送信URLを表示
+    ink_println(url);                           // 送信URLを表示
     http.POST(S);                               // センサ値をAmbientへ送信する
     http.end();                                 // HTTP通信を終了する
     sleep();                                    // 下記のsleep関数を実行
@@ -109,13 +111,13 @@ void sleep(){                                   // スリープ実行用の関�
     delay(100);                                 // 送信完了の待ち時間処理
     WiFi.disconnect();                          // Wi-Fiの切断
     digitalWrite(LED_EXT_PIN, HIGH);            // LED消灯
-    eInk_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
+    ink_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
     if(batt_mv() > 3300){                       // 電圧が3300mV以上のとき
         int sec = (int)(SLEEP_P/1000000ul);     // 秒に変換
-        eInk_println("Sleeping for " + String(sec) + " Seconds");
+        ink_println("Sleeping for " + String(sec) + " Seconds");
         M5.shutdown(sec);                       // タイマー・スリープ
     }   // else:
-    eInk_println("Power OFF");                  // E-Inkへメッセージを表示
+    ink_println("Power OFF");                   // Inkへメッセージを表示
     M5.shutdown();                              // 電源OFF
 }
 
