@@ -11,13 +11,14 @@ M5Stack CORE INK にテキスト文字を表示する
 【参考文献】
 M5Stack Arduino Library API 情報：
 https://docs.m5stack.com/en/api/coreink/system_api
+https://docs.m5stack.com/en/api/coreink/eink_api
 *******************************************************************************/
 
 #include <M5CoreInk.h>                          // M5Stack用ライブラリ組み込み
 #define INK_WEIGHT 240                          // 再描画までの間隔(ms)
                                                 // 範囲240～15000 大きい方が遅い
 
-Ink_Sprite InkPageSprite(&M5.M5Ink);            // M5Inkインスタンス作成
+Ink_Sprite InkPageSprite(&M5.M5Ink);            // M5Ink描画用インスタンス作成
 int ink_x = 0;                                  // Ink表示用のX座標
 int ink_y = 0;                                  // Ink表示用のY座標
 unsigned long ink_start_time = 0;               // 描画完了時刻保持用
@@ -39,9 +40,6 @@ void ink_print_setup(){                         // Inkの初期化処理部
     M5.M5Ink.isInit();                          // Inkの初期化
     ink_start_time = millis();                  // 初期化処理の完了時刻を保持
     M5.M5Ink.clear();                           // Inkを消去
-//  InkPageSprite.creatSprite(0,0,200,200,0);   // 画像用バッファの作成
-//  InkPageSprite.clear(CLEAR_DRAWBUFF|CLEAR_LASTBUFF); // バッファのクリア
-//  InkPageSprite.pushSprite();                 // push the sprite.
     ink_x = 0;                                  // Ink表示用のX座標
     ink_y = 0;                                  // Ink表示用のY座標
     InkPageSprite.creatSprite(0,0,200,16,0);    // 画像用バッファの作成
@@ -53,7 +51,6 @@ void ink_print_clear(){                         // Inkの画面を消去する
     InkPageSprite.creatSprite(0,0,200,200,0);   // 画面全体
     InkPageSprite.pushSprite();                 // push the sprite.
     M5.M5Ink.clear();                           // Inkを消去
-    InkPageSprite.clear(CLEAR_DRAWBUFF|CLEAR_LASTBUFF); // 消去
     InkPageSprite.deleteSprite();               // メモリの開放
     ink_x = 0;                                  // Ink表示用のX座標
     ink_y = 0;                                  // Ink表示用のY座標
@@ -62,9 +59,10 @@ void ink_print_clear(){                         // Inkの画面を消去する
 
 void ink_println(){                             // Inkの改行処理
     ink_x = 0;                                  // (改行処理)X座標を左端へ
-    ink_y += 16;                                // (改行処理)Y座標を下の行へ
-    if(ink_y >= 192) ink_y = 176;               // 最下段を超えた時に最下段へ
-    ink_push();                                 // Inkに表示データを転送
+    if(ink_y <= 192){                           // 表示可能な場合
+        ink_y += 16;                            // (改行処理)Y座標を下の行へ
+        ink_push();                             // Inkに表示データを転送
+    }
 }
 
 void ink_print(String text, bool push = true);
