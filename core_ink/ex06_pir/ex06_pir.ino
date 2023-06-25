@@ -66,7 +66,7 @@ void setup(){                                   // 起動時に一度だけ実�
     pir = digitalRead(PIN_PIR);                 // 人感センサの状態を取得
     
     M5.begin();                                 // M5Stack用ライブラリの起動
-    if(wake == ESP_SLEEP_WAKEUP_EXT0){          // タイマーによる起動時
+    if(wake == ESP_SLEEP_WAKEUP_EXT0){          // 人感センサによる起動時
         WiFi.mode(WIFI_STA);                    // 無線LANをSTAモードに設定
         WiFi.begin(SSID,PASS);                  // 無線LANアクセスポイントへ接続
     }
