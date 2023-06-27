@@ -52,7 +52,7 @@ void drawLine(int x1, int y1, int x2, int y2, int width){
 }
 
 void lineGraphCls(){
-    InkGraphSprite->FillRect(0,LgaY,200,112,1);;
+    InkGraphSprite->FillRect(0,LgaY,200,112,1);
     for (int i = 0; i <= 10; i++) {
         int y = 8 + i * 20;     // y:4～104 ＋16 20～120
         drawLine(30, y/LggY+LgaY, 190, y/LggY+LgaY, 50);
@@ -64,7 +64,8 @@ void lineGraphCls(){
             // InkGraphSprite->drawString(28 - 8 * S.length(), y/LggY+LgaY, S);
             char s[9];
             snprintf(s,9,"%d",map(i,0,10,lineGraphMinVal,lineGraphMaxVal));
-            InkGraphSprite->drawString(28 - 8 * strlen(s), y/LggY+LgaY, s);
+            if(strlen(s) >= 4) InkGraphSprite->drawString(0, y/LggY+LgaY, s);
+            else InkGraphSprite->drawString(28 - 8 * strlen(s), y/LggY+LgaY, s);
         }
     }
     for (int i = 0; i <= 8; i++) {
@@ -99,6 +100,13 @@ void lineGraphRedraw(){
     }
 }
 
+void lineGraphSetSprite(Ink_Sprite *sprite, int y, int min_val, int max_val){
+    InkGraphSprite = sprite;
+    LgaY = y;
+    lineGraphMinVal = min_val;
+    lineGraphMaxVal = max_val;
+}
+
 void lineGraphCls(Ink_Sprite *sprite, int y){
     InkGraphSprite = sprite;
     LgaY = y;
@@ -128,6 +136,7 @@ void lineGraphInit(Ink_Sprite *sprite, int y, int min_val, int max_val){
 
 // d=GVals-1のときだけ時間を進めて描画。それ以外はデータ代入のみ
 void lineGraphPlot(float value_f, int d){
+    Serial.println("entered lineGraphPlot"); // debug
     float delta = (float)(lineGraphMaxVal - lineGraphMinVal);
     if( delta != 0.){
         value_f = ( value_f - (float)lineGraphMinVal ) * 200. / delta;

@@ -52,6 +52,7 @@ ENV III HAT SHT30 + QMP6988
     5. 「ライトキー」を下記のAmb_Keyに貼り付ける
    (参考文献)
     IoTデータ可視化サービスAmbient(アンビエントデーター社) https://ambidata.io/
+    注意事項:SLEEP_Pを28.8秒以下にしないこと(※必ず 30*1000000ul 以上に設定)
 *******************************************************************************/
 #define Amb_Id  "00000"                         // AmbientのチャネルID
 #define Amb_Key "0000000000000000"              // Ambientのライトキー
@@ -64,8 +65,8 @@ ENV III HAT SHT30 + QMP6988
  *****************************************************************************/
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
+RTC_DATA_ATTR uint8_t PageBuf[200*200/8];       // ESP32用メモリの確保(画像用)
 Ink_Sprite InkPageSprite(&M5.M5Ink);            // e-paper描画用インスタンス
-
 int wake = (int)esp_sleep_get_wakeup_cause();   // 起動理由を変数wakeに保存
 
 int batt_mv(){                                  // 電池電圧確認
@@ -79,44 +80,45 @@ int batt_mv(){                                  // 電池電圧確認
 }
 
 void setup(){                                   // 起動時に一度だけ実行する関数
-    /*
+    /* CoreInk側のRTC起動時に変数wakeを上書きする処理(ESP32側RTC使用時は不要)
     if(!wake){                                  // ESP32が電源による起動の場合
         Wire1.begin(21, 22);                    // RTCによる起動を確認する処理
         uint8_t data = M5.rtc.ReadReg(0x01);    // (M5.beginより前に配置する)
         if(data & 0x04) wake = ESP_SLEEP_WAKEUP_TIMER; // タイマー起動に上書き
-    }
-    */
+    } (ここまで)CoreInk側RTC起動時の処理 */
+    
     M5.begin();                                 // M5Stack用ライブラリの起動
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
     shtSetup(25,26);                            // 湿度センサの初期化
     
-    if(wake != ESP_SLEEP_WAKEUP_TIMER){         // タイマー以外による起動時
+    if(wake != ESP_SLEEP_WAKEUP_TIMER){         // タイマー以外で起動時の処理
         M5.M5Ink.isInit();                      // Inkの初期化
         M5.M5Ink.clear();                       // Inkを消去
         InkPageSprite.creatSprite(0,0,200,200,0);  // 描画用バッファの作成
         lineGraphInit(&InkPageSprite, 16, 0, 100); // グラフ初期化,縦軸範囲指定
-    }
-    
-    // 再描画になるので避けたい部分(ここらから)↓
-    if(wake == ESP_SLEEP_WAKEUP_TIMER){
-        InkPageSprite.deleteSprite();              // メモリの開放
+        ink_print_init(&InkPageSprite);            // テキスト表示用 ink_print
+        ink_print("Example 5 HUM",false);          // タイトルの描画
+    }else{                                         // タイマー起動時の処理
         InkPageSprite.creatSprite(0,0,200,200,0);  // 描画用バッファの作成
-        InkPageSprite.FillRect(0,0,200,200,0);
-        InkPageSprite.pushSprite();                // e-paperに描画
-        InkPageSprite.clear();
-        lineGraphCls(&InkPageSprite, 16, 0, 100);
-        lineGraphRedraw();
-    } // 再描画になるので避けたい部分(ここまで)↑
+        InkPageSprite.drawFullBuff(PageBuf);       // RTCメモリから画像読み込み
+        lineGraphSetSprite(&InkPageSprite, 16, 0, 100); // 棒グラフ描画用の設定
+        ink_print_setup(&InkPageSprite);           // テキスト表示用 ink_print
+    }
+    InkPageSprite.pushSprite();                 // e-paperに描画(同一内容の書込)
 
-    InkPageSprite.drawString(0,0,"Example 5 HUM"); // タイトルの描画
+    ink_printPos(120,0);                        // 文字表示位置を移動
+    ink_print("("+String(wake)+")",false);      // 起動値をバッファに描画
+    ink_printPos(144,0);                        // 文字表示位置を移動
+    ink_print(String(batt_mv())+" mV",false);   // 電圧値をバッファに描画
+    ink_printPos(160);
+    /*
     char s[8] = "*** mV";                       // 文字列変数sを生成
     snprintf(s,4,"(%d)",wake);                  // 起動値を文字列変数sに代入
     InkPageSprite.drawString(120,0,s);          // 起動値をバッファに描画
     snprintf(s,9,"%d mV",batt_mv());            // 電圧値を文字列変数sに代入
     InkPageSprite.drawString(144,0,s);          // 電圧値をバッファに描画
-    InkPageSprite.pushSprite();                 // e-paperに描画
-    ink_print_setup(&InkPageSprite, 160);       // テキスト表示用 ink_print
+    */
 }
 
 void loop(){                                    // 繰り返し実行する関数
@@ -125,14 +127,7 @@ void loop(){                                    // 繰り返し実行する関�
     int batt = batt_mv();                       // 電池電圧を取得してbattに代入
     
     drawNum(&InkPageSprite, 128, String(temp,1)+"C "+String(hum,0)+"%");
-    InkPageSprite.pushSprite();                       // e-paperに描画
-    
     if(temp < -100. || hum < 0.) sleep();       // 取得失敗時に末尾のsleepを実行
-    
-    lineGraphPlot(temp,0);                      // tempをグラフ表示
-    lineGraphPlot(hum,1);                       // humをグラフ表示
-    lineGraphPlot((float)batt*100/4300,2);      // battをグラフ表示
-    lineGraphPush();
 
     String S = String(DEVICE);                  // 送信データSにデバイス名を代入
     S += String(temp,1) + ", ";                 // 変数tempの値を追記
@@ -140,11 +135,17 @@ void loop(){                                    // 繰り返し実行する関�
     S += String(batt);                          // 変数battの値を追記
     Serial.println(S);  // debug
 
-    if(WiFi.status() != WL_CONNECTED){          // 接続に成功するまで待つ
+    while(WiFi.status() != WL_CONNECTED){       // 接続に成功するまで待つ
         if(millis() > 30000) sleep();           // 30秒超過でスリープ
-        delay(1000);                            // 1秒間の待機
-        return;                                 // 接続試行中表示
+        if(millis()%1000 == 0){                 // 1秒間の描画待機用の処理
+            InkPageSprite.pushSprite();         // e-paperに描画
+            return;                             // loopの先頭に戻る(更新用)
+        }
     }
+    
+    lineGraphPlot(temp,0);                      // tempをグラフ表示
+    lineGraphPlot(hum,1);                       // humをグラフ表示
+    lineGraphPlot((float)batt*100/4300,2);      // battをグラフ表示
 
     WiFiUDP udp;                                // UDP通信用のインスタンスを定義
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
@@ -160,9 +161,9 @@ void loop(){                                    // 繰り返し実行する関�
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
     String url = "http://ambidata.io/api/v2/channels/"+String(Amb_Id)+"/data";
+    ink_print(url.substring(0,22)+"...",false); // 送信URLの一部(22文字)を表示
     http.begin(url);                            // HTTPリクエスト先を設定する
     http.addHeader("Content-Type","application/json"); // JSON形式を設定する
-    ink_println(url.substring(0, 22));          // 送信URLの一部(22文字)を表示
     http.POST(S);                               // センサ値をAmbientへ送信する
     http.end();                                 // HTTP通信を終了する
     sleep();                                    // 下記のsleep関数を実行
@@ -170,22 +171,25 @@ void loop(){                                    // 繰り返し実行する関�
 
 void sleep(){                                   // スリープ実行用の関数
     M5.update();                                // M5Stack用IO状態の更新
-    delay(100);                                 // 送信完了の待ち時間処理
+    InkPageSprite.pushSprite();                 // e-paperに描画
+    // delay(100);                              // 送信完了の待ち時間処理
     WiFi.disconnect();                          // Wi-Fiの切断
+    memcpy(PageBuf,InkPageSprite.getSpritePtr(),200*200/8); // ESP内のRTCに保存
+
     digitalWrite(LED_EXT_PIN, HIGH);            // LED消灯
     // ink_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
     if(batt_mv() > 3300 && !M5.BtnPWR.wasPressed()){ // 電圧が3300mV以上のとき
-        /* スリープ中に GPIO12 をHighレベルに維持する */
+        /* スリープ中に GPIO12 をHighレベルに維持する(ESP32への電源供給) */
         rtc_gpio_init(GPIO_NUM_12);
         rtc_gpio_set_direction(GPIO_NUM_12,RTC_GPIO_MODE_OUTPUT_ONLY);
         rtc_gpio_set_level(GPIO_NUM_12,1);
         esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
-        unsigned long us = millis() * 1000ul;
+        unsigned long us = millis() * 1000ul + 363000ul;
         if(SLEEP_P > us) us = SLEEP_P - us; else us = 1000000ul;
         ink_println("Sleeping for " + String(((double)(us/100000))/10.,1) + " secs");
         esp_deep_sleep(us);                     // Deep Sleepモードへ移行
         
-        /* 下記の方法では,GPIO12を保持できない(作成時点)
+        /* 下記の方法では,GPIO12を保持できない(2023年6月時点)
         int sec = (int)(SLEEP_P/1000000ul);     // 秒に変換
         sec -= (millis()-500)/1000;             // 動作時間を減算
         if(sec < 1) sec = 1;

@@ -94,6 +94,7 @@ void drawNum(Ink_Sprite *sprite, int y, String S) {
             x += 8;
         }
     }
+    sprite->FillRect(0,y,200,29,1);
     x = 100 - x / 2;
     for(int i=0; i<strlen(s); i++){
         if(s[i] >= '0' && s[i] <= '9'){
@@ -101,7 +102,7 @@ void drawNum(Ink_Sprite *sprite, int y, String S) {
             sprite->drawBuff(x, y, 18, 29, num18x29[n].ptr);
             x += 18;
         }else if(s[i] == '/'){
-            sprite->drawChar(x,y+13,s[10]);
+            sprite->drawBuff(x, y, 18, 29, num18x29[10].ptr);
             x += 18;
         }else{
             sprite->drawChar(x,y+13,s[i]);
