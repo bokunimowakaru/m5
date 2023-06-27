@@ -5,7 +5,7 @@ Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for M5Stack CORE INK
     使用機材(例)：M5Stack CORE INK + HAT-DLIGHT
         HAT 設定方法＝shtSetup(25,26);
 
-    ENV II/III HAT の代わりに ENV II/III UNIT (Grove互換端子)を使用するときは
+    DLIGHT HAT の代わりに DLIGHT UNIT (Grove互換端子)を使用するときは
     ポート番号の変更が必要です。
         UNIT設定方法＝shtSetup(32,33);
     
@@ -35,6 +35,7 @@ Example 3: ESP32 (IoTセンサ) Wi-Fi 照度計 for M5Stack CORE INK
     5. 「ライトキー」を下記のAmb_Keyに貼り付ける
    (参考文献)
     IoTデータ可視化サービスAmbient(アンビエントデーター社) https://ambidata.io/
+    注意事項:SLEEP_Pを28.8秒以下にしないこと(※必ず 30*1000000ul 以上に設定)
 *******************************************************************************/
 #define Amb_Id  "00000"                         // AmbientのチャネルID
 #define Amb_Key "0000000000000000"              // Ambientのライトキー
