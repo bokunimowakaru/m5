@@ -28,6 +28,8 @@ ESP32開発ボード ESP32-DevKitC, モジュール ESP32-WROOM-32, M5Stack, M5S
 |atom_s3    |M5Stack製 ATOM S3 用                                  |
 |core       |M5Stack製 Core 用                                     |
 |core_ink   |M5Stack製 Core Ink 用                                 |
+|core2      |M5Stack製 Core2 用                                    |
+|stick_c    |M5Stack製 M5Stick C 用                                |
 |stick_cplus|M5Stack製 M5Stick C Plus 用                           |
 |pictures   |関連画像ファイル                                      |
 |tools      |関連ツール                                            |
