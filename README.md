@@ -55,11 +55,24 @@ Wi-Fiを使用するサンプル・プログラムについては、実行前に
 お持ちの無線アクセスポイントに合わせて設定してください。  
 m5フォルダ内にある setWifiSSID.sh を使用すれば、一括で全プログラムのSSIDとパスワードを変更できます。  
 
+### 照度センサの送信プログラム ex03_lum
+
+照度センサ DLIGHT UNIT や DLIGHT HAT を ESP32開発ボードや M5Stack シリーズに接続し、照度値をクラウド(Ambient)に送信するプログラムです。  
+下図は、M5 Core Ink 用の ex03_lum_graph の実行例です。M5 Core Ink は e-Paper を搭載しているので、待機中は表示を維持したまま deep sleep することができます。  
+
+![実行画面ex03](/pictures/ex03_lum_ink.jpg)  
+
+### 温度＋湿度センサの送信プログラム ex05_hum
+
+照度センサ ENV II/III UNIT や ENV II/III HAT を ESP32開発ボードや M5Stack シリーズに接続し、照度値をクラウド(Ambient)に送信するプログラムです。  
+
+![実行画面ex03](/pictures/ex03_lum_ink.jpg)  
+
 ### 赤外線リモコン ex08_ir_out
 
 下図は、赤外線リモコン信号を受信したり、LAN内の別の端末のブラウザからの遠隔制御でリモコン信号を送信することが出来る、ex08_ir_outの画面の一例です。  
 
-![実行画面ex08](/pictures/ex08_thumb.gif)
+![実行画面ex08](/pictures/ex08_thumb.gif)  
 
 詳細説明（M5Stackでリモコン送信&受信）  
 [https://bokunimo.net/blog/esp/2685/](https://bokunimo.net/blog/esp/2685/)  
@@ -70,7 +83,7 @@ M5Stack with IR Remote Unit receives infrared signal or transmits infrared signa
 
 下図は、音声合成 AquesTalk Pico LSI ATP3012 で音声を発話する ex09_talk の動作例です。LAN内の端末のブラウザからローマ字ベースの音声コードを入力して、しゃべらせることも可能です。  
 
-![実行画面ex09](/pictures/ex09_thumb.gif)
+![実行画面ex09](/pictures/ex09_thumb.gif)  
 
 詳細説明（M5Stackで音声出力）  
 [https://bokunimo.net/blog/esp/2708/](https://bokunimo.net/blog/esp/2708/)  
