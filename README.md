@@ -66,7 +66,7 @@ m5フォルダ内にある setWifiSSID.sh を使用すれば、一括で全プ�
 
 照度センサ ENV II/III UNIT や ENV II/III HAT を ESP32開発ボードや M5Stack シリーズに接続し、照度値をクラウド(Ambient)に送信するプログラムです。  
 
-![実行画面ex03](/pictures/ex03_lum_ink.jpg)  
+![実行画面ex03](/pictures/ex05_hum_ink.jpg)  
 
 ### 赤外線リモコン ex08_ir_out
 
