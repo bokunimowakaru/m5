@@ -99,20 +99,20 @@ void loop(){                                    // 繰り返し実行する関�
     udp.beginPacket(UDPTO_IP, PORT);            // UDP送信先を設定
     udp.println(S);                             // センサ値を送信
     udp.endPacket();                            // UDP送信の終了(実際に送信する)
-    delay(10);                                  // 送信待ち時間
+    if(strlen(LINE_TOKEN) <= 42) sleep();       // LINE_TOKEN未設定時にsleep
+    
+    S = "message=センサが反応しました。(" + S.substring(8) + ")";
 
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
     String url;                                 // URLを格納する文字列変数を生成
-    if(strlen(LINE_TOKEN) > 42){                // LINE_TOKEN設定時
-        url = "https://notify-api.line.me/api/notify";  // LINEのURLを代入
-        ink_println(url);                       // 送信URLを表示
-        http.begin(url);                        // HTTPリクエスト先を設定する
-        http.addHeader("Content-Type","application/x-www-form-urlencoded");
-        http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
-        http.POST("message=センサが反応しました。(" + S.substring(8) + ")");
-        http.end();                             // HTTP通信を終了する
-    }
+    url = "https://notify-api.line.me/api/notify";  // LINEのURLを代入
+    http.begin(url);                            // HTTPリクエスト先を設定する
+    http.addHeader("Content-Type","application/x-www-form-urlencoded");
+    http.addHeader("Authorization","Bearer " + String(LINE_TOKEN));
+    int code = http.POST(S);                    // メッセージをLINEに送信する
+    if(code == 200) ink_println(url);           // 送信URLを表示
+    http.end();                                 // HTTP通信を終了する
     sleep();                                    // 下記のsleep関数を実行
 }
 
