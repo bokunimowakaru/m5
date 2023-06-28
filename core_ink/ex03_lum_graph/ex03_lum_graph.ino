@@ -129,8 +129,8 @@ void loop(){                                    // 繰り返し実行する関�
     String url = "http://ambidata.io/api/v2/channels/"+String(Amb_Id)+"/data";
     http.begin(url);                            // HTTPリクエスト先を設定する
     http.addHeader("Content-Type","application/json"); // JSON形式を設定する
-    ink_print(url.substring(0,22)+"...",false); // 送信URLの一部(22文字)を表示
-    http.POST(S);                               // センサ値をAmbientへ送信する
+    int code = http.POST(S);                    // センサ値をAmbientへ送信する
+    if(code == 200) ink_print(url.substring(0,22)+"...",false); // 送信URL表示
     http.end();                                 // HTTP通信を終了する
     sleep();                                    // 下記のsleep関数を実行
 }
