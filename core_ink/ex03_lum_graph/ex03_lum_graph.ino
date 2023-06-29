@@ -89,6 +89,7 @@ void setup(){                                   // 起動時に一度だけ実�
     ink_print("("+String(wake)+")",false);      // 起動値をバッファに描画
     ink_printPos(144,0);                        // 文字表示位置を移動
     ink_print(String(batt_mv())+" mV",false);   // 電圧値をバッファに描画
+    InkPageSprite.FillRect(0,160,200,40,1);     // テキスト文字エリアを消去
     ink_printPos(160);
 }
 

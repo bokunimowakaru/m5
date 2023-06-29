@@ -111,6 +111,7 @@ void setup(){                                   // 起動時に一度だけ実�
     ink_print("("+String(wake)+")",false);      // 起動値をバッファに描画
     ink_printPos(144,0);                        // 文字表示位置を移動
     ink_print(String(batt_mv())+" mV",false);   // 電圧値をバッファに描画
+    InkPageSprite.FillRect(0,160,200,40,1);     // テキスト文字エリアを消去
     ink_printPos(160);
     /*
     char s[8] = "*** mV";                       // 文字列変数sを生成
@@ -161,7 +162,6 @@ void loop(){                                    // 繰り返し実行する関�
     HTTPClient http;                            // HTTPリクエスト用インスタンス
     http.setConnectTimeout(15000);              // タイムアウトを15秒に設定する
     String url = "http://ambidata.io/api/v2/channels/"+String(Amb_Id)+"/data";
-    ink_print(url.substring(0,22)+"...",false); // 送信URLの一部(22文字)を表示
     http.begin(url);                            // HTTPリクエスト先を設定する
     http.addHeader("Content-Type","application/json"); // JSON形式を設定する
     int code = http.POST(S);                    // センサ値をAmbientへ送信する
