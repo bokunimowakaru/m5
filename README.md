@@ -70,7 +70,7 @@ m5フォルダ内にある setWifiSSID.sh を使用すれば、一括で全プ�
 
 ![実行画面ex03](/pictures/ex05_hum_ink.jpg)  
 
-省エネ M5Stack Core Ink で Wi-Fi 温湿度センサ送信機  
+詳細説明（省エネ M5Stack Core Ink で Wi-Fi 温湿度センサ送信機）  
 [https://bokunimo.net/blog/esp/3743/](https://bokunimo.net/blog/esp/3743/)  
 
 ### 赤外線リモコン ex08_ir_out
