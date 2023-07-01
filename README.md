@@ -70,6 +70,9 @@ m5フォルダ内にある setWifiSSID.sh を使用すれば、一括で全プ�
 
 ![実行画面ex03](/pictures/ex05_hum_ink.jpg)  
 
+省エネ M5Stack Core Ink で Wi-Fi 温湿度センサ送信機  
+[https://bokunimo.net/blog/esp/3743/](https://bokunimo.net/blog/esp/3743/)  
+
 ### 赤外線リモコン ex08_ir_out
 
 下図は、赤外線リモコン信号を受信したり、LAN内の別の端末のブラウザからの遠隔制御でリモコン信号を送信することが出来る、ex08_ir_outの画面の一例です。  
