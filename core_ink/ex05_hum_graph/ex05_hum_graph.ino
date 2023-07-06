@@ -66,6 +66,7 @@ ENV III HAT SHT30 + QMP6988
 IPAddress UDPTO_IP = {255,255,255,255};         // UDP宛先 IPアドレス
 
 RTC_DATA_ATTR uint8_t PageBuf[200*200/8];       // ESP32用メモリの確保(画像用)
+RTC_DATA_ATTR uint32_t ink_refresh_time;        // e-paper全消去後の経過時間
 Ink_Sprite InkPageSprite(&M5.M5Ink);            // e-paper描画用インスタンス
 int wake = (int)esp_sleep_get_wakeup_cause();   // 起動理由を変数wakeに保存
 
@@ -91,21 +92,36 @@ void setup(){                                   // 起動時に一度だけ実�
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
     shtSetup(25,26);                            // 湿度センサの初期化
-    
     if(wake != ESP_SLEEP_WAKEUP_TIMER){         // タイマー以外で起動時の処理
-        M5.M5Ink.isInit();                      // Inkの初期化
+        while(!M5.M5Ink.isInit()) delay(3000);  // Inkの初期化
         M5.M5Ink.clear();                       // Inkを消去
-        InkPageSprite.creatSprite(0,0,200,200,0);  // 描画用バッファの作成
-        lineGraphInit(&InkPageSprite, 16, 0, 100); // グラフ初期化,縦軸範囲指定
-        ink_print_init(&InkPageSprite);            // テキスト表示用 ink_print
-        ink_print("Example 5 HUM",false);          // タイトルの描画
-    }else{                                         // タイマー起動時の処理
-        InkPageSprite.creatSprite(0,0,200,200,0);  // 描画用バッファの作成
-        InkPageSprite.drawFullBuff(PageBuf);       // RTCメモリから画像読み込み
+        ink_refresh_time = 0;                   // 消去した時刻を0に
+        InkPageSprite.creatSprite(0,0,200,200,0);   // 描画用バッファの作成
+        lineGraphInit(&InkPageSprite, 16, 0, 100);  // グラフ初期化,縦軸範囲指定
+        ink_print_init(&InkPageSprite);             // テキスト表示用 ink_print
+        ink_print("Example 5 HUM",false);           // タイトルの描画
+    }else{                                          // タイマー起動時の処理
+        while(!M5.M5Ink.isInit()) delay(3000);      // Inkの初期化
+        InkPageSprite.creatSprite(0,0,200,200,0);   // 描画用バッファの作成
+        InkPageSprite.drawFullBuff(PageBuf);        // RTCメモリから画像読み込み
         lineGraphSetSprite(&InkPageSprite, 16, 0, 100); // 棒グラフ描画用の設定
-        ink_print_setup(&InkPageSprite);           // テキスト表示用 ink_print
+        ink_print_setup(&InkPageSprite);            // テキスト表示用 ink_print
+        if(ink_refresh_time >= 60*60*1000){         // 1時間が経過
+            ink_refresh_time = 0;                   // 消去した時刻を0に
+            InkPageSprite.pushSprite();             // e-paperに描画
+            delay(300);
+            InkPageSprite.clear();                  // 画面の消去
+            InkPageSprite.pushSprite();             // e-paperに描画
+            InkPageSprite.deleteSprite();           // 描画用バッファの削除
+            InkPageSprite.creatSprite(0,0,200,200,0); // 描画用バッファの作成
+            while(!M5.M5Ink.isInit()) delay(300);   // Inkの初期化
+            M5.M5Ink.clear();                       // Inkを消去
+            lineGraphCls();                         // グラフ画面の罫線描画
+            lineGraphRedraw();                      // 過去グラフの再描画
+            ink_print("Example 5 HUM",false);       // タイトルの描画
+        }
     }
-    InkPageSprite.pushSprite();                 // e-paperに描画(同一内容の書込)
+    InkPageSprite.pushSprite();                 // e-paperに描画
 
     ink_printPos(120,0);                        // 文字表示位置を移動
     ink_print("("+String(wake)+")",false);      // 起動値をバッファに描画
@@ -176,7 +192,9 @@ void sleep(){                                   // スリープ実行用の関�
     // delay(100);                              // 送信完了の待ち時間処理
     WiFi.disconnect();                          // Wi-Fiの切断
     memcpy(PageBuf,InkPageSprite.getSpritePtr(),200*200/8); // ESP内のRTCに保存
-
+    ink_refresh_time += millis() + SLEEP_P/1000;
+    Serial.println(ink_refresh_time/1000);  // debug
+    
     digitalWrite(LED_EXT_PIN, HIGH);            // LED消灯
     // ink_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
     if(batt_mv() > 3300 && !M5.BtnPWR.wasPressed()){ // 電圧が3300mV以上のとき
