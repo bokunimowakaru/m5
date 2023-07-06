@@ -71,7 +71,7 @@ void setup(){                                   // 起動時に一度だけ実�
     bh1750Setup(25,26);                         // 照度センサの初期化
 
     if(wake != ESP_SLEEP_WAKEUP_TIMER){         // タイマー以外で起動時の処理
-        M5.M5Ink.isInit();                      // Inkの初期化
+        while(!M5.M5Ink.isInit()) delay(3000);  // Inkの初期化
         M5.M5Ink.clear();                       // Inkを消去
         InkPageSprite.creatSprite(0,0,200,200,0);  // 描画用バッファの作成
         lineGraphInit(&InkPageSprite,16, 0, 1000); // グラフ初期化,縦軸範囲指定

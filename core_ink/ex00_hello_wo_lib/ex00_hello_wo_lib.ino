@@ -71,7 +71,8 @@ void loop(){                                    // 繰り返し実行する関�
     }
     if( btnE == 1 ){                            // ボタン先頭が押されていた時
         M5.M5Ink.clear();                       // Inkを消去
-        InkPageSprite.clear(CLEAR_DRAWBUFF|CLEAR_LASTBUFF);
+        InkPageSprite.clear();
+        InkPageSprite.pushSprite();             // push the sprite.
         ink_x = 0;
         ink_y = 0;
         ink_println("Screen Cleared");          // Inkへメッセージを表示

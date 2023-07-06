@@ -37,7 +37,7 @@ void ink_push(){                                // Inkに表示データを転�
 
 void ink_print_setup(){                         // Inkの初期化処理部
     Serial.println("Entered ink_print_setup");  // debug
-    M5.M5Ink.isInit();                          // Inkの初期化
+    while(!M5.M5Ink.isInit()) delay(3000);      // Inkの初期化
     ink_start_time = millis();                  // 初期化処理の完了時刻を保持
     M5.M5Ink.clear();                           // Inkを消去
     ink_x = 0;                                  // Ink表示用のX座標
@@ -50,6 +50,7 @@ void ink_print_clear(){                         // Inkの画面を消去する
     InkPageSprite.deleteSprite();               // メモリの開放
     InkPageSprite.creatSprite(0,0,200,200,0);   // 画面全体
     InkPageSprite.pushSprite();                 // push the sprite.
+    while(!M5.M5Ink.isInit()) delay(3000);      // Inkの初期化
     M5.M5Ink.clear();                           // Inkを消去
     InkPageSprite.deleteSprite();               // メモリの開放
     ink_x = 0;                                  // Ink表示用のX座標
