@@ -92,34 +92,29 @@ void setup(){                                   // 起動時に一度だけ実�
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
     shtSetup(25,26);                            // 湿度センサの初期化
+    
+    while(!M5.M5Ink.isInit()) delay(3000);      // Inkの初期化状態確認
     if(wake != ESP_SLEEP_WAKEUP_TIMER){         // タイマー以外で起動時の処理
-        while(!M5.M5Ink.isInit()) delay(3000);  // Inkの初期化
         M5.M5Ink.clear();                       // Inkを消去
         ink_refresh_time = 0;                   // 消去した時刻を0に
         InkPageSprite.creatSprite(0,0,200,200,0);   // 描画用バッファの作成
         lineGraphInit(&InkPageSprite, 16, 0, 100);  // グラフ初期化,縦軸範囲指定
         ink_print_init(&InkPageSprite);             // テキスト表示用 ink_print
         ink_print("Example 5 HUM",false);           // タイトルの描画
+    }else if(ink_refresh_time >= 60*60*1000){       // 1時間に1回の処理
+        M5.M5Ink.clear();                           // Inkを消去
+        ink_refresh_time = 0;                       // 消去した時刻を0に
+        InkPageSprite.creatSprite(0,0,200,200,0);   // 描画用バッファの作成
+        lineGraphSetSprite(&InkPageSprite, 16, 0, 100); // 棒グラフ描画用の設定
+        ink_print_init(&InkPageSprite);             // テキスト表示用 ink_print
+        lineGraphCls();                             // グラフ画面の罫線描画
+        lineGraphRedraw();                          // 過去グラフの再描画
+        ink_print("Example 5 HUM",false);           // タイトルの描画
     }else{                                          // タイマー起動時の処理
-        while(!M5.M5Ink.isInit()) delay(3000);      // Inkの初期化
         InkPageSprite.creatSprite(0,0,200,200,0);   // 描画用バッファの作成
         InkPageSprite.drawFullBuff(PageBuf);        // RTCメモリから画像読み込み
         lineGraphSetSprite(&InkPageSprite, 16, 0, 100); // 棒グラフ描画用の設定
         ink_print_setup(&InkPageSprite);            // テキスト表示用 ink_print
-        if(ink_refresh_time >= 60*60*1000){         // 1時間が経過
-            ink_refresh_time = 0;                   // 消去した時刻を0に
-            InkPageSprite.pushSprite();             // e-paperに描画
-            delay(300);
-            InkPageSprite.clear();                  // 画面の消去
-            InkPageSprite.pushSprite();             // e-paperに描画
-            InkPageSprite.deleteSprite();           // 描画用バッファの削除
-            InkPageSprite.creatSprite(0,0,200,200,0); // 描画用バッファの作成
-            while(!M5.M5Ink.isInit()) delay(300);   // Inkの初期化
-            M5.M5Ink.clear();                       // Inkを消去
-            lineGraphCls();                         // グラフ画面の罫線描画
-            lineGraphRedraw();                      // 過去グラフの再描画
-            ink_print("Example 5 HUM",false);       // タイトルの描画
-        }
     }
     InkPageSprite.pushSprite();                 // e-paperに描画
 
@@ -128,14 +123,7 @@ void setup(){                                   // 起動時に一度だけ実�
     ink_printPos(144,0);                        // 文字表示位置を移動
     ink_print(String(batt_mv())+" mV",false);   // 電圧値をバッファに描画
     InkPageSprite.FillRect(0,160,200,40,1);     // テキスト文字エリアを消去
-    ink_printPos(160);
-    /*
-    char s[8] = "*** mV";                       // 文字列変数sを生成
-    snprintf(s,4,"(%d)",wake);                  // 起動値を文字列変数sに代入
-    InkPageSprite.drawString(120,0,s);          // 起動値をバッファに描画
-    snprintf(s,9,"%d mV",batt_mv());            // 電圧値を文字列変数sに代入
-    InkPageSprite.drawString(144,0,s);          // 電圧値をバッファに描画
-    */
+    ink_printPos(160);                          // テキスト文字位置を上から160に
 }
 
 void loop(){                                    // 繰り返し実行する関数
@@ -205,10 +193,11 @@ void sleep(){                                   // スリープ実行用の関�
         esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
         unsigned long us = millis() * 1000ul + 363000ul;
         if(SLEEP_P > us) us = SLEEP_P - us; else us = 1000000ul;
-        ink_println("Sleeping for " + String(((double)(us/100000))/10.,1) + " secs");
-        esp_deep_sleep(us);                     // Deep Sleepモードへ移行
+        ink_println("Sleeping for "+String((double)(us/100000)/10.,1)+" secs");
+        M5.M5Ink.deepSleep();                   // InkをDeep Sleepモードへ移行
+        esp_deep_sleep(us);                     // ESP32をDeep Sleepモードへ移行
         
-        /* 下記の方法では,GPIO12を保持できない(2023年6月時点)
+        /* 下記の方法では,GPIO12を保持できずにRTCメモリが消える(2023年6月時点)
         int sec = (int)(SLEEP_P/1000000ul);     // 秒に変換
         sec -= (millis()-500)/1000;             // 動作時間を減算
         if(sec < 1) sec = 1;
