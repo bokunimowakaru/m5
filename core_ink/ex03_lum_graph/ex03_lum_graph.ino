@@ -233,6 +233,9 @@ M5 Core Ink 回路図：
 https://docs.m5stack.com/en/core/coreink
 PWR_SW&ADC：GPIO12で5V DCDCと3.3V DC-DCの動作を維持できる
 
+画面の定期更新：
+https://github.com/m5stack/M5Core-Ink/blob/master/examples/Basics/RTC_Clock/RTC_Clock.ino
+
 *******************************************************************************
 【引用コード】
 https://github.com/bokunimowakaru/esp/tree/master/2_example/example06_lum
