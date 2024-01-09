@@ -203,7 +203,7 @@ void sleep(){                                   // スリープ実行用の関�
         unsigned long us = millis() * 1000ul + 363000ul;
         if(SLEEP_P > us) us = SLEEP_P - us; else us = 1000000ul;
         ink_println("Sleeping for "+String((double)(us/100000)/10.,1)+" secs");
-        M5.M5Ink.deepSleep();                   // InkをDeep Sleepモードへ移行
+    //  M5.M5Ink.deepSleep(); // 初期化に失敗することがある // InkをDeep Sleepモードへ移行
         esp_deep_sleep(us);                     // ESP32をDeep Sleepモードへ移行
         
         /* 下記の方法では,GPIO12を保持できずにRTCメモリが消える(2023年6月時点)
