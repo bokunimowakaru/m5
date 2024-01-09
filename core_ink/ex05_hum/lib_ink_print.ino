@@ -42,6 +42,7 @@ void ink_print_setup(){                         // Inkの初期化処理部
     M5.M5Ink.clear();                           // Inkを消去
     ink_x = 0;                                  // Ink表示用のX座標
     ink_y = 0;                                  // Ink表示用のY座標
+    InkPageSprite.clear();                      // 2024/1/9 追加
     InkPageSprite.creatSprite(0,0,200,16,0);    // 画像用バッファの作成
     Serial.println("Done");                     // debug
 }

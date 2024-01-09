@@ -93,6 +93,7 @@ void setup(){                                   // 起動時に一度だけ実�
     if(wake != ESP_SLEEP_WAKEUP_TIMER){         // タイマー以外で起動時の処理
         M5.M5Ink.clear();                       // Inkを消去
         ink_refresh_time = 0;                   // 消去した時刻を0に
+        InkPageSprite.clear();                      // 2024/1/9 追加
         InkPageSprite.creatSprite(0,0,200,200,0);   // 描画用バッファの作成
         lineGraphInit(&InkPageSprite,16, 0, 1000);  // グラフ初期化,縦軸範囲指定
         ink_print_init(&InkPageSprite);             // テキスト表示用 ink_print
@@ -100,6 +101,7 @@ void setup(){                                   // 起動時に一度だけ実�
     }else if(ink_refresh_time >= 60*60*1000){       // 1時間に1回の処理
         M5.M5Ink.clear();                           // Inkを消去
         ink_refresh_time = 0;                       // 消去した時刻を0に
+        InkPageSprite.clear();                      // 2024/1/9 追加
         InkPageSprite.creatSprite(0,0,200,200,0);   // 描画用バッファの作成
         lineGraphSetSprite(&InkPageSprite, 16, 0, 100); // 棒グラフ描画用の設定
         ink_print_init(&InkPageSprite);             // テキスト表示用 ink_print
