@@ -96,30 +96,38 @@ void setup(){                                   // 起動時に一度だけ実�
     } (ここまで)CoreInk側RTC起動時の処理 */
     
     M5.begin();                                 // M5Stack用ライブラリの起動
+    digitalWrite(LED_EXT_PIN, LOW);             // LED点灯
+    Serial.println("wake = "+String(wake));  // debug
+
+    ink_test();
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
     shtSetup(25,26);                            // 湿度センサの初期化
     
     while(!M5.M5Ink.isInit()) delay(3000);      // Inkの初期化状態確認
+    // M5.M5Ink.isInit();      // Inkの初期化状態確認
     if(wake != ESP_SLEEP_WAKEUP_TIMER){         // タイマー以外で起動時の処理
+        Serial.println("wake = Power ON");  // debug
         M5.M5Ink.clear();                       // Inkを消去
         ink_refresh_time = 0;                   // 消去した時刻を0に
-    //  InkPageSprite.clear();                      // 2024/1/9 追加 1/11削除
         InkPageSprite.creatSprite(0,0,200,200,0);   // 描画用バッファの作成
+        ink_test_cls();                             // 暫定対策(画面消去)
         lineGraphInit(&InkPageSprite, 16, 0, 100);  // グラフ初期化,縦軸範囲指定
         ink_print_init(&InkPageSprite);             // テキスト表示用 ink_print
         ink_print("Example 5 HUM",false);           // タイトルの描画
     }else if(ink_refresh_time >= 60*60*1000){       // 1時間に1回の処理
         M5.M5Ink.clear();                           // Inkを消去
         ink_refresh_time = 0;                       // 消去した時刻を0に
-    //  InkPageSprite.clear();                      // 2024/1/9 追加 1/11削除
+        InkPageSprite.clear();                      // 2024/1/9 追加 1/11削除
         InkPageSprite.creatSprite(0,0,200,200,0);   // 描画用バッファの作成
+        ink_test_cls();                             // 暫定対策(画面消去)
         lineGraphSetSprite(&InkPageSprite, 16, 0, 100); // 棒グラフ描画用の設定
         ink_print_init(&InkPageSprite);             // テキスト表示用 ink_print
         lineGraphCls();                             // グラフ画面の罫線描画
         lineGraphRedraw();                          // 過去グラフの再描画
         ink_print("Example 5 HUM",false);           // タイトルの描画
     }else{                                          // タイマー起動時の処理
+        Serial.println("wake = ESP_SLEEP_WAKEUP_TIMER"); // debug
         InkPageSprite.creatSprite(0,0,200,200,0);   // 描画用バッファの作成
         InkPageSprite.drawFullBuff(PageBuf);        // RTCメモリから画像読み込み
         lineGraphSetSprite(&InkPageSprite, 16, 0, 100); // 棒グラフ描画用の設定
@@ -192,9 +200,10 @@ void sleep(){                                   // スリープ実行用の関�
     ink_refresh_time += millis() + SLEEP_P/1000;
     Serial.println(ink_refresh_time/1000);  // debug
     
-    digitalWrite(LED_EXT_PIN, HIGH);            // LED消灯
     // ink_println("Elapsed "+String((float)millis()/1000.,1)+" Seconds");
-    if(batt_mv() > 3300 && !M5.BtnPWR.wasPressed()){ // 電圧が3300mV以上のとき
+    int batt = batt_mv();                       // 電池電圧を取得してbattに代入
+    if(batt > 3300 && !M5.BtnPWR.wasPressed()){ // 電圧が3300mV以上のとき
+        digitalWrite(LED_EXT_PIN, HIGH);            // LED消灯
         /* スリープ中に GPIO12 をHighレベルに維持する(ESP32への電源供給) */
         rtc_gpio_init(GPIO_NUM_12);
         rtc_gpio_set_direction(GPIO_NUM_12,RTC_GPIO_MODE_OUTPUT_ONLY);
@@ -214,7 +223,13 @@ void sleep(){                                   // スリープ実行用の関�
         M5.shutdown(sec);                       // タイマー・スリープ
         */
     }   // else:
-    ink_println("Power OFF");                   // Inkへメッセージを表示
+    ink_println("Power OFF ("+String(batt)+" mV)"); // Inkへメッセージを表示
+    /* スリープ中に GPIO12 をLowレベルに維持する(ESP32への電源供給を阻止) */
+    rtc_gpio_init(GPIO_NUM_12);
+    rtc_gpio_set_direction(GPIO_NUM_12,RTC_GPIO_MODE_OUTPUT_ONLY);
+    rtc_gpio_set_level(GPIO_NUM_12,0);
+    esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
+    digitalWrite(LED_EXT_PIN, LOW);             // LED点灯(M5Stackサンプルどおり)
     M5.shutdown();                              // 電源OFF
 }
 
