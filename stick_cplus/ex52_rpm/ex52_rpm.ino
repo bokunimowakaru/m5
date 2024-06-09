@@ -200,26 +200,26 @@ void loop() {
         /**** Gryo ****/
         M5.Lcd.setCursor(0, 4);
         M5.Lcd.println("[Gyro]");
-        M5.Lcd.printf(" %5.1f\n %5.1f\n %5.1f\n", gyroX, gyroY, gyroZ);
+        M5.Lcd.printf("%6.1f\n%6.1f\n%6.1f\n", gyroX, gyroY, gyroZ);
         
         /**** Accel ****/
         M5.Lcd.println("[Accel]");
-        M5.Lcd.printf(" %5.2f\n %5.2f\n %5.2f\n", accX, accY, accZ);
+        M5.Lcd.printf("%6.2f\n%6.2f\n%6.2f\n", accX, accY, accZ);
         
         /**** Temperature ****/
     //  M5.Lcd.printf("[Temperature]\n  %6.2f C\n", temp);
 
         /**** LEVEL ****/
         M5.Lcd.println("[Level]");
-        M5.Lcd.printf(" %5.2f\n %5.2f\n", degx, degy);
+        M5.Lcd.printf("%6.2f\n%6.2f\n", degx, degy);
         M5.Lcd.fillCircle(pos_x_prev[0], pos_y_prev[0], 2, BLACK);
         M5.Lcd.fillCircle(120, 67, 1, DARKGREY);
         for(int i=1; i<BUF_N; i++){
             M5.Lcd.fillCircle(pos_x_prev[i], pos_y_prev[i], 2, DARKGREEN);
         }
         if(pow(degx,2)+pow(degy,2) < pow(DEG_MAX,2)){
-            int pos_x = int(64 * degx / DEG_MAX + 0.5) + 120;
-            int pos_y = int(64 * degy / DEG_MAX + 0.5) +  67;
+            int pos_x = -int(64 * degx / DEG_MAX + 0.5) + 120;
+            int pos_y = -int(64 * degy / DEG_MAX + 0.5) +  67;
             M5.Lcd.fillCircle(pos_x, pos_y, 2, RED);
             buf_append(pos_x_prev, pos_x);
             buf_append(pos_y_prev, pos_y);
@@ -227,7 +227,7 @@ void loop() {
         
         /**** RPM ****/
         M5.Lcd.println("[RPM]");
-        M5.Lcd.printf(" %5.2f\n %5.2f\n", rpm1, rpm2);
+        M5.Lcd.printf("%6.2f\n%6.2f\n", rpm1, rpm2);
         M5.Lcd.drawLine(192, rpm1_y_prev[0], 207, rpm1_y_prev[0], BLACK);
         M5.Lcd.drawLine(217, rpm2_y_prev[0], 232, rpm2_y_prev[0], BLACK);
         M5.Lcd.drawLine(192, 67, 207, 67, DARKGREY);

@@ -21,7 +21,7 @@ uint16_t lux_array[800];
 
 float get_rpm_lum(){
     Wire.beginTransmission(I2C_bh1750);
-    Wire.write(0x10);            // Continuously Resolution Mode (L=0x13,H=0x10)
+    Wire.write(0x13);            // Continuously Resolution Mode (L=0x13,H=0x10)
     Wire.endTransmission(false); // send a restart, keeping the connection active.
     delay(180);                  // 16ms以上 ローレゾ24ms ハイレゾ180ms
 
