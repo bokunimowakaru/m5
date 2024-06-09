@@ -108,6 +108,10 @@ void lcd_init(int mode){
         M5.Lcd.setTextFont(8);     // 75ピクセルのフォント(数値表示)
         M5.Lcd.fillScreen(BLACK);
       break;
+      default:
+        M5.Lcd.setRotation(1);     // Rotate the screen. 将屏幕旋转
+        M5.Lcd.setTextFont(1);     // 8x6ピクセルのフォント
+        M5.Lcd.fillScreen(BLACK);
     }
 }
 
@@ -133,7 +137,7 @@ void loop() {
     M5.update();                                // ボタン状態の取得
     if(M5.BtnA.wasPressed()){                   // (過去に)ボタンが押された時
         disp_mode++;
-        if(disp_mode >= 3) disp_mode = 0;
+        if(disp_mode > 2) disp_mode = 0;
         lcd_init(disp_mode);
     }
 
@@ -141,20 +145,23 @@ void loop() {
     float accX = 0.;  float accY = 0.;  float accZ = 0.;
     float temp = 0.;
     float gx, gy, gz, ax, ay, az, t;    
+    float rpm1, rpm2;
+
     for( int i=0; i<AVR_N; i++){
         M5.Imu.getGyroData(&gx, &gy, &gz);
         M5.Imu.getAccelData(&ax, &ay, &az);
         M5.Imu.getTempData(&t);
-        gyroX -= gy; gyroY -= gx; gyroZ += gz; 
-        accX  -= ay; accY  -= ax; accZ  += az; 
+        gyroX -= gy; gyroY -= gx; gyroZ -= gz; 
+        accX  -= ay; accY  -= ax; accZ  -= az; 
         temp  += t;
         delay(INTERVAL_MS / AVR_N);
     }
     gyroX /= AVR_N; gyroY /= AVR_N; gyroZ /= AVR_N;
     accX *= GRAV_MPS2/AVR_N; accY *= GRAV_MPS2/AVR_N; accZ *= GRAV_MPS2/AVR_N;
     temp  /= AVR_N;
+    
+    // 簡易キャリブレーション部 (側面ボタン押下時)
     if(disp_mode == 0 && M5.BtnB.wasPressed()){
-        // キャリブレーション (側面ボタン)
         M5.Lcd.setCursor(0, 4);
         M5.Lcd.println("[Calb]");
         delay(1000);
@@ -163,7 +170,7 @@ void loop() {
         CAL_GyroZ = -gyroZ;
         CAL_AccmX = -accX;
         CAL_AccmY = -accY;
-        CAL_AccmZ = GRAV_MPS2 / accZ;
+        CAL_AccmZ = -GRAV_MPS2 / accZ;
         M5.Lcd.printf(" %5.1f\n %5.1f\n %5.1f\n", gyroX, gyroY, gyroZ);
         delay(1000);
     }
@@ -171,13 +178,23 @@ void loop() {
     accX += CAL_AccmX; accY += CAL_AccmY; accZ *= CAL_AccmZ;
     if(accZ == 0.) accZ = 1e-38;
     if(gyroZ == 0.) gyroZ = 1e-38;
+    // 側面を下向きに置いた場合の簡易対応
+    if(accY < -4.9){ // -0.5 * GRAV_MPS2
+        float tmp;
+        tmp = accZ;  accZ  = accY;  accY  = -tmp;
+        tmp = gyroZ; gyroZ = gyroY; gyroY = -tmp;
+    }
+    
+    // 水平計、回転数計、演算処理部
     float degx = atan(accX/accZ) / 6.2832 * 360.;
     float degy = atan(accY/accZ) / 6.2832 * 360.;
-    float rpm1 = fabs(gyroZ) / 6.;
-    float rpm2 = 60 * sqrt(fabs(accY) / 39.478 / RADIUS_CM * 100);
+    rpm1 = fabs(gyroZ) / 6.;
+    rpm2 = 60 * sqrt(fabs(accY) / 39.478 / RADIUS_CM * 100);
     int rpm1_y = int(67.5 - 67. * (rpm1 - RPM_TYP) / RPM_TYP / ERR_MAX * 100);
     int rpm2_y = int(67.5 - 67. * (rpm2 - RPM_TYP) / RPM_TYP / ERR_MAX * 100);
     int flag_dx = 0;
+    
+    // モードに応じた処理部（メインボタン押下で切り替え）
     switch(disp_mode){
       case 0:  // 通常モード、水平計＋回転数計
         /**** Gryo ****/
@@ -248,6 +265,8 @@ void loop() {
         M5.Lcd.printf("%04.1f",rpm1);
         break;
     }
+    
+    // CSVxUDP送信
     if(rpm1 > 10. && millis()-started_time_ms > UDP_TX_MS && WiFi.status() == WL_CONNECTED){
         started_time_ms = millis();
         String S = String(DEVICE)
