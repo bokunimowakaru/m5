@@ -22,6 +22,7 @@ This code was forked by Wataru KUNINO from the following authors:
 
 #include <M5StickCPlus.h>
 #include <WiFi.h>               // ESP32用WiFiライブラリ
+#include <WebServer.h>          // HTTPサーバ用ライブラリ
 #include <WiFiUdp.h>            // UDP通信を行うライブラリ
 
 #define SSID "1234ABCD"         // 無線LANアクセスポイントSSID
@@ -48,6 +49,8 @@ RTC_DATA_ATTR float CAL_AccmZ = 1.; // 加速度Zキャリブレーション値(
 WiFiUDP udp;                    // UDP通信用のインスタンスを定義
 IPAddress UDPTO_IP = {255,255,255,255}; // UDP宛先 IPアドレス
 
+WebServer server(80);           // Webサーバ(ポート80=HTTP)定義
+
 int pos_x_prev[BUF_N];          // = 120;
 int pos_y_prev[BUF_N];          // = 67;
 int rpm1_y_prev[BUF_N];         // = 67;
@@ -55,6 +58,9 @@ int rpm2_y_prev[BUF_N];         // = 67;
 int udp_len_prev = 1;
 unsigned long started_time_ms = millis();
 int disp_mode = 0;              // 表示モード(ボタンで切り替わる)
+float rpm[212];					// RPM測定結果
+int i_rpm = 211;				// RPM測定結果の保存位置
+float wow = 0.0;				// WOW 測定結果
 int line_x = 27;                // 折れ線グラフのX座標
 
 void buf_init(){
@@ -72,6 +78,8 @@ void buf_append(int *array, int val){
 }
 
 void lcd_init(int mode){
+    char s[65];
+    uint32_t ip = WiFi.localIP();
     switch(mode){
       case 0: // 通常モード、水平計＋回転数計
         M5.Lcd.setRotation(1);     // Rotate the screen. 将屏幕旋转
@@ -108,11 +116,36 @@ void lcd_init(int mode){
         M5.Lcd.setTextFont(8);     // 75ピクセルのフォント(数値表示)
         M5.Lcd.fillScreen(BLACK);
       break;
+      case  3: // QRコード表示
+        M5.Lcd.setRotation(1);     // Rotate the screen. 将屏幕旋转
+        M5.Lcd.setTextFont(1);     // 75ピクセルのフォント(数値表示)
+        M5.Lcd.fillScreen(BLACK);
+        snprintf(s,65,"http://%d.%d.%d.%d/",ip&255,ip>>8&255,ip>>16&255,ip>>24);
+        M5.Lcd.setCursor(1,1); M5.Lcd.print(s);
+        M5.Lcd.qrcode(s, 114, 10, 123, 2);
+      break;
+      case -1:
+      break;
       default:
         M5.Lcd.setRotation(1);     // Rotate the screen. 将屏幕旋转
         M5.Lcd.setTextFont(1);     // 8x6ピクセルのフォント
         M5.Lcd.fillScreen(BLACK);
     }
+}
+
+void handleRoot(){
+    String rx, tx;                              // 受信用,送信用文字列
+    if(server.hasArg("mode")){                  // 引数Lが含まれていた時
+        rx = server.arg("mode");                // 引数Lの値を変数rxへ代入
+        disp_mode = rx.toInt();                 // 変数sの数値をled_statへ
+        lcd_init(disp_mode);
+    }
+    if(server.hasArg("stop")){                  // 引数Lが含まれていた時
+        rx = server.arg("stop");                // 引数Lの値を変数rxへ代入
+        disp_mode = -1;
+    }
+    tx = getHtml(disp_mode, rpm[i_rpm], wow);   // HTMLコンテンツを取得
+    server.send(200, "text/html", tx);          // HTMLコンテンツを送信
 }
 
 /* After M5StickC Plus is started or reset
@@ -126,6 +159,9 @@ void setup() {
     lcd_init(0);
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
+    server.on("/", handleRoot);                 // HTTP接続用コールバック先設定
+    server.begin();                             // Web サーバを起動する
+    for(int i=0; i<212; i++) rpm[i]=0.;         // rpm値の初期化
 }
 
 /* After the program in setup() runs, it runs the program in loop()
@@ -134,12 +170,14 @@ The loop() function is an infinite loop in which the program runs repeatedly
 loop()函数是一个死循环，其中的程序会不断的重复运行 */
 
 void loop() {
+    server.handleClient();
     M5.update();                                // ボタン状態の取得
     if(M5.BtnA.wasPressed()){                   // (過去に)ボタンが押された時
         disp_mode++;
-        if(disp_mode > 2) disp_mode = 0;
+        if(disp_mode > 3) disp_mode = 0;
         lcd_init(disp_mode);
     }
+    if(disp_mode < 0 || disp_mode == 3) return;
 
     float gyroX = 0.; float gyroY = 0.; float gyroZ = 0.;
     float accX = 0.;  float accY = 0.;  float accZ = 0.;
@@ -265,6 +303,18 @@ void loop() {
         M5.Lcd.printf("%04.1f",rpm1);
         break;
     }
+    
+    // WOW推定値の計算
+    i_rpm++;
+    if(i_rpm > 211) i_rpm = 0;
+    rpm[i_rpm] = rpm1;                      // RPM値の保存
+    float mse = 0., avr = 0.;
+    for(int i=0; i<212; i++) avr += rpm[i]; 
+    avr /= 212;
+    for(int i=0; i<212; i++){
+        mse += pow(avr-rpm[i],2);
+    }
+    wow = AVR_N * sqrt(mse) / 212. / avr * 100.;
     
     // CSVxUDP送信
     if(rpm1 > 10. && millis()-started_time_ms > UDP_TX_MS && WiFi.status() == WL_CONNECTED){
