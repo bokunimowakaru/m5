@@ -36,7 +36,8 @@ This code was forked by Wataru KUNINO from the following authors:
 #define GRAV_MPS2   9.80665     // 重力加速度(m/s2)
 #define DEG_MAX     6.0         // 水平レベル測定用最大角度
 #define ERR_MAX     20.         // RPM測定用最大誤差(%)
-#define RPM_TYP     33.333      // RPM測定用基準値(RPM)
+#define RPM_TYP_33  33.333      // 33 1/3 回転RPM測定用基準値(RPM)
+#define RPM_TYP_45  45.000      // 45 回転時 RPM測定用基準値(RPM)
 #define BUF_N       10          // 残像表示用バッファ数
 
 RTC_DATA_ATTR float CAL_GyroX = 0.; // 角速度Xキャリブレーション値
@@ -64,6 +65,7 @@ uint16_t wow[212];              // WOW測定結果 100倍値
 uint16_t level[212];            // 角度測定結果 1000倍値
 uint16_t meas[212];             // 測定時刻
 int line_x = 27;                // 折れ線グラフのX座標
+float rpm_typ = RPM_TYP_33;     // 33回転を設定
 
 void buf_init(){
     for(int i=0; i<BUF_N; i++){
@@ -103,14 +105,14 @@ void lcd_init(int mode){
         M5.Lcd.fillScreen(BLACK);
         M5.Lcd.setCursor(0, 0);    // set the cursor location.
         M5.Lcd.drawRect(26, 1, 213, 133, DARKGREY);
-        M5.Lcd.setCursor(1,1); M5.Lcd.printf("%4.1f",RPM_TYP*(1+ERR_MAX/100.));
+        M5.Lcd.setCursor(1,1); M5.Lcd.printf("%4.1f",rpm_typ*(1+ERR_MAX/100.));
         M5.Lcd.drawLine(26, 34, 238, 34, DARKGREY);
-        M5.Lcd.setCursor(1,28); M5.Lcd.printf("%4.1f",RPM_TYP*(1+ERR_MAX/200.));
+        M5.Lcd.setCursor(1,28); M5.Lcd.printf("%4.1f",rpm_typ*(1+ERR_MAX/200.));
         M5.Lcd.drawLine(26, 67, 238, 67, DARKGREY);
-        M5.Lcd.setCursor(1,61); M5.Lcd.printf("%4.1f",RPM_TYP);
+        M5.Lcd.setCursor(1,61); M5.Lcd.printf("%4.1f",rpm_typ);
         M5.Lcd.drawLine(26, 100, 238, 100, DARKGREY);
-        M5.Lcd.setCursor(1,97); M5.Lcd.printf("%4.1f",RPM_TYP*(1-ERR_MAX/200.));
-        M5.Lcd.setCursor(1,129); M5.Lcd.printf("%4.1f",RPM_TYP*(1-ERR_MAX/100.));
+        M5.Lcd.setCursor(1,97); M5.Lcd.printf("%4.1f",rpm_typ*(1-ERR_MAX/200.));
+        M5.Lcd.setCursor(1,129); M5.Lcd.printf("%4.1f",rpm_typ*(1-ERR_MAX/100.));
         line_x = 27;
       break;
       case 2: // 回転数の数値表示
@@ -164,7 +166,8 @@ void handleCSV(){
     for(int t=0; t < 212; t++){
         i++;
         if(i >= 212) i = 0;
-        tx += String(meas[i] - ms)+", "
+        uint16_t ms_ui = meas[i] - ms;
+        tx += String((int)ms_ui)+", "
             + String((float)level[i]/1000.,3)+", "
             + String((float)rpm[i]/1000.,3)+", "
             + String((float)wow[i]/100.,2)+"\r\n";
@@ -274,8 +277,9 @@ void loop() {
     float deg = sqrt(pow(degx,2)+pow(degy,2));
     rpm1 = fabs(gyroZ) / 6.;
     rpm2 = 60 * sqrt(fabs(accY) / 39.478 / RADIUS_CM * 100);
-    int rpm1_y = int(67.5 - 67. * (rpm1 - RPM_TYP) / RPM_TYP / ERR_MAX * 100);
-    int rpm2_y = int(67.5 - 67. * (rpm2 - RPM_TYP) / RPM_TYP / ERR_MAX * 100);
+    rpm_typ = rpm1 < 38.73 ? RPM_TYP_33 : RPM_TYP_45;
+    int rpm1_y = int(67.5 - 67. * (rpm1 - rpm_typ) / rpm_typ / ERR_MAX * 100);
+    int rpm2_y = int(67.5 - 67. * (rpm2 - rpm_typ) / rpm_typ / ERR_MAX * 100);
     int flag_dx = 0;
     
     // モードに応じた処理部（メインボタン押下で切り替え）
