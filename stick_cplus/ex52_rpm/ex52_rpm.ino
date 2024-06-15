@@ -58,9 +58,11 @@ int rpm2_y_prev[BUF_N];         // = 67;
 int udp_len_prev = 1;
 unsigned long started_time_ms = millis();
 int disp_mode = 0;              // 表示モード(ボタンで切り替わる)
-float rpm[212];					// RPM測定結果
-int i_rpm = 211;				// RPM測定結果の保存位置
-float wow = 0.0;				// WOW 測定結果
+int i_rpm = 211;                // RPM測定結果の保存位置
+uint16_t rpm[212];              // RPM測定結果 1000倍値
+uint16_t wow[212];              // WOW測定結果 100倍値
+uint16_t level[212];            // 角度測定結果 1000倍値
+uint16_t meas[212];             // 測定時刻
 int line_x = 27;                // 折れ線グラフのX座標
 
 void buf_init(){
@@ -144,8 +146,49 @@ void handleRoot(){
         rx = server.arg("stop");                // 引数Lの値を変数rxへ代入
         disp_mode = -1;
     }
-    tx = getHtml(disp_mode, rpm[i_rpm], wow);   // HTMLコンテンツを取得
+    int wow_prev = i_rpm > 0 ? wow[i_rpm - 1] : wow[211];
+    wow_prev -= wow[i_rpm];
+    int wow_disp = (-100 < wow_prev && wow_prev < 100) ? wow[i_rpm] : 10000;
+    tx = getHtml(disp_mode, 
+        (float)level[i_rpm]/1000.,
+        (float)rpm[i_rpm]/1000., 
+        (float)wow_disp/100.
+    );
     server.send(200, "text/html", tx);          // HTMLコンテンツを送信
+}
+
+void handleCSV(){
+    String tx = "time(ms), level(deg), rpm(rpm), wow(%)\n";
+    int i = i_rpm;
+    uint16_t ms = i < 211 ? meas[i+1] : meas[0];
+    for(int t=0; t < 212; t++){
+        i++;
+        if(i >= 212) i = 0;
+        tx += String(meas[i] - ms)+", "
+            + String((float)level[i]/1000.,3)+", "
+            + String((float)rpm[i]/1000.,3)+", "
+            + String((float)wow[i]/100.,2)+"\r\n";
+    }
+    server.send(200, "text/csv", tx);           // HTMLコンテンツを送信
+}
+
+void handleBMP(){
+    uint8_t buf[240*3];
+    WiFiClient client = server.client();
+    client.println("HTTP/1.0 200 OK");                  // HTTP OKを応答
+    client.println("Content-Type: image/bmp");          // コンテンツ
+    client.println("Content-Length: " + String(240*135*3+54));  // サイズ
+    client.println("Connection: close");                // 応答後に閉じる
+    client.println();                                   // ヘッダの終了
+    getBmpHeader(buf);
+    client.write((const uint8_t *)buf, 54); 
+    for(int y=0; y<135; y++){
+        getBmpLine(buf,y);
+        client.write((const uint8_t *)buf, 240*3);
+    }
+    client.println();                   // コンテンツの終了
+    client.flush();                     // ESP32用 ERR_CONNECTION_RESET対策
+    client.stop();                      // クライアントの切断
 }
 
 /* After M5StickC Plus is started or reset
@@ -160,8 +203,10 @@ void setup() {
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
     server.on("/", handleRoot);                 // HTTP接続用コールバック先設定
+    server.on("/rpm.csv", handleCSV);           // CSVデータ取得用
+    server.on("/screen.bmp", handleBMP);        // 画像データ取得用
     server.begin();                             // Web サーバを起動する
-    for(int i=0; i<212; i++) rpm[i]=0.;         // rpm値の初期化
+    for(int i=0; i<212; i++) rpm[i]=0;          // rpm値の初期化
 }
 
 /* After the program in setup() runs, it runs the program in loop()
@@ -226,6 +271,7 @@ void loop() {
     // 水平計、回転数計、演算処理部
     float degx = atan(accX/accZ) / 6.2832 * 360.;
     float degy = atan(accY/accZ) / 6.2832 * 360.;
+    float deg = sqrt(pow(degx,2)+pow(degy,2));
     rpm1 = fabs(gyroZ) / 6.;
     rpm2 = 60 * sqrt(fabs(accY) / 39.478 / RADIUS_CM * 100);
     int rpm1_y = int(67.5 - 67. * (rpm1 - RPM_TYP) / RPM_TYP / ERR_MAX * 100);
@@ -255,7 +301,7 @@ void loop() {
         for(int i=1; i<BUF_N; i++){
             M5.Lcd.fillCircle(pos_x_prev[i], pos_y_prev[i], 2, DARKGREEN);
         }
-        if(pow(degx,2)+pow(degy,2) < pow(DEG_MAX,2)){
+        if(deg < DEG_MAX){
             int pos_x = -int(64 * degx / DEG_MAX + 0.5) + 120;
             int pos_y = -int(64 * degy / DEG_MAX + 0.5) +  67;
             M5.Lcd.fillCircle(pos_x, pos_y, 2, RED);
@@ -307,14 +353,16 @@ void loop() {
     // WOW推定値の計算
     i_rpm++;
     if(i_rpm > 211) i_rpm = 0;
-    rpm[i_rpm] = rpm1;                      // RPM値の保存
+    meas[i_rpm] = (uint16_t) millis();
+    rpm[i_rpm] = int(rpm1 * 1000. + 0.5);   // RPM値の保存
     float mse = 0., avr = 0.;
-    for(int i=0; i<212; i++) avr += rpm[i]; 
+    for(int i=0; i<212; i++) avr += (float)rpm[i]/1000.; 
     avr /= 212;
     for(int i=0; i<212; i++){
-        mse += pow(avr-rpm[i],2);
+        mse += pow(avr-(float)rpm[i]/1000.,2);
     }
-    wow = AVR_N * sqrt(mse) / 212. / avr * 100.;
+    wow[i_rpm] = int(AVR_N * sqrt(mse) / 212. / avr * 10000. +.5);
+    level[i_rpm] = int(deg * 1000. +.5);
     
     // CSVxUDP送信
     if(rpm1 > 10. && millis()-started_time_ms > UDP_TX_MS && WiFi.status() == WL_CONNECTED){
