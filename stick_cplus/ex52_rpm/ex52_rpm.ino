@@ -1,9 +1,13 @@
 /******************************************************************************
 Example 52: 加速度センサMPU6886で回転数を測定し、Wi-Fiで送信する
-・
 
     使用機材(例)：M5StickC Plus (加速度センサは本体内蔵品)
+    
+    使用方法・詳細：
+    https://bokunimo.net/blog/audio/4592/
 
+    画面サイズ：240 x 135
+    
                                                Copyright (c) 2024 Wataru KUNINO
 *******************************************************************************
 本ソフトウェアには下記のソースコードの一部(MPU6886に関する)が含まれています。
@@ -39,6 +43,7 @@ This code was forked by Wataru KUNINO from the following authors:
 #define RPM_TYP_33  33.333      // 33 1/3 回転RPM測定用基準値(RPM)
 #define RPM_TYP_45  45.000      // 45 回転時 RPM測定用基準値(RPM)
 #define BUF_N       10          // 残像表示用バッファ数
+#define CSV_N       212         // CSV用バッファ数(212固定)
 
 RTC_DATA_ATTR float CAL_GyroX = 0.; // 角速度Xキャリブレーション値
 RTC_DATA_ATTR float CAL_GyroY = 0.; // 角速度Yキャリブレーション値
@@ -59,11 +64,11 @@ int rpm2_y_prev[BUF_N];         // = 67;
 int udp_len_prev = 1;
 unsigned long started_time_ms = millis();
 int disp_mode = 0;              // 表示モード(ボタンで切り替わる)
-int i_rpm = 211;                // RPM測定結果の保存位置
-uint16_t rpm[212];              // RPM測定結果 1000倍値
-uint16_t wow[212];              // WOW測定結果 100倍値
-uint16_t level[212];            // 角度測定結果 1000倍値
-uint16_t meas[212];             // 測定時刻
+int i_rpm = CSV_N - 1;          // RPM測定結果の保存位置
+uint16_t rpm[CSV_N];            // RPM測定結果 1000倍値
+uint16_t wow[CSV_N];            // WOW測定結果 100倍値
+uint16_t level[CSV_N];          // 角度測定結果 1000倍値
+uint16_t meas[CSV_N];           // 測定時刻
 int line_x = 27;                // 折れ線グラフのX座標
 float rpm_typ = RPM_TYP_33;     // 33回転を設定
 
@@ -148,7 +153,7 @@ void handleRoot(){
         rx = server.arg("stop");                // 引数Lの値を変数rxへ代入
         disp_mode = -1;
     }
-    int wow_prev = i_rpm > 0 ? wow[i_rpm - 1] : wow[211];
+    int wow_prev = i_rpm > 0 ? wow[i_rpm - 1] : wow[CSV_N-1];
     wow_prev -= wow[i_rpm];
     int wow_disp = (-100 < wow_prev && wow_prev < 100) ? wow[i_rpm] : 10000;
     tx = getHtml(disp_mode, 
@@ -162,10 +167,10 @@ void handleRoot(){
 void handleCSV(){
     String tx = "time(ms), level(deg), rpm(rpm), wow(%)\n";
     int i = i_rpm;
-    uint16_t ms = i < 211 ? meas[i+1] : meas[0];
-    for(int t=0; t < 212; t++){
+    uint16_t ms = i < CSV_N-1 ? meas[i+1] : meas[0];
+    for(int t=0; t < CSV_N; t++){
         i++;
-        if(i >= 212) i = 0;
+        if(i >= CSV_N) i = 0;
         uint16_t ms_ui = meas[i] - ms;
         tx += String((int)ms_ui)+", "
             + String((float)level[i]/1000.,3)+", "
@@ -209,7 +214,9 @@ void setup() {
     server.on("/rpm.csv", handleCSV);           // CSVデータ取得用
     server.on("/screen.bmp", handleBMP);        // 画像データ取得用
     server.begin();                             // Web サーバを起動する
-    for(int i=0; i<212; i++) rpm[i]=0;          // rpm値の初期化
+    for(int i=0; i<CSV_N; i++){                 // CSV出力用データの初期化
+        rpm[i]=0; wow[i]=0; level[i]=0; meas[i]=0;
+    }
 }
 
 /* After the program in setup() runs, it runs the program in loop()
@@ -350,22 +357,22 @@ void loop() {
         break;
       case 2:  // 回転数の数値表示
         M5.Lcd.setCursor(24, 31);
-        M5.Lcd.printf("%04.1f",rpm1);
+        M5.Lcd.printf("%4.1f",rpm1);
         break;
     }
     
     // WOW推定値の計算
     i_rpm++;
-    if(i_rpm > 211) i_rpm = 0;
+    if(i_rpm > CSV_N-1) i_rpm = 0;
     meas[i_rpm] = (uint16_t) millis();
     rpm[i_rpm] = int(rpm1 * 1000. + 0.5);   // RPM値の保存
     float mse = 0., avr = 0.;
-    for(int i=0; i<212; i++) avr += (float)rpm[i]/1000.; 
-    avr /= 212;
-    for(int i=0; i<212; i++){
+    for(int i=0; i<CSV_N; i++) avr += (float)rpm[i]/1000.; 
+    avr /= CSV_N;
+    for(int i=0; i<CSV_N; i++){
         mse += pow(avr-(float)rpm[i]/1000.,2);
     }
-    wow[i_rpm] = int(AVR_N * sqrt(mse) / 212. / avr * 10000. +.5);
+    wow[i_rpm] = int(AVR_N * sqrt(mse) / CSV_N / avr * 10000. +.5);
     level[i_rpm] = int(deg * 1000. +.5);
     
     // CSVxUDP送信
