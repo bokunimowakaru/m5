@@ -1,8 +1,9 @@
 /******************************************************************************
 Example 52: 加速度センサMPU6886で回転数を測定し、Wi-Fiで送信する
-・
 
     使用機材(例)：M5StickC Plus + HAT-DLIGHT
+
+    画面サイズ：240 x 135
 
                                                Copyright (c) 2024 Wataru KUNINO
 *******************************************************************************
@@ -22,6 +23,7 @@ This code was forked by Wataru KUNINO from the following authors:
 
 #include <M5StickCPlus.h>
 #include <WiFi.h>               // ESP32用WiFiライブラリ
+#include <WebServer.h>          // HTTPサーバ用ライブラリ
 #include <WiFiUdp.h>            // UDP通信を行うライブラリ
 
 #define SSID "1234ABCD"         // 無線LANアクセスポイントSSID
@@ -35,8 +37,10 @@ This code was forked by Wataru KUNINO from the following authors:
 #define GRAV_MPS2   9.80665     // 重力加速度(m/s2)
 #define DEG_MAX     6.0         // 水平レベル測定用最大角度
 #define ERR_MAX     20.         // RPM測定用最大誤差(%)
-#define RPM_TYP     33.333      // RPM測定用基準値(RPM)
+#define RPM_TYP_33  33.333      // 33 1/3 回転RPM測定用基準値(RPM)
+#define RPM_TYP_45  45.000      // 45 回転時 RPM測定用基準値(RPM)
 #define BUF_N       10          // 残像表示用バッファ数
+#define CSV_N       212         // CSV用バッファ数(212固定)
 
 RTC_DATA_ATTR float CAL_GyroX = 0.; // 角速度Xキャリブレーション値
 RTC_DATA_ATTR float CAL_GyroY = 0.; // 角速度Yキャリブレーション値
@@ -48,6 +52,8 @@ RTC_DATA_ATTR float CAL_AccmZ = 1.; // 加速度Zキャリブレーション値(
 WiFiUDP udp;                    // UDP通信用のインスタンスを定義
 IPAddress UDPTO_IP = {255,255,255,255}; // UDP宛先 IPアドレス
 
+WebServer server(80);           // Webサーバ(ポート80=HTTP)定義
+
 int pos_x_prev[BUF_N];          // = 120;
 int pos_y_prev[BUF_N];          // = 67;
 int rpm1_y_prev[BUF_N];         // = 67;
@@ -55,7 +61,13 @@ int rpm2_y_prev[BUF_N];         // = 67;
 int udp_len_prev = 1;
 unsigned long started_time_ms = millis();
 int disp_mode = 0;              // 表示モード(ボタンで切り替わる)
+int i_rpm = CSV_N - 1;          // RPM測定結果の保存位置
+uint16_t rpm[CSV_N];            // RPM測定結果 1000倍値
+uint16_t wow[CSV_N];            // WOW測定結果 100倍値
+uint16_t level[CSV_N];          // 角度測定結果 1000倍値
+uint16_t meas[CSV_N];           // 測定時刻
 int line_x = 27;                // 折れ線グラフのX座標
+float rpm_typ = RPM_TYP_33;     // 33回転を設定
 
 void buf_init(){
     for(int i=0; i<BUF_N; i++){
@@ -72,6 +84,8 @@ void buf_append(int *array, int val){
 }
 
 void lcd_init(int mode){
+    char s[65];
+    uint32_t ip = WiFi.localIP();
     switch(mode){
       case 0: // 通常モード、水平計＋回転数計
         M5.Lcd.setRotation(1);     // Rotate the screen. 将屏幕旋转
@@ -93,14 +107,14 @@ void lcd_init(int mode){
         M5.Lcd.fillScreen(BLACK);
         M5.Lcd.setCursor(0, 0);    // set the cursor location.
         M5.Lcd.drawRect(26, 1, 213, 133, DARKGREY);
-        M5.Lcd.setCursor(1,1); M5.Lcd.printf("%4.1f",RPM_TYP*(1+ERR_MAX/100.));
+        M5.Lcd.setCursor(1,1); M5.Lcd.printf("%4.1f",rpm_typ*(1+ERR_MAX/100.));
         M5.Lcd.drawLine(26, 34, 238, 34, DARKGREY);
-        M5.Lcd.setCursor(1,28); M5.Lcd.printf("%4.1f",RPM_TYP*(1+ERR_MAX/200.));
+        M5.Lcd.setCursor(1,28); M5.Lcd.printf("%4.1f",rpm_typ*(1+ERR_MAX/200.));
         M5.Lcd.drawLine(26, 67, 238, 67, DARKGREY);
-        M5.Lcd.setCursor(1,61); M5.Lcd.printf("%4.1f",RPM_TYP);
+        M5.Lcd.setCursor(1,61); M5.Lcd.printf("%4.1f",rpm_typ);
         M5.Lcd.drawLine(26, 100, 238, 100, DARKGREY);
-        M5.Lcd.setCursor(1,97); M5.Lcd.printf("%4.1f",RPM_TYP*(1-ERR_MAX/200.));
-        M5.Lcd.setCursor(1,129); M5.Lcd.printf("%4.1f",RPM_TYP*(1-ERR_MAX/100.));
+        M5.Lcd.setCursor(1,97); M5.Lcd.printf("%4.1f",rpm_typ*(1-ERR_MAX/200.));
+        M5.Lcd.setCursor(1,129); M5.Lcd.printf("%4.1f",rpm_typ*(1-ERR_MAX/100.));
         line_x = 27;
       break;
       case 2: // 回転数の数値表示
@@ -108,11 +122,78 @@ void lcd_init(int mode){
         M5.Lcd.setTextFont(8);     // 75ピクセルのフォント(数値表示)
         M5.Lcd.fillScreen(BLACK);
       break;
+      case  3: // QRコード表示
+        M5.Lcd.setRotation(1);     // Rotate the screen. 将屏幕旋转
+        M5.Lcd.setTextFont(1);     // 75ピクセルのフォント(数値表示)
+        M5.Lcd.fillScreen(BLACK);
+        snprintf(s,65,"http://%d.%d.%d.%d/",ip&255,ip>>8&255,ip>>16&255,ip>>24);
+        M5.Lcd.setCursor(1,1); M5.Lcd.print(s);
+        M5.Lcd.qrcode(s, 114, 10, 123, 2);
+      break;
+      case -1:
+      break;
       default:
         M5.Lcd.setRotation(1);     // Rotate the screen. 将屏幕旋转
         M5.Lcd.setTextFont(1);     // 8x6ピクセルのフォント
         M5.Lcd.fillScreen(BLACK);
     }
+}
+
+void handleRoot(){
+    String rx, tx;                              // 受信用,送信用文字列
+    if(server.hasArg("mode")){                  // 引数Lが含まれていた時
+        rx = server.arg("mode");                // 引数Lの値を変数rxへ代入
+        disp_mode = rx.toInt();                 // 変数sの数値をled_statへ
+        lcd_init(disp_mode);
+    }
+    if(server.hasArg("stop")){                  // 引数Lが含まれていた時
+        rx = server.arg("stop");                // 引数Lの値を変数rxへ代入
+        disp_mode = -1;
+    }
+    int wow_prev = i_rpm > 0 ? wow[i_rpm - 1] : wow[CSV_N-1];
+    wow_prev -= wow[i_rpm];
+    int wow_disp = (-100 < wow_prev && wow_prev < 100) ? wow[i_rpm] : 10000;
+    tx = getHtml(disp_mode, 
+        (float)level[i_rpm]/1000.,
+        (float)rpm[i_rpm]/1000., 
+        (float)wow_disp/100.
+    );
+    server.send(200, "text/html", tx);          // HTMLコンテンツを送信
+}
+
+void handleCSV(){
+    String tx = "time(ms), level(deg), rpm(rpm), wow(%)\n";
+    int i = i_rpm;
+    uint16_t ms = i < CSV_N-1 ? meas[i+1] : meas[0];
+    for(int t=0; t < CSV_N; t++){
+        i++;
+        if(i >= CSV_N) i = 0;
+        uint16_t ms_ui = meas[i] - ms;
+        tx += String((int)ms_ui)+", "
+            + String((float)level[i]/1000.,3)+", "
+            + String((float)rpm[i]/1000.,3)+", "
+            + String((float)wow[i]/100.,2)+"\r\n";
+    }
+    server.send(200, "text/csv", tx);           // HTMLコンテンツを送信
+}
+
+void handleBMP(){
+    uint8_t buf[240*3];
+    WiFiClient client = server.client();
+    client.println("HTTP/1.0 200 OK");                  // HTTP OKを応答
+    client.println("Content-Type: image/bmp");          // コンテンツ
+    client.println("Content-Length: " + String(240*135*3+54));  // サイズ
+    client.println("Connection: close");                // 応答後に閉じる
+    client.println();                                   // ヘッダの終了
+    getBmpHeader(buf);
+    client.write((const uint8_t *)buf, 54); 
+    for(int y=0; y<135; y++){
+        getBmpLine(buf,y);
+        client.write((const uint8_t *)buf, 240*3);
+    }
+    client.println();                   // コンテンツの終了
+    client.flush();                     // ESP32用 ERR_CONNECTION_RESET対策
+    client.stop();                      // クライアントの切断
 }
 
 /* After M5StickC Plus is started or reset
@@ -127,6 +208,13 @@ void setup() {
     lcd_init(0);
     WiFi.mode(WIFI_STA);                        // 無線LANをSTAモードに設定
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
+    server.on("/", handleRoot);                 // HTTP接続用コールバック先設定
+    server.on("/rpm.csv", handleCSV);           // CSVデータ取得用
+    server.on("/screen.bmp", handleBMP);        // 画像データ取得用
+    server.begin();                             // Web サーバを起動する
+    for(int i=0; i<CSV_N; i++){                 // CSV出力用データの初期化
+        rpm[i]=0; wow[i]=0; level[i]=0; meas[i]=0;
+    }
 }
 
 /* After the program in setup() runs, it runs the program in loop()
@@ -135,12 +223,14 @@ The loop() function is an infinite loop in which the program runs repeatedly
 loop()函数是一个死循环，其中的程序会不断的重复运行 */
 
 void loop() {
+    server.handleClient();
     M5.update();                                // ボタン状態の取得
     if(M5.BtnA.wasPressed()){                   // (過去に)ボタンが押された時
         disp_mode++;
-        if(disp_mode > 3) disp_mode = 0;
+        if(disp_mode > 4) disp_mode = 0;
         lcd_init(disp_mode);
     }
+    if(disp_mode < 0 || disp_mode == 3) return;
 
     float gyroX = 0.; float gyroY = 0.; float gyroZ = 0.;
     float accX = 0.;  float accY = 0.;  float accZ = 0.;
@@ -189,10 +279,12 @@ void loop() {
     // 水平計、回転数計、演算処理部
     float degx = atan(accX/accZ) / 6.2832 * 360.;
     float degy = atan(accY/accZ) / 6.2832 * 360.;
+    float deg = sqrt(pow(degx,2)+pow(degy,2));
     rpm1 = fabs(gyroZ) / 6.;
     rpm2 = 60 * sqrt(fabs(accY) / 39.478 / RADIUS_CM * 100);
-    int rpm1_y = int(67.5 - 67. * (rpm1 - RPM_TYP) / RPM_TYP / ERR_MAX * 100);
-    int rpm2_y = int(67.5 - 67. * (rpm2 - RPM_TYP) / RPM_TYP / ERR_MAX * 100);
+    rpm_typ = rpm1 < 38.73 ? RPM_TYP_33 : RPM_TYP_45;
+    int rpm1_y = int(67.5 - 67. * (rpm1 - rpm_typ) / rpm_typ / ERR_MAX * 100);
+    int rpm2_y = int(67.5 - 67. * (rpm2 - rpm_typ) / rpm_typ / ERR_MAX * 100);
     int flag_dx = 0;
     
     // モードに応じた処理部（メインボタン押下で切り替え）
@@ -218,7 +310,7 @@ void loop() {
         for(int i=1; i<BUF_N; i++){
             M5.Lcd.fillCircle(pos_x_prev[i], pos_y_prev[i], 2, DARKGREEN);
         }
-        if(pow(degx,2)+pow(degy,2) < pow(DEG_MAX,2)){
+        if(deg < DEG_MAX){
             int pos_x = -int(64 * degx / DEG_MAX + 0.5) + 120;
             int pos_y = -int(64 * degy / DEG_MAX + 0.5) +  67;
             M5.Lcd.fillCircle(pos_x, pos_y, 2, RED);
@@ -265,7 +357,7 @@ void loop() {
         M5.Lcd.setCursor(24, 31);
         M5.Lcd.printf("%04.1f",rpm1);
         break;
-      case 3:  // 照度センサを利用した回転数計測
+      case 4:  // 照度センサを利用した回転数計測
         M5.Lcd.fillRect(0, 4, 240, 16, BLACK);
         M5.Lcd.setCursor(0, 4);
         M5.Lcd.setTextFont(1);     // 8x6ピクセルのフォント
@@ -278,6 +370,21 @@ void loop() {
         M5.Lcd.setTextFont(8);
         M5.Lcd.printf("%4.1f ",rpm1);
     }
+    
+    // WOW推定値の計算
+    i_rpm++;
+    if(i_rpm > CSV_N-1) i_rpm = 0;
+    meas[i_rpm] = (uint16_t) millis();
+    rpm[i_rpm] = int(rpm1 * 1000. + 0.5);   // RPM値の保存
+    float mse = 0., avr = 0.;
+    for(int i=0; i<CSV_N; i++) avr += (float)rpm[i]/1000.; 
+    avr /= CSV_N;
+    for(int i=0; i<CSV_N; i++){
+        mse += pow(avr-(float)rpm[i]/1000.,2);
+    }
+    wow[i_rpm] = int(AVR_N * sqrt(mse) / CSV_N / avr * 10000. +.5);
+    level[i_rpm] = int(deg * 1000. +.5);
+    
     
     // CSVxUDP送信
     if(rpm1 > 10. && millis()-started_time_ms > UDP_TX_MS && WiFi.status() == WL_CONNECTED){
