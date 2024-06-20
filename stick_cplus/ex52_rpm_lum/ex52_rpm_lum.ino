@@ -60,7 +60,8 @@ int rpm1_y_prev[BUF_N];         // = 67;
 int rpm2_y_prev[BUF_N];         // = 67;
 int udp_len_prev = 1;
 unsigned long started_time_ms = millis();
-int disp_mode = 0;              // 表示モード(ボタンで切り替わる)
+volatile int disp_mode = 0;     // 表示モード(ボタンで切り替わる)
+volatile boolean disp_pause = false; // 表示の一時停止
 int i_rpm = CSV_N - 1;          // RPM測定結果の保存位置
 uint16_t rpm[CSV_N];            // RPM測定結果 1000倍値
 uint16_t wow[CSV_N];            // WOW測定結果 100倍値
@@ -68,6 +69,8 @@ uint16_t level[CSV_N];          // 角度測定結果 1000倍値
 uint16_t meas[CSV_N];           // 測定時刻
 int line_x = 27;                // 折れ線グラフのX座標
 float rpm_typ = RPM_TYP_33;     // 33回転を設定
+
+uint16_t lux_array[800];        // 照度データ
 
 void buf_init(){
     for(int i=0; i<BUF_N; i++){
@@ -143,12 +146,17 @@ void handleRoot(){
     String rx, tx;                              // 受信用,送信用文字列
     if(server.hasArg("mode")){                  // 引数Lが含まれていた時
         rx = server.arg("mode");                // 引数Lの値を変数rxへ代入
-        disp_mode = rx.toInt();                 // 変数sの数値をled_statへ
-        lcd_init(disp_mode);
+        if(rx.toInt() < 0){
+            disp_pause = true;
+        }else{
+            disp_mode = rx.toInt();             // 変数sの数値をled_statへ
+            lcd_init(disp_mode);
+            disp_pause = false;
+        }
     }
     if(server.hasArg("stop")){                  // 引数Lが含まれていた時
         rx = server.arg("stop");                // 引数Lの値を変数rxへ代入
-        disp_mode = -1;
+        disp_pause = !disp_pause;
     }
     int wow_prev = i_rpm > 0 ? wow[i_rpm - 1] : wow[CSV_N-1];
     wow_prev -= wow[i_rpm];
@@ -156,23 +164,36 @@ void handleRoot(){
     tx = getHtml(disp_mode, 
         (float)level[i_rpm]/1000.,
         (float)rpm[i_rpm]/1000., 
-        (float)wow_disp/100.
+        (float)wow_disp/100.,
+        disp_pause
     );
     server.send(200, "text/html", tx);          // HTMLコンテンツを送信
 }
 
 void handleCSV(){
-    String tx = "time(ms), level(deg), rpm(rpm), wow(%)\n";
-    int i = i_rpm;
-    uint16_t ms = i < CSV_N-1 ? meas[i+1] : meas[0];
-    for(int t=0; t < CSV_N; t++){
-        i++;
-        if(i >= CSV_N) i = 0;
-        uint16_t ms_ui = meas[i] - ms;
-        tx += String((int)ms_ui)+", "
-            + String((float)level[i]/1000.,3)+", "
-            + String((float)rpm[i]/1000.,3)+", "
-            + String((float)wow[i]/100.,2)+"\r\n";
+    String tx;
+    if(disp_mode == 4){
+        if( !disp_pause){
+            tx = "ERROR: Cannot get for lux_array data. Please stop measuring.\n";
+        }else{
+            tx = "lux_array\n";
+            for(int t=0; t < 800; t++){
+                tx += String(lux_array[t])+"\r\n";
+            }
+        }
+    }else{      
+        tx = "time(ms), level(deg), rpm(rpm), wow(%)\n";
+        int i = i_rpm;
+        uint16_t ms = i < CSV_N-1 ? meas[i+1] : meas[0];
+        for(int t=0; t < CSV_N; t++){
+            i++;
+            if(i >= CSV_N) i = 0;
+            uint16_t ms_ui = meas[i] - ms;
+            tx += String((int)ms_ui)+", "
+                + String((float)level[i]/1000.,3)+", "
+                + String((float)rpm[i]/1000.,3)+", "
+                + String((float)wow[i]/100.,2)+"\r\n";
+        }
     }
     server.send(200, "text/csv", tx);           // HTMLコンテンツを送信
 }
@@ -228,9 +249,10 @@ void loop() {
     if(M5.BtnA.wasPressed()){                   // (過去に)ボタンが押された時
         disp_mode++;
         if(disp_mode > 4) disp_mode = 0;
+        disp_pause = false;
         lcd_init(disp_mode);
     }
-    if(disp_mode < 0 || disp_mode == 3) return;
+    if(disp_pause || disp_mode == 3) return;
 
     float gyroX = 0.; float gyroY = 0.; float gyroZ = 0.;
     float accX = 0.;  float accY = 0.;  float accZ = 0.;
@@ -364,11 +386,11 @@ void loop() {
         float lux = getLux();               // 照度(lux)を取得
         M5.Lcd.printf(" Illuminance=%.1f(lx)\n",lux);
         if(lux >= 0.){                      // 正常値の時
-            rpm2 = rpm1;
             rpm1 = get_rpm_lum();           // 回転数を測定してrpm1値を置き換え
         }
         M5.Lcd.setTextFont(8);
         M5.Lcd.printf("%4.1f ",rpm1);
+        break;
     }
     
     // WOW推定値の計算

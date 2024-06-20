@@ -17,7 +17,7 @@ BH1750FVI-TRを回転させたときの周期を求めます
 
 int calculate_autocorrelation_peak_lag(uint16_t data[], int n);
 
-uint16_t lux_array[800];
+extern uint16_t lux_array[800];
 
 float get_rpm_lum(){
     Wire.beginTransmission(I2C_bh1750);
@@ -29,7 +29,7 @@ float get_rpm_lum(){
     M5.Lcd.printf(" Sampling:");
     unsigned long start = millis();
     for(int i=0;i<800;i++){
-        Wire.requestFrom(I2C_bh1750, 2, false);
+        Wire.requestFrom((uint8_t)I2C_bh1750, (size_t)2, false);
         for(cnt=0; cnt < 1000; cnt++) { // 1 second waiting time max
             if(Wire.available())break;
             delay(1);
@@ -61,7 +61,7 @@ float get_rpm_lum(){
     int lag = calculate_autocorrelation_peak_lag(lux_array, 800);
     
     float dist = (float)lag * msPerSample;
-    float rpm = round(600000. / dist) / 10.;
+    float rpm = 60000. / dist;
     M5.Lcd.printf(" Lag=%d, Dist=%.0f(ms), RPM=%.1f(rpm) \n", lag, dist, rpm);
     return rpm;
 }
@@ -145,12 +145,12 @@ int calculate_autocorrelation_peak_lag(uint16_t data[], int n) { //.........(1)
     float max_autocorrelation = -1.0; // 最小の初期値を設定
     int peak_lag = 0; // ピークが現れるラグ値を保存
 
-    for (int k = n/3; k < n; k++) { //......................................(2)
+    for (int k = n/6; k < n/2; k++) { //......................................(2)
         float sum = 0.0; //.................................................(3)
-        for (int t = 0; t < n - k; t++) {
+        for (int t = 0; t < n/2; t++) {
             sum += (float)data[t] * (float)data[t + k];
         }
-        float autocorrelation = sum / (n - k);
+        float autocorrelation = sum / (n / 2);
         if (autocorrelation > max_autocorrelation) {
             max_autocorrelation = autocorrelation;
             peak_lag = k;
