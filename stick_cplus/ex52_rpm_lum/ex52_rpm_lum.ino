@@ -142,6 +142,16 @@ void lcd_init(int mode){
     }
 }
 
+void lcd_val(float val){
+	val += 0.005;
+    M5.Lcd.setTextFont(8);
+    M5.Lcd.setCursor(0, 44);
+    M5.Lcd.printf("%2d ", int(val));
+    M5.Lcd.setCursor(128, 44);
+    M5.Lcd.printf("%02d", int(val*100)%100);
+    M5.Lcd.fillRect(116, 112, 8, 8, WHITE);
+    M5.Lcd.setTextFont(1);
+}
 void handleRoot(){
     String rx, tx;                              // 受信用,送信用文字列
     if(server.hasArg("mode")){                  // 引数Lが含まれていた時
@@ -274,18 +284,54 @@ void loop() {
     temp  /= AVR_N;
     
     // 簡易キャリブレーション部 (側面ボタン押下時)
-    if(disp_mode == 0 && M5.BtnB.wasPressed()){
-        M5.Lcd.setCursor(0, 4);
-        M5.Lcd.println("[Calb]");
-        delay(1000);
-        CAL_GyroX = -gyroX;
-        CAL_GyroY = -gyroY;
-        CAL_GyroZ = -gyroZ;
-        CAL_AccmX = -accX;
-        CAL_AccmY = -accY;
-        CAL_AccmZ = -GRAV_MPS2 / accZ;
-        M5.Lcd.printf(" %5.1f\n %5.1f\n %5.1f\n", gyroX, gyroY, gyroZ);
-        delay(1000);
+    if(M5.BtnB.wasPressed()){       // 水平器
+        if(disp_mode == 0){
+            M5.Lcd.setCursor(0, 4);
+            M5.Lcd.println("[Calb]");
+            delay(1000);
+            CAL_GyroX = -gyroX;
+            CAL_GyroY = -gyroY;
+            CAL_GyroZ = -gyroZ;
+            CAL_AccmX = -accX;
+            CAL_AccmY = -accY;
+            CAL_AccmZ = -GRAV_MPS2 / accZ;
+            M5.Lcd.printf(" %5.1f\n %5.1f\n %5.1f\n", gyroX, gyroY, gyroZ);
+            delay(1000);
+        }else if(disp_mode == 4){   // 照度による回転数計
+            M5.Lcd.setRotation(1);     // Rotate the screen. 将屏幕旋转
+            M5.Lcd.setTextFont(1);     // 75ピクセルのフォント(数値表示)
+            M5.Lcd.fillScreen(BLACK);
+            M5.Lcd.setCursor(0, 4);
+            //              0123456789012345678901234567890123456789
+            M5.Lcd.println("[Calb]");
+            M5.Lcd.println("Please put this device on the turntable");
+            delay(3000);
+            float lux = getLux();               // 照度(lux)を取得
+            float rpm_sum=0.0, rpm_prev=-1;
+            M5.Lcd.printf(" Illuminance=%.1f(lx)\n",lux);
+            if(lux >= 0.){                      // 正常値の時
+                for(int i=0; i<10; i++){
+                    M5.Lcd.fillRect(0, 4, 240, 16, BLACK);
+                    M5.Lcd.setCursor(0, 4);
+                    M5.Lcd.setTextFont(1);      // 8x6ピクセルのフォント
+                    M5.Lcd.printf("[Calb] %d/10 ",i+1);
+                    for(int j=0; j<i; j++) M5.Lcd.print(".");
+                    M5.Lcd.println();
+                    rpm1 = get_rpm_lum();       // 回転数を測定してrpm1値を置き換え
+                    if(i>0 && fabs(rpm_prev - rpm1) >= 1){
+                        i=0;
+                        rpm_sum=0.0;
+                    }
+                    rpm_sum += rpm1;
+                    rpm_prev = rpm1;
+                    if(i < 9) M5.Lcd.setTextColor(RED, BLACK);
+                    lcd_val(rpm_sum/(i+1));
+                    M5.Lcd.setTextColor(WHITE, BLACK);
+                    M5.Lcd.fillRect(116, 112, 8, 8, WHITE);
+                }
+            }
+            do M5.update(); while(!M5.BtnB.wasPressed());
+        }
     }
     gyroX += CAL_GyroX; gyroY += CAL_GyroY; gyroZ += CAL_GyroZ;
     accX += CAL_AccmX; accY += CAL_AccmY; accZ *= CAL_AccmZ;
@@ -376,8 +422,11 @@ void loop() {
         if(flag_dx) line_x++;
         break;
       case 2:  // 回転数の数値表示
+        /*
         M5.Lcd.setCursor(24, 31);
         M5.Lcd.printf("%04.1f",rpm1);
+        */
+        lcd_val(rpm1);
         break;
       case 4:  // 照度センサを利用した回転数計測
         M5.Lcd.fillRect(0, 4, 240, 16, BLACK);
@@ -388,8 +437,7 @@ void loop() {
         if(lux >= 0.){                      // 正常値の時
             rpm1 = get_rpm_lum();           // 回転数を測定してrpm1値を置き換え
         }
-        M5.Lcd.setTextFont(8);
-        M5.Lcd.printf("%4.1f ",rpm1);
+        lcd_val(rpm1);
         break;
     }
     
