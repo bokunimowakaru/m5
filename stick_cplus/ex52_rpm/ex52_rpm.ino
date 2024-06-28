@@ -63,7 +63,8 @@ int rpm1_y_prev[BUF_N];         // = 67;
 int rpm2_y_prev[BUF_N];         // = 67;
 int udp_len_prev = 1;
 unsigned long started_time_ms = millis();
-int disp_mode = 0;              // 表示モード(ボタンで切り替わる)
+volatile int disp_mode = 0;     // 表示モード(ボタンで切り替わる)
+volatile boolean disp_pause = false; // 表示の一時停止
 int i_rpm = CSV_N - 1;          // RPM測定結果の保存位置
 uint16_t rpm[CSV_N];            // RPM測定結果 1000倍値
 uint16_t wow[CSV_N];            // WOW測定結果 100倍値
@@ -142,16 +143,32 @@ void lcd_init(int mode){
     }
 }
 
+void lcd_val(float val){
+    val += 0.005;
+    M5.Lcd.setTextFont(8);
+    M5.Lcd.setCursor(0, 44);
+    M5.Lcd.printf("%2d ", int(val));
+    M5.Lcd.setCursor(128, 44);
+    M5.Lcd.printf("%02d", int(val*100)%100);
+    M5.Lcd.fillRect(116, 112, 8, 8, WHITE);
+    M5.Lcd.setTextFont(1);
+}
+
 void handleRoot(){
     String rx, tx;                              // 受信用,送信用文字列
     if(server.hasArg("mode")){                  // 引数Lが含まれていた時
         rx = server.arg("mode");                // 引数Lの値を変数rxへ代入
-        disp_mode = rx.toInt();                 // 変数sの数値をled_statへ
-        lcd_init(disp_mode);
+        if(rx.toInt() < 0){
+            disp_pause = true;
+        }else{
+            disp_mode = rx.toInt();             // 変数sの数値をled_statへ
+            lcd_init(disp_mode);
+            disp_pause = false;
+        }
     }
     if(server.hasArg("stop")){                  // 引数Lが含まれていた時
         rx = server.arg("stop");                // 引数Lの値を変数rxへ代入
-        disp_mode = -1;
+        disp_pause = !disp_pause;
     }
     int wow_prev = i_rpm > 0 ? wow[i_rpm - 1] : wow[CSV_N-1];
     wow_prev -= wow[i_rpm];
@@ -159,7 +176,8 @@ void handleRoot(){
     tx = getHtml(disp_mode, 
         (float)level[i_rpm]/1000.,
         (float)rpm[i_rpm]/1000., 
-        (float)wow_disp/100.
+        (float)wow_disp/100.,
+        disp_pause
     );
     server.send(200, "text/html", tx);          // HTMLコンテンツを送信
 }
@@ -230,9 +248,10 @@ void loop() {
     if(M5.BtnA.wasPressed()){                   // (過去に)ボタンが押された時
         disp_mode++;
         if(disp_mode > 3) disp_mode = 0;
+        disp_pause = false;
         lcd_init(disp_mode);
     }
-    if(disp_mode < 0 || disp_mode == 3) return;
+    if(disp_pause || disp_mode == 3) return;
 
     float gyroX = 0.; float gyroY = 0.; float gyroZ = 0.;
     float accX = 0.;  float accY = 0.;  float accZ = 0.;
@@ -356,8 +375,11 @@ void loop() {
         if(flag_dx) line_x++;
         break;
       case 2:  // 回転数の数値表示
+        /*
         M5.Lcd.setCursor(24, 31);
         M5.Lcd.printf("%4.1f",rpm1);
+        */
+        lcd_val(rpm1);
         break;
     }
     

@@ -143,7 +143,7 @@ void lcd_init(int mode){
 }
 
 void lcd_val(float val){
-	val += 0.005;
+    val += 0.005;
     M5.Lcd.setTextFont(8);
     M5.Lcd.setCursor(0, 44);
     M5.Lcd.printf("%2d ", int(val));
@@ -152,6 +152,7 @@ void lcd_val(float val){
     M5.Lcd.fillRect(116, 112, 8, 8, WHITE);
     M5.Lcd.setTextFont(1);
 }
+
 void handleRoot(){
     String rx, tx;                              // 受信用,送信用文字列
     if(server.hasArg("mode")){                  // 引数Lが含まれていた時
@@ -454,7 +455,6 @@ void loop() {
     }
     wow[i_rpm] = int(AVR_N * sqrt(mse) / CSV_N / avr * 10000. +.5);
     level[i_rpm] = int(deg * 1000. +.5);
-    
     
     // CSVxUDP送信
     if(rpm1 > 10. && millis()-started_time_ms > UDP_TX_MS && WiFi.status() == WL_CONNECTED){
