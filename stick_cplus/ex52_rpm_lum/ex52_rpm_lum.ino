@@ -192,13 +192,26 @@ void handleCSV(){
                 tx += String(lux_array[t])+"\r\n";
             }
         }
-    }else{      
+    }else if(disp_mode == 5){
+        tx = "time(ms), rpm(rpm)\n";
+        int i = i_rpm;
+        uint16_t ms = i < CSV_N-1 ? meas[i+1] : meas[0];
+        for(int t=0; t < CSV_N; t++){
+            i++;
+            if(i >= CSV_N) i = 0;
+            if(disp_mode == 5 && meas[i] == 0) continue;
+            uint16_t ms_ui = meas[i] - ms;
+            tx += String((int)ms_ui)+", "
+                + String((float)rpm[i]/1000.,3)+"\r\n";
+        }
+    }else{
         tx = "time(ms), level(deg), rpm(rpm), wow(%)\n";
         int i = i_rpm;
         uint16_t ms = i < CSV_N-1 ? meas[i+1] : meas[0];
         for(int t=0; t < CSV_N; t++){
             i++;
             if(i >= CSV_N) i = 0;
+            if(disp_mode == 5 && meas[i] == 0) continue;
             uint16_t ms_ui = meas[i] - ms;
             tx += String((int)ms_ui)+", "
                 + String((float)level[i]/1000.,3)+", "
@@ -299,6 +312,7 @@ void loop() {
             M5.Lcd.printf(" %5.1f\n %5.1f\n %5.1f\n", gyroX, gyroY, gyroZ);
             delay(1000);
         }else if(disp_mode == 4){   // 照度による回転数計
+			disp_mode = 5;
             M5.Lcd.setRotation(1);     // Rotate the screen. 将屏幕旋转
             M5.Lcd.setTextFont(1);     // 75ピクセルのフォント(数値表示)
             M5.Lcd.fillScreen(BLACK);
@@ -306,32 +320,51 @@ void loop() {
             //              0123456789012345678901234567890123456789
             M5.Lcd.println("[Calb]");
             M5.Lcd.println("Please put this device on the turntable");
-            delay(3000);
+            delay(1000);
+            for(int i=0; i<CSV_N; i++){
+                rpm[i]=0;                       // RPM測定結果 1000倍値
+                meas[i]=0;                      // 測定時刻
+            }
+            i_rpm = CSV_N-1;
+            M5.update();                        // ボタン状態の取得
             float lux = getLux();               // 照度(lux)を取得
             float rpm_sum=0.0, rpm_prev=-1;
+            int N = 100;                        // 測定回数 平均化精度 0.01RPM
+            if(M5.BtnB.isPressed()) N = 10;     //          平均化精度 0.03RPM
             M5.Lcd.printf(" Illuminance=%.1f(lx)\n",lux);
             if(lux >= 0.){                      // 正常値の時
-                for(int i=0; i<10; i++){
+                for(int i=0; i<N; i++){
                     M5.Lcd.fillRect(0, 4, 240, 16, BLACK);
                     M5.Lcd.setCursor(0, 4);
                     M5.Lcd.setTextFont(1);      // 8x6ピクセルのフォント
-                    M5.Lcd.printf("[Calb] %d/10 ",i+1);
-                    for(int j=0; j<i; j++) M5.Lcd.print(".");
+                    M5.Lcd.printf("[Calb] %d/%d ",i+1,N);
+                    for(int j=0; j<(i*25/N); j++) M5.Lcd.print(".");
                     M5.Lcd.println();
                     rpm1 = get_rpm_lum();       // 回転数を測定してrpm1値を置き換え
-                    if(i>0 && fabs(rpm_prev - rpm1) >= 1){
+                    while(i>0 && fabs(rpm_prev - rpm1) >= 2){
                         i=0;
                         rpm_sum=0.0;
+                        rpm_prev = rpm1;
+                        rpm1 = get_rpm_lum();	// 再測定(たまたま近い値になることがあるので)
                     }
+                    if(rpm1 < 65.536) rpm[i] = (uint16_t)(rpm1 * 1000);
+                    else rpm[i] = 65535;
+                    meas[i] = (uint16_t) millis();
                     rpm_sum += rpm1;
                     rpm_prev = rpm1;
-                    if(i < 9) M5.Lcd.setTextColor(RED, BLACK);
+                    if(i < N-1) M5.Lcd.setTextColor(RED, BLACK);
                     lcd_val(rpm_sum/(i+1));
                     M5.Lcd.setTextColor(WHITE, BLACK);
                     M5.Lcd.fillRect(116, 112, 8, 8, WHITE);
                 }
             }
-            do M5.update(); while(!M5.BtnB.wasPressed());
+            do{
+                server.handleClient();
+                M5.update();
+            }while(!M5.BtnB.isPressed());
+            disp_mode = 4;
+            delay(1000);
+            do M5.update(); while(M5.BtnB.isPressed());
         }
     }
     gyroX += CAL_GyroX; gyroY += CAL_GyroY; gyroZ += CAL_GyroZ;
