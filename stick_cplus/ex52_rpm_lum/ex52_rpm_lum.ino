@@ -63,7 +63,7 @@ unsigned long started_time_ms = millis();
 volatile int disp_mode = 0;     // 表示モード(ボタンで切り替わる)
 volatile boolean disp_pause = false; // 表示の一時停止
 int i_rpm = CSV_N - 1;          // RPM測定結果の保存位置
-uint16_t rpm[CSV_N];            // RPM測定結果 1000倍値
+uint16_t rpm[CSV_N];            // RPM測定結果 500倍値
 uint16_t wow[CSV_N];            // WOW測定結果 100倍値
 uint16_t level[CSV_N];          // 角度測定結果 1000倍値
 uint16_t meas[CSV_N];           // 測定時刻
@@ -174,7 +174,7 @@ void handleRoot(){
     int wow_disp = (-100 < wow_prev && wow_prev < 100) ? wow[i_rpm] : 10000;
     tx = getHtml(disp_mode, 
         (float)level[i_rpm]/1000.,
-        (float)rpm[i_rpm]/1000., 
+        (float)rpm[i_rpm]/500., 
         (float)wow_disp/100.,
         disp_pause
     );
@@ -202,7 +202,7 @@ void handleCSV(){
             if(disp_mode == 5 && meas[i] == 0) continue;
             uint16_t ms_ui = meas[i] - ms;
             tx += String((int)ms_ui)+", "
-                + String((float)rpm[i]/1000.,3)+"\r\n";
+                + String((float)rpm[i]/500.,3)+"\r\n";
         }
     }else{
         tx = "time(ms), level(deg), rpm(rpm), wow(%)\n";
@@ -215,7 +215,7 @@ void handleCSV(){
             uint16_t ms_ui = meas[i] - ms;
             tx += String((int)ms_ui)+", "
                 + String((float)level[i]/1000.,3)+", "
-                + String((float)rpm[i]/1000.,3)+", "
+                + String((float)rpm[i]/500.,3)+", "
                 + String((float)wow[i]/100.,2)+"\r\n";
         }
     }
@@ -312,7 +312,7 @@ void loop() {
             M5.Lcd.printf(" %5.1f\n %5.1f\n %5.1f\n", gyroX, gyroY, gyroZ);
             delay(1000);
         }else if(disp_mode == 4){   // 照度による回転数計
-			disp_mode = 5;
+            disp_mode = 5;
             M5.Lcd.setRotation(1);     // Rotate the screen. 将屏幕旋转
             M5.Lcd.setTextFont(1);     // 75ピクセルのフォント(数値表示)
             M5.Lcd.fillScreen(BLACK);
@@ -320,9 +320,9 @@ void loop() {
             //              0123456789012345678901234567890123456789
             M5.Lcd.println("[Calb]");
             M5.Lcd.println("Please put this device on the turntable");
-            delay(1000);
+            delay(500);
             for(int i=0; i<CSV_N; i++){
-                rpm[i]=0;                       // RPM測定結果 1000倍値
+                rpm[i]=0;                       // RPM測定結果 500倍値
                 meas[i]=0;                      // 測定時刻
             }
             i_rpm = CSV_N-1;
@@ -347,7 +347,7 @@ void loop() {
                         rpm_prev = rpm1;
                         rpm1 = get_rpm_lum();	// 再測定(たまたま近い値になることがあるので)
                     }
-                    if(rpm1 < 65.536) rpm[i] = (uint16_t)(rpm1 * 1000);
+                    if(rpm1 < 65.536) rpm[i] = (uint16_t)(rpm1 * 500);
                     else rpm[i] = 65535;
                     meas[i] = (uint16_t) millis();
                     rpm_sum += rpm1;
@@ -479,12 +479,12 @@ void loop() {
     i_rpm++;
     if(i_rpm > CSV_N-1) i_rpm = 0;
     meas[i_rpm] = (uint16_t) millis();
-    rpm[i_rpm] = int(rpm1 * 1000. + 0.5);   // RPM値の保存
+    rpm[i_rpm] = int(rpm1 * 500. + 0.5);    // RPM値の保存
     float mse = 0., avr = 0.;
-    for(int i=0; i<CSV_N; i++) avr += (float)rpm[i]/1000.; 
+    for(int i=0; i<CSV_N; i++) avr += (float)rpm[i]/500.; 
     avr /= CSV_N;
     for(int i=0; i<CSV_N; i++){
-        mse += pow(avr-(float)rpm[i]/1000.,2);
+        mse += pow(avr-(float)rpm[i]/500.,2);
     }
     wow[i_rpm] = int(AVR_N * sqrt(mse) / CSV_N / avr * 10000. +.5);
     level[i_rpm] = int(deg * 1000. +.5);
