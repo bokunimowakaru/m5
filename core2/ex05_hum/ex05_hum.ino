@@ -86,17 +86,17 @@ void loop(){                                    // 繰り返し実行する関�
     float hum = getHum();                       // 湿度を取得して変数humに代入
     if(temp < -100. || hum < 0.) return;        // 取得失敗時に戻る
 
-    float wgbt = 0.725*temp + 0.0368*hum + 0.00364*temp*hum - 3.246 + 0.5;
+    float wbgt = 0.725*temp + 0.0368*hum + 0.00364*temp*hum - 3.246 + 0.5;
     analogMeterNeedle(0,temp);                  // メータに温度を表示
     analogMeterNeedle(1,hum);                   // メータに湿度を表示
-    lineGraphPlot(wgbt);                        // WGBTをグラフ表示
-    if(12. < wgbt && wgbt < 30.){               // 12℃より大かつ30℃より小の時
+    lineGraphPlot(wbgt);                        // WBGTをグラフ表示
+    if(12. < wbgt && wbgt < 30.){               // 12℃より大かつ30℃より小の時
         M5.Lcd.fillRect(0,210, 320,30, BLACK);  // 表示部の背景を塗る
     }else{
         M5.Lcd.fillRect(0,210, 320,30,TFT_RED); // 表示部の背景を塗る
     }
 
-    String S = "WGBT= " + String(wgbt,1);       // WGBT値を文字列変数Sに代入
+    String S = "WBGT= " + String(wbgt,1);       // WBGT値を文字列変数Sに代入
     S += "C ("+String(temp,1)+"C, "+String(hum,0)+"%)"; // 温度と湿度をSに追記
     M5.Lcd.drawCentreString(S, 160, 210, 4);    // 文字列を表示
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る

@@ -14,7 +14,7 @@ M5Stack Arduino Library API 情報(eink)：
 https://docs.m5stack.com/en/api/coreink/eink_api
 ********************************************************************************
 引用コード：
-https://github.com/bokunimowakaru/m5/blob/master/core/ex51_wgbt_ir_out/lib_lineGraph4log.ino
+https://github.com/bokunimowakaru/m5/blob/master/core/ex51_wbgt_ir_out/lib_lineGraph4log.ino
 *******************************************************************************/
 
 #include <M5CoreInk.h>                          // M5Stack用ライブラリ組み込み

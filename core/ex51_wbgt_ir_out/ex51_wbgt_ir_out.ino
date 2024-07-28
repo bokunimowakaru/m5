@@ -59,20 +59,20 @@ int ir_type = 255;                          // リモコン方式 255で自動�
 int ir_i = 1;                               // リモコン信号の選択番号1～3
 
 IPAddress IP;                               // ブロードキャストIP保存用
-float temp, hum, wgbt, temp2, press;        // 温度値、湿度値、WGBT用の変数
+float temp, hum, wbgt, temp2, press;        // 温度値、湿度値、WBGT用の変数
 WebServer server(80);                       // Webサーバ(ポート80=HTTP)定義
 unsigned long TIME = 0;                     // 1970年からmillis()＝0までの秒数
 
 void disp_graph(){
-    if(wgbt < 22 && DISP_MODE == 1){
+    if(wbgt < 22 && DISP_MODE == 1){
         DISP_MODE = 0;
         lineGraphInit(14, 24);
     }
-    if(wgbt > 26 && DISP_MODE == 1){
+    if(wbgt > 26 && DISP_MODE == 1){
         DISP_MODE = 2;
         lineGraphInit(24, 34);
     }
-    if((wgbt >= 24 && DISP_MODE == 0)||(wgbt <= 24 && DISP_MODE == 2)){
+    if((wbgt >= 24 && DISP_MODE == 0)||(wbgt <= 24 && DISP_MODE == 2)){
         DISP_MODE = 1;
         lineGraphInit(19, 29);
     }
@@ -153,16 +153,16 @@ float calc_press_h0(float temp, float press){
     return press;
 }
 
-void get_wgbt(){
+void get_wbgt(){
     temp = i2c_sht30_getTemp() - 0.5;       // 温度値の取得
     hum = i2c_sht30_getHum();               // 湿度値の取得
     temp2=bme280_getTemp() -1.5;            // 温度を取得して変数tempに代入
     press=bme280_getPress();                // 気圧を取得して変数pressに代入
     bme280_print(temp2,hum,press);
     if(temp >= temp2){                      // 温度値が高い方のセンサ値を採用
-        wgbt = 0.725 * temp + 0.0368 * hum + 0.00364 * temp * hum - 3.246 + 0.5;
+        wbgt = 0.725 * temp + 0.0368 * hum + 0.00364 * temp * hum - 3.246 + 0.5;
     }else{
-        wgbt = 0.725 * temp2+ 0.0368 * hum + 0.00364 * temp2* hum - 3.246 + 0.5;
+        wbgt = 0.725 * temp2+ 0.0368 * hum + 0.00364 * temp2* hum - 3.246 + 0.5;
     }
     analogMeterNeedle(0,temp);              // メータへ表示
     analogMeterNeedle(1,hum);               // メータへ表示
@@ -170,19 +170,19 @@ void get_wgbt(){
     if(TIME){
         char s[20];
         time2txt(s, (millis()/1000) + TIME);
-        S = String(wgbt,1)+"C " + String(calc_press_h0(temp,press),0) + "hPa "
+        S = String(wbgt,1)+"C " + String(calc_press_h0(temp,press),0) + "hPa "
           + String(&s[11]);
     }else{
-        S = String(wgbt,1)+"C("+String(temp,1)+"C,"+String(hum,0)+"%) "
+        S = String(wbgt,1)+"C("+String(temp,1)+"C,"+String(hum,0)+"%) "
           + String(calc_press_h0(temp,press),0) + "hPa";
     }
-    if(12. < wgbt && wgbt < 30.){
+    if(12. < wbgt && wbgt < 30.){
         M5.Lcd.fillRect(0, 210, 320, 30, BLACK);    // 表示部の背景を塗る
     }else{
         M5.Lcd.fillRect(0, 210, 320, 30, TFT_RED);  // 表示部の背景を塗る
     }
     M5.Lcd.drawCentreString(S, 160,210, 4); // 受信文字列を表示
-    if(wgbt > 32.){                         // 熱中症への警告
+    if(wbgt > 32.){                         // 熱中症への警告
         M5.Speaker.tone(880);               // スピーカ出力 880Hzを出力
         delay(10);                          // 10msの待ち時間処理
         M5.Speaker.end();                   // スピーカ出力を停止する
@@ -212,12 +212,12 @@ void loop(){                                // 繰り返し実行する関数
 /*
     wifistart();
 */
-    Serial.print("get_wgbt");
-    get_wgbt();                             // 温度、湿度、WGBTの取得
+    Serial.print("get_wbgt");
+    get_wbgt();                             // 温度、湿度、WBGTの取得
     Serial.println("...got");
     disp_graph();
     Serial.print("lineGraphPlot");
-    lineGraphPlot(wgbt,0);                  // WGBTをグラフ表示
+    lineGraphPlot(wbgt,0);                  // WBGTをグラフ表示
     Serial.print("...done 0");
     lineGraphPlot(temp,1);                  // tempをグラフ表示
     Serial.print("...done 1");
@@ -283,7 +283,7 @@ void loop(){                                // 繰り返し実行する関数
         }
         Serial.print(t);
         Serial.print(", ");
-        get_wgbt();                         // 温度、湿度、WGBTの取得
+        get_wbgt();                         // 温度、湿度、WBGTの取得
         t = millis()/1000;
     }while(t % 60);
 
@@ -315,7 +315,7 @@ LAN内の他の機器に、赤外線リモコンの受信信号をブロード�
 
 ・温湿度センサSHT30から取得した温度値と湿度値を送信するIoTセンサです。
 ・センサ値は液晶ディスプレイにアナログメータで表示します。
-・WGBT(疑似)を計算しグラフに表示します。【追加機能】
+・WBGT(疑似)を計算しグラフに表示します。【追加機能】
 ・送信頻度を 約1分に1回に抑えました。【追加機能】
 
 ********************************************************************************

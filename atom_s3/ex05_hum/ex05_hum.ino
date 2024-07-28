@@ -54,7 +54,7 @@ void disp_init(){
     switch(disp){                               // アナログ・メータの初期表示用
         case 1: analogMeterInit("Celsius", "Temp.", 0, 40); break;
         case 2: analogMeterInit("RH%", "Humi.", 0, 100); break;
-        default: analogMeterInit("Celsius", "WGBT", 0, 40); break;
+        default: analogMeterInit("Celsius", "WBGT", 0, 40); break;
     }
     M5.Lcd.setTextColor(WHITE);                 // 文字色を白に
     M5.Lcd.setCursor(0,72);                     // 文字の表示位置を原点に設定
@@ -90,19 +90,19 @@ void loop(){                                    // 繰り返し実行する関�
     float hum = getHum();                       // 湿度を取得して変数humに代入
     if(temp < -100. || hum < 0.) return;        // 取得失敗時に戻る
 
-    float wgbt = 0.725*temp + 0.0368*hum + 0.00364*temp*hum - 3.246 + 0.5;
+    float wbgt = 0.725*temp + 0.0368*hum + 0.00364*temp*hum - 3.246 + 0.5;
     switch(disp){                               // 画面番号に応じて針を動かす
         case 1 : analogMeterNeedle(temp,5); break;  // 温度メータ
         case 2 : analogMeterNeedle(hum,5);  break;  // 湿度メータ
-        default: analogMeterNeedle(wgbt,5); break;  // WGBTメータ
+        default: analogMeterNeedle(wbgt,5); break;  // WBGTメータ
     }
-    if(12. < wgbt && wgbt < 30.){               // 12℃より大かつ30℃より小の時
+    if(12. < wbgt && wbgt < 30.){               // 12℃より大かつ30℃より小の時
         M5.Lcd.fillRect(0,88, 128,15, BLACK);   // 表示部の背景を塗る
     }else{
         M5.Lcd.fillRect(0,88, 128,15,TFT_RED);  // 表示部の背景を塗る
     }
 
-    String S = String(wgbt,1);                  // WGBT値を文字列変数Sに代入
+    String S = String(wbgt,1);                  // WBGT値を文字列変数Sに代入
     S += "C ("+String(temp,0)+"C, "+String(hum,0)+"%)"; // 温度と湿度をSに追記
     M5.Lcd.drawCentreString(S, 64, 88, 2);      // 文字列を表示
     if(WiFi.status() != WL_CONNECTED) return;   // Wi-Fi未接続のときに戻る
