@@ -1,11 +1,229 @@
 /***********************************************************************
 LED制御ドライバ RGB LED WS2812
-                                        Copyright (c) 2022 Wataru KUNINO
-************************************************************************
-MITライセンスで配布します。権利表示の改変は禁止します。全て無保証です。
-本ソースコードには末尾に示すライセンス(The Unlicense)に基づいたコードを
-含みます。
+                                   Copyright (c) 2022-2024 Wataru KUNINO
 ***********************************************************************/
+
+#ifndef ESP_IDF_VERSION
+    #define ESP_IDF_VERSION 0
+#endif
+#ifndef ESP_IDF_VERSION_VAL
+    #define ESP_IDF_VERSION_VAL(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
+    // https://github.com/espressif/esp-idf/blob/master/components/esp_common/include/esp_idf_version.h
+#endif
+
+#define NUM_LEDS 30
+
+void print_esp_idf_version(){
+    Serial.print(ESP_IDF_VERSION >> 16);
+    Serial.print(".");
+    Serial.print((ESP_IDF_VERSION >> 8) % 255);
+    Serial.print(".");
+    Serial.println(ESP_IDF_VERSION % 255);
+}
+////////////////////////////////////////////////////////////////////////
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5,0,0)
+////////////////////////////////////////////////////////////////////////
+
+rmt_data_t led_data[NUM_LEDS * 24];
+int _PIN_LED = 0;
+
+void led_data_set(int n, uint32_t rgb){
+    for (int bit = 0; bit < 24; bit++) {
+        int i = n * 24 + bit;
+        if((i < 0) || (i >= NUM_LEDS * 24)) break;
+        if(rgb & (1 << (23 - bit))){
+            led_data[i].level0 = 1;
+            led_data[i].duration0 = 8;
+            led_data[i].level1 = 0;
+            led_data[i].duration1 = 4;
+        }else{
+            led_data[i].level0 = 1;
+            led_data[i].duration0 = 4;
+            led_data[i].level1 = 0;
+            led_data[i].duration1 = 8;
+        }
+    }
+}
+
+void led(int r,int g,int b){                    // LEDにカラーを設定
+    if(_PIN_LED == 0) return;
+    uint32_t rgb = (g & 0xff) << 16 | (r & 0xff) << 8 | (b & 0xff);
+    for (int i = 0; i < NUM_LEDS; i++) {
+        led_data_set(i, rgb);
+    }
+    rmtWrite(_PIN_LED, led_data, NUM_LEDS * 24, RMT_WAIT_FOR_EVER);
+}
+
+void led_single(int r,int g,int b){                    // LEDにカラーを設定
+    if(_PIN_LED == 0) return;
+    uint32_t rgb = (g & 0xff) << 16 | (r & 0xff) << 8 | (b & 0xff);
+    for(int bit = NUM_LEDS * 24 - 1 ; bit >= 24; bit--){
+        led_data[bit] = led_data[bit-24];
+    }
+    led_data_set(0, rgb);
+    rmtWrite(_PIN_LED, led_data, NUM_LEDS * 24, RMT_WAIT_FOR_EVER);
+}
+
+/* 000～30までをLEDの点灯数で表示 */
+void led_bar(int n, uint32_t rgb){
+    for(int i=0;i<NUM_LEDS;i++){
+        if(i+1 <= n) led_data_set(i, rgb);
+        else led_data_set(0, 0);
+    }
+    rmtWrite(_PIN_LED, led_data, NUM_LEDS * 24, RMT_WAIT_FOR_EVER);
+}
+
+void led_bar(int n){
+    led_bar(n, 10 << 16 | 10 << 8 | 10);
+}
+
+/* 000～999までの数字をLEDの点灯数で表示 */
+void led_num(int n, uint32_t rgb){
+    for(int i=0;i<NUM_LEDS;i++){
+        int j = i%10;
+        if(j == 0) led_data_set(i, 10 << 16);
+        else if(j <= n%10) led_data_set(i, rgb);
+        else led_data_set(i, 0);
+        if(j == 9) n /= 10;
+    }
+    rmtWrite(_PIN_LED, led_data, NUM_LEDS * 24, RMT_WAIT_FOR_EVER);
+}
+
+void led_num(int n){
+    led_num(n, 10 << 16 | 10 << 8 | 10);
+}
+
+void led(int brightness){                       // グレースケール制御
+    if(brightness > 0xff) brightness = 0xff;    // 256以上時に255に設定
+    led(brightness,brightness,brightness);      // RGB全て同値でLED制御
+}
+
+void led_single(int brightness){
+    if(brightness > 100) brightness = 100;      // 100以上時に100に設定(電流上限)
+    led_single(brightness,brightness,brightness); // RGB全て同値でLED制御
+}
+
+void led_on(){                                  // LED制御の停止
+    led(30);                                    // LEDの消灯
+}
+
+void led_on_single(){                           // LED制御の停止
+    led_single(30);                             // LEDの点灯
+}
+
+void led_off(){                                 // LED制御の停止
+    led(0);                                     // LEDの消灯
+}
+
+void led_off_single(){                          // LED制御の停止
+    led_single(0);                              // LEDの消灯
+}
+
+void led_setup(int pin){
+    _PIN_LED = pin;
+    if(_PIN_LED == 0) return;
+    Serial.println("RMT Init, Espressif Systems Remote Control Transceiver, forked by Wataru KUNINO");
+    Serial.print("RMT Init, ESP_IDF_VERSION: ");
+    print_esp_idf_version();
+    Serial.println("RMT Init, (PIN="+String(pin)+") real tick set to: 100ns");
+    rmtInit(_PIN_LED, RMT_TX_MODE, RMT_MEM_NUM_BLOCKS_1, 10000000);
+}
+
+void led_setup(){
+    led_setup(_PIN_LED);
+}
+
+void led_tone2rgb(byte rgb[], int tone_color, int brightness){
+    float r, g, b, v, f, q, t;
+    v = (float)brightness / 255.;
+    f = ((float)(tone_color % 60)) / 60.;
+    t = f * v;
+    q = v - t;
+    switch(tone_color / 60){
+        case 0: r=v; g=t; b=0; break;
+        case 1: r=q; g=v; b=0; break;
+        case 2: r=0; g=v; b=t; break;
+        case 3: r=0; g=q; b=v; break;
+        case 4: r=t; g=0; b=v; break;
+        case 5: r=v; g=0; b=q; break;
+        default: r=v; g=t; b=0; break;
+    }
+    rgb[0] = (byte)(r * 255. + .5);
+    rgb[1] = (byte)(g * 255. + .5);
+    rgb[2] = (byte)(b * 255. + .5);
+}
+
+void led_notify(int mode){
+	int tone_color = 0;                             // 現在の色調(0〜359)
+	int tone_speed = 3;                             // 色調の変更速度
+	int brightness = 0;                             // 現在の輝度値
+	int dimmer_speed = +1;                          // 輝度の変更速度
+	int dimmer_max = 14;                            // 点灯時の輝度(255以下)
+    byte rgb[3];
+    
+    rmt_data_t led_data2[NUM_LEDS * 24];
+    memcpy(led_data2, led_data, sizeof(rmt_data_t) * NUM_LEDS);
+
+    if(mode==1){
+	    while(tone_color >= 0 && tone_color < 360){
+		    led_tone2rgb(rgb, tone_color, brightness);
+		    led_single(rgb[0],rgb[1],rgb[2]);           // LED 制御
+		    brightness += dimmer_speed;                 // 輝度の増減
+		    tone_color += tone_speed;
+		    if(brightness < 0){                         // 輝度値が負になったとき
+		        brightness = 0;                         // 輝度値を0に設定
+		        dimmer_speed = abs(dimmer_speed);       // 正の速度を設定
+		    }else if(brightness > dimmer_max){          // 点灯時の輝度を超えたとき
+		        brightness = dimmer_max;                // 転倒時の輝度を設定
+		        dimmer_speed = -abs(dimmer_speed);      // 負の速度
+		    }
+	    	delay(14);                                  // 14msの待ち時間処理
+		}
+	}else if(mode==2){
+	    while(tone_color >= 0 && tone_color < 360){
+		    led_tone2rgb(rgb, tone_color, brightness);
+		    led(rgb[0],rgb[1],rgb[2]);                  // LED 制御
+		    brightness += dimmer_speed;                 // 輝度の増減
+		    tone_color += tone_speed;
+		    if(brightness < 0){                         // 輝度値が負になったとき
+		        brightness = 0;                         // 輝度値を0に設定
+		        dimmer_speed = abs(dimmer_speed);       // 正の速度を設定
+		    }else if(brightness > dimmer_max){          // 点灯時の輝度を超えたとき
+		        brightness = dimmer_max;                // 転倒時の輝度を設定
+		        dimmer_speed = -abs(dimmer_speed);      // 負の速度
+		    }
+	    	delay(14);                                  // 14msの待ち時間処理
+		}
+	}
+    memcpy(led_data, led_data2, sizeof(rmt_data_t) * NUM_LEDS);
+    rmtWrite(_PIN_LED, led_data, NUM_LEDS * 24, RMT_WAIT_FOR_EVER);
+}
+
+/***********************************************************************
+参考文献 RMT Write RGB LED
+Remote Control Transceiver (RMT) peripheral was designed to act as an
+infrared transceiver.
+https://docs.espressif.com/projects/arduino-esp32/en/latest/api/rmt.html
+************************************************************************
+
+// Copyright 2024 Espressif Systems (Shanghai) PTE LTD
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+*/
+
+////////////////////////////////////////////////////////////////////////
+#else // ESP_IDF_VERSION < 5.0.0
+////////////////////////////////////////////////////////////////////////
 
 #include "driver/rmt.h"
 
@@ -13,7 +231,6 @@ MITライセンスで配布します。権利表示の改変は禁止します�
 #define LED_RMT_TX_CHANNEL  (rmt_channel_t)0
 int _PIN_LED = 8;
 
-#define NUM_LEDS 30
 #define BITS_PER_LED_CMD 24
 #define LED_BUFFER_ITEMS ((NUM_LEDS * BITS_PER_LED_CMD))
 
@@ -143,6 +360,7 @@ void led_single(int brightness){
 void led_on(){                                  // LED制御の停止
     led(30);                                    // LEDの点灯
 }
+
 void led_on_single(){                           // LED制御の停止
     led_single(30);                             // LEDの点灯
 }
@@ -156,6 +374,11 @@ void led_off_single(){                          // LED制御の停止
 
 void led_setup(int pin){
     _PIN_LED = pin;
+    if(_PIN_LED == 0) return;
+    Serial.println("RMT Init, JSchaenzle/ESP32-NeoPixel-WS2812-RMT, forked by Wataru KUNINO");
+    Serial.print("RMT Init, ESP_IDF_VERSION: ");
+    print_esp_idf_version();
+    Serial.println("RMT Init, PIN="+String(pin));
     ws2812_control_init();
     led_off();
 }
@@ -229,32 +452,7 @@ void led_notify(int mode){
     ws2812_write_leds(buf2);
 }
 
-
-/******************************************************************************
-lib_led.ino
-*******************************************************************************
-MIT License
-
-Copyright (c) 2022 Wataru KUNINO
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-******************************************************************************/
+#endif
 
     /**********************************************************************
     参考文献：
