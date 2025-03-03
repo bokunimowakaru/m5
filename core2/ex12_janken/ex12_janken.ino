@@ -10,6 +10,10 @@ https://github.com/bokunimowakaru/m5Janken/tree/master/janken05_net
 説明書：
 https://github.com/bokunimowakaru/m5Janken/blob/master/README.md
 
+制限事項：
+・画面に何も表示されないときはFLASHメモリのAPPへの割り当てを増やしてください
+　(Arduino IDE ツール → Partition Scheme → Minimal SPIFFS などの方法で)
+
                                           Copyright (c) 2020-2022 Wataru KUNINO
 *******************************************************************************/
 
@@ -72,8 +76,11 @@ void setup() {
     WiFi.begin(SSID,PASS);                      // 無線LANアクセスポイントへ接続
     while(WiFi.status() != WL_CONNECTED);       // 接続に成功するまで待つ
     disp("janken88","Example 12 Janken");       // 持ち手＋タイトルを表示
-    if(USER == "") USER = "Mac" + WiFi.macAddress().substring(15);
-    // 上記の行でMACアドレスの末尾1バイト(2桁)がユーザ名に設定される
+    if(USER == ""){
+        String Mac = String(WiFi.macAddress());
+        USER = Mac.substring(12,14) + Mac.substring(15,17);
+    }
+    // 上記でWi-Fi接続に利用したMACアドレスの末尾4桁がユーザ名に設定される
 }
 
 void loop(){                                    // 繰り返し実行する関数
